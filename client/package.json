@@ -13,6 +13,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@primevue/forms": "^4.2.2",
     "@primevue/themes": "^4.2.2",
     "install": "^0.13.0",
     "npm": "^10.9.0",
