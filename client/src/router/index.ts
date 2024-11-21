@@ -14,6 +14,11 @@ const router = createRouter({
       name: "share",
       component: () => import("../views/FormView.vue"),
     },
+    {
+      path: "/organize",
+      name: "organize",
+      component: () => import("../views/OrganizeView.vue"),
+    },
   ],
 });
 
