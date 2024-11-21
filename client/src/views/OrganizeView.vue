@@ -29,16 +29,12 @@ const secretLink = computed(
           </li>
         </ul>
       </LinkAdmonition>
-      <LinkAdmonition
-        :link="secretLink"
-        summary="Keep this link secret"
-        icon="pi pi-exclamation-circle"
-      >
+      <LinkAdmonition :link="secretLink" summary="Keep this link secret" icon="pi pi-lock">
         <ul>
           <li>Use this link to view responses to your survey.</li>
           <li>
-            Only share this link with people you trust, because
-            <strong>anyone</strong> with this link can access your survey responses.
+            This link is like a password. <strong>Anyone</strong> with this link can access your
+            survey responses.
           </li>
           <li>
             Copy this link down in a safe place, because it will disappear when you leave this page.
