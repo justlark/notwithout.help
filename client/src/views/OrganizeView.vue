@@ -3,9 +3,11 @@ import { computed, ref } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import type { SurveyId, SurveySecret } from "@/types";
 
-// TODO: These are example values.
+// TODO: Example of an 8-character alphanumeric survey ID.
 const surveyId = ref<SurveyId>("VmrfdKsn");
-const surveySecret = ref<SurveySecret>("kqCmJEdzk7pK5OiS71ZKHbyYgP5sXzg0");
+
+// TODO: Example of a base64-encoded 256-bit private key.
+const surveySecret = ref<SurveySecret>("R5A2zhBtFwO8gWzBQn2y3ZoaQm5bnIi3Fl2RZmwZH5w=");
 
 const origin = computed(() => window.location.origin);
 const shareLink = computed(() => new URL(`${origin.value}/share/#/${surveyId.value}`));
