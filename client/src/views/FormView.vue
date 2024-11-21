@@ -17,6 +17,7 @@ const contactTypes = ref([
   { name: "Bluesky", code: "bluesky" },
   { name: "Threads", code: "threads" },
   { name: "Twitter", code: "twitter" },
+  { name: "WhatsApp", code: "whatsapp" },
   { name: "Instagram", code: "instagram" },
   { name: "Facebook", code: "facebook" },
   { name: "Other", code: "other" },
