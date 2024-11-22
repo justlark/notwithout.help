@@ -3,6 +3,7 @@ use secrecy::ExposeSecret;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(transparent)]
 pub struct Secret(secrecy::SecretString);
 
 impl Secret {
