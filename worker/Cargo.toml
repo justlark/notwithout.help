@@ -33,3 +33,4 @@ serde = { version = "1.0.215", features = ["derive"] }
 secrecy = { version = "0.10.3", features = ["serde"] }
 futures = "0.3.31"
 constant_time_eq = "0.3.1"
+rand = "0.8.5"

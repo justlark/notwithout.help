@@ -1,4 +1,5 @@
 use constant_time_eq::constant_time_eq;
+use rand::distributions::{Alphanumeric, DistString};
 use secrecy::{zeroize::Zeroize, CloneableSecret, ExposeSecret, SecretBox, SerializableSecret};
 use serde::{Deserialize, Serialize};
 
@@ -38,3 +39,18 @@ impl PartialEq for Secret {
 }
 
 impl Eq for Secret {}
+
+fn random_id(len: usize) -> String {
+    Alphanumeric.sample_string(&mut rand::thread_rng(), len)
+}
+
+const FORM_ID_LEN: usize = 8;
+const SUBMISSION_ID_LEN: usize = 8;
+
+pub fn new_form_id() -> String {
+    random_id(FORM_ID_LEN)
+}
+
+pub fn new_submission_id() -> String {
+    random_id(SUBMISSION_ID_LEN)
+}
