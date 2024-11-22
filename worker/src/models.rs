@@ -1,4 +1,5 @@
-use secrecy::SecretString;
+use constant_time_eq::constant_time_eq;
+use secrecy::{ExposeSecret, SecretString};
 use serde::{Deserialize, Serialize};
 
 // Base64-encoded encrypted form response.
@@ -6,7 +7,26 @@ pub type EncryptedFormSubmission = String;
 pub type FormId = String;
 pub type SubmissionId = String;
 pub type PublicEncryptionKey = String;
-pub type ApiToken = SecretString;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ApiToken(SecretString);
+
+impl ApiToken {
+    pub fn from(token: &str) -> Self {
+        Self(SecretString::from(token))
+    }
+}
+
+impl PartialEq for ApiToken {
+    fn eq(&self, other: &Self) -> bool {
+        constant_time_eq(
+            self.0.expose_secret().as_bytes(),
+            other.0.expose_secret().as_bytes(),
+        )
+    }
+}
+
+impl Eq for ApiToken {}
 
 #[derive(Debug, Deserialize)]
 pub struct FormTemplate {

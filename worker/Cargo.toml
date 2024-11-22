@@ -17,7 +17,10 @@ crate-type = ["cdylib"]
 [dependencies]
 worker = { version = "0.4.2", features = ["http", "axum"] }
 worker-macros = { version = "0.4.2", features = ["http"] }
-axum = { version = "0.7", default-features = false, features = ["json"] }
+axum = { version = "0.7", default-features = false, features = [
+  "json",
+  "macros",
+] }
 tower-service = "0.3.2"
 console_error_panic_hook = { version = "0.1.1" }
 tower-http = { version = "0.6.2", features = [
@@ -27,6 +30,6 @@ tower-http = { version = "0.6.2", features = [
   "sensitive-headers",
 ] }
 serde = { version = "1.0.215", features = ["derive"] }
-subtle = "2.6.1"
 secrecy = { version = "0.10.3", features = ["serde"] }
 futures = "0.3.31"
+constant_time_eq = "0.3.1"

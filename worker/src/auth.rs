@@ -1,11 +1,19 @@
+use std::sync::Arc;
+
 use axum::{
     body::Body,
     http::{header::AUTHORIZATION, Request, Response, StatusCode},
+    response::ErrorResponse,
 };
+use constant_time_eq::constant_time_eq;
 use futures::future::{BoxFuture, FutureExt};
+use secrecy::ExposeSecret;
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
-use crate::models::ApiToken;
+use crate::{
+    models::{ApiToken, FormId},
+    store, AppState,
+};
 
 const BEARER_PREFIX: &str = "Bearer ";
 
@@ -39,4 +47,22 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
         }
         .boxed()
     })
+}
+
+#[must_use]
+pub async fn authorize(
+    form_id: FormId,
+    api_token: ApiToken,
+    state: Arc<AppState>,
+) -> Result<(), ErrorResponse> {
+    let form = store::get_form(&state.kv, form_id)
+        .await
+        .map_err(|_| StatusCode::UNAUTHORIZED)?
+        .ok_or_else(|| StatusCode::UNAUTHORIZED)?;
+
+    if form.api_token == api_token {
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED.into())
+    }
 }

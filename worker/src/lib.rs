@@ -2,31 +2,44 @@ mod auth;
 mod models;
 mod store;
 
+use std::{fmt, sync::Arc};
+
 use axum::{
     body::Body,
-    extract::{Json, Path},
+    extract::{Extension, Json, Path, State},
     http::{
         header::{HeaderName, AUTHORIZATION, CONTENT_TYPE},
         HeaderValue, Method, Response, StatusCode,
     },
+    response::ErrorResponse,
     routing::{delete, get, post},
     Router,
 };
-use tower_http::{
-    auth::AsyncRequireAuthorizationLayer, cors::CorsLayer,
-    sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer,
-};
+use tower_http::{cors::CorsLayer, sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
 use tower_service::Service;
 use worker::{self, event, kv::KvStore, Context, Env, HttpRequest};
 
-use auth::auth_layer;
-use models::{EncryptedFormSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse};
+use auth::{auth_layer, authorize};
+use models::{
+    ApiToken, EncryptedFormSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse,
+};
 
 const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
 const CORS_ALLOWED_METHODS: [Method; 3] = [Method::GET, Method::POST, Method::DELETE];
 const CORS_ALLOWED_HEADERS: [HeaderName; 1] = [CONTENT_TYPE];
 
 const KV_BINDING: &str = "KV";
+
+#[derive(Clone)]
+pub struct AppState {
+    kv: KvStore,
+}
+
+impl fmt::Debug for AppState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AppState").finish_non_exhaustive()
+    }
+}
 
 fn cors_layer() -> CorsLayer {
     let cors_layer = CorsLayer::new()
@@ -42,10 +55,6 @@ fn cors_layer() -> CorsLayer {
 
 fn router(kv: KvStore) -> Router {
     Router::new()
-        .layer(SetSensitiveHeadersLayer::new([AUTHORIZATION]))
-        .layer(TraceLayer::new_for_http())
-        .layer(cors_layer())
-        .with_state(kv)
         // Authenticated endpoints.
         .route("/forms/:form_id", delete(delete_form))
         .route("/submissions/:form_id", get(list_form_submissions))
@@ -55,6 +64,10 @@ fn router(kv: KvStore) -> Router {
         .route("/forms", post(publish_form))
         .route("/forms/:form_id", get(get_form))
         .route("/submissions/:form_id", post(store_form_submission))
+        .layer(cors_layer())
+        .layer(SetSensitiveHeadersLayer::new([AUTHORIZATION]))
+        .layer(TraceLayer::new_for_http())
+        .with_state(Arc::new(AppState { kv }))
 }
 
 #[event(fetch)]
@@ -64,19 +77,31 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
     Ok(router(kv).call(req).await?)
 }
 
-pub async fn publish_form(Json(template): Json<FormTemplate>) -> Json<PublishFormResponse> {
+pub async fn publish_form(
+    State(state): State<Arc<AppState>>,
+    Json(template): Json<FormTemplate>,
+) -> Json<PublishFormResponse> {
     todo!()
 }
 
-pub async fn get_form(Path(form_id): Path<FormId>) -> Json<FormResponse> {
+pub async fn get_form(
+    State(state): State<Arc<AppState>>,
+    Path(form_id): Path<FormId>,
+) -> Json<FormResponse> {
     todo!()
 }
 
-pub async fn delete_form(Path(form_id): Path<FormId>) -> StatusCode {
+pub async fn delete_form(
+    State(state): State<Arc<AppState>>,
+    Extension(api_token): Extension<ApiToken>,
+    Path(form_id): Path<FormId>,
+) -> Result<StatusCode, ErrorResponse> {
+    // authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }
 
 pub async fn store_form_submission(
+    State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
     body: EncryptedFormSubmission,
 ) -> StatusCode {
@@ -84,11 +109,19 @@ pub async fn store_form_submission(
 }
 
 pub async fn list_form_submissions(
+    State(state): State<Arc<AppState>>,
+    Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
-) -> Json<Vec<EncryptedFormSubmission>> {
+) -> Result<Json<Vec<EncryptedFormSubmission>>, ErrorResponse> {
+    // authorize(form_id, api_token, state).await?;
     todo!()
 }
 
-pub async fn delete_form_submission(Path(form_id): Path<FormId>) -> StatusCode {
+pub async fn delete_form_submission(
+    State(state): State<Arc<AppState>>,
+    Extension(api_token): Extension<ApiToken>,
+    Path(form_id): Path<FormId>,
+) -> Result<StatusCode, ErrorResponse> {
+    // authorize(form_id, api_token, state).await?;
     todo!()
 }
