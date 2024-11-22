@@ -1,5 +1,6 @@
 mod auth;
 mod models;
+mod secrets;
 mod store;
 
 use std::{fmt, sync::Arc};
