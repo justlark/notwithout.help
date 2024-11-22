@@ -2,6 +2,9 @@
 import { computed, ref } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import type { SurveyId, SurveySecret } from "@/types";
+import { useToast } from "primevue/usetoast";
+import { TOAST_TTL } from "@/vars";
+import Toast from "primevue/toast";
 
 // TODO: Example of an 8-character alphanumeric survey ID.
 const surveyId = ref<SurveyId>("VmrfdKsn");
@@ -14,13 +17,40 @@ const shareLink = computed(() => new URL(`${origin.value}/share/#/${surveyId.val
 const secretLink = computed(
   () => new URL(`${origin.value}/view/#/${surveyId.value}/${surveySecret.value}`),
 );
+
+const toast = useToast();
+
+const copyShareLink = () => {
+  toast.removeGroup("link-copy");
+
+  toast.add({
+    severity: "info",
+    summary: "Link copied",
+    detail: "Share this link to collect responses.",
+    life: TOAST_TTL,
+    group: "link-copy",
+  });
+};
+
+const copySecretLink = () => {
+  toast.removeGroup("link-copy");
+
+  toast.add({
+    severity: "warn",
+    summary: "Secret link copied",
+    detail: "Be careful who you share this link with.",
+    life: TOAST_TTL,
+    group: "link-copy",
+  });
+};
 </script>
 
 <template>
+  <Toast position="bottom-center" group="link-copy" />
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>
     <div class="max-w-xl mx-auto flex flex-col gap-8">
-      <LinkAdmonition :link="shareLink">
+      <LinkAdmonition :link="shareLink" @click="copyShareLink">
         <template #title>
           <span class="flex gap-3 items-center">
             <i class="pi pi-share-alt"></i>
@@ -42,7 +72,7 @@ const secretLink = computed(
         </template>
       </LinkAdmonition>
 
-      <LinkAdmonition :link="secretLink">
+      <LinkAdmonition :link="secretLink" @click="copySecretLink">
         <template #title>
           <span class="flex gap-3 items-center">
             <i class="pi pi-lock"></i>
