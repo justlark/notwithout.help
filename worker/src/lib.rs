@@ -1,19 +1,25 @@
+mod auth;
 mod models;
+mod store;
 
 use axum::{
     body::Body,
     extract::{Json, Path},
     http::{
-        header::{HeaderName, CONTENT_TYPE},
-        HeaderValue, Method, Request, Response, StatusCode,
+        header::{HeaderName, AUTHORIZATION, CONTENT_TYPE},
+        HeaderValue, Method, Response, StatusCode,
     },
     routing::{delete, get, post},
     Router,
 };
-use tower_http::{auth::AsyncRequireAuthorizationLayer, cors::CorsLayer, trace::TraceLayer};
+use tower_http::{
+    auth::AsyncRequireAuthorizationLayer, cors::CorsLayer,
+    sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer,
+};
 use tower_service::Service;
 use worker::{self, event, kv::KvStore, Context, Env, HttpRequest};
 
+use auth::auth_layer;
 use models::{EncryptedFormSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse};
 
 const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
@@ -34,12 +40,9 @@ fn cors_layer() -> CorsLayer {
         })
 }
 
-async fn auth_layer(req: Request<Body>) -> Result<Request<Body>, Response<Body>> {
-    todo!()
-}
-
 fn router(kv: KvStore) -> Router {
     Router::new()
+        .layer(SetSensitiveHeadersLayer::new([AUTHORIZATION]))
         .layer(TraceLayer::new_for_http())
         .layer(cors_layer())
         .with_state(kv)
@@ -47,7 +50,7 @@ fn router(kv: KvStore) -> Router {
         .route("/forms/:form_id", delete(delete_form))
         .route("/submissions/:form_id", get(list_form_submissions))
         .route("/submissions/:form_id", delete(delete_form_submission))
-        .route_layer(AsyncRequireAuthorizationLayer::new(auth_layer))
+        .route_layer(auth_layer())
         // Unauthenticated endpoints.
         .route("/forms", post(publish_form))
         .route("/forms/:form_id", get(get_form))
