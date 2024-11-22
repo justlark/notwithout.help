@@ -22,7 +22,7 @@ use worker::{self, event, kv::KvStore, Context, Env, HttpRequest};
 
 use auth::{auth_layer, authorize};
 use models::{
-    ApiToken, EncryptedFormSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse,
+    ApiToken, EncryptedSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse,
 };
 
 const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
@@ -104,7 +104,7 @@ pub async fn delete_form(
 pub async fn store_form_submission(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
-    body: EncryptedFormSubmission,
+    body: EncryptedSubmission,
 ) -> Result<StatusCode, ErrorResponse> {
     todo!()
 }
@@ -113,7 +113,7 @@ pub async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
-) -> Result<Json<Vec<EncryptedFormSubmission>>, ErrorResponse> {
+) -> Result<Json<Vec<EncryptedSubmission>>, ErrorResponse> {
     authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }

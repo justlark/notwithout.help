@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::secrets::Secret;
 
-pub type EncryptedFormSubmission = String;
+pub type EncryptedSubmission = String;
 pub type FormId = String;
 pub type SubmissionId = String;
 pub type PublicEncryptionKey = String;
 pub type ApiToken = Secret;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
     pub public_key: PublicEncryptionKey,
     pub api_token: ApiToken,
@@ -39,11 +39,4 @@ impl From<FormTemplate> for FormResponse {
 #[derive(Debug, Serialize)]
 pub struct PublishFormResponse {
     pub form_id: FormId,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Submission {
-    pub name: String,
-    pub contact: String,
-    pub contact_method: String,
 }
