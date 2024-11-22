@@ -5,20 +5,22 @@ use axum::{
     extract::{Json, Path},
     http::{
         header::{HeaderName, CONTENT_TYPE},
-        HeaderValue, Method, Response, StatusCode,
+        HeaderValue, Method, Request, Response, StatusCode,
     },
     routing::{delete, get, post},
     Router,
 };
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_http::{auth::AsyncRequireAuthorizationLayer, cors::CorsLayer, trace::TraceLayer};
 use tower_service::Service;
-use worker::*;
+use worker::{self, event, kv::KvStore, Context, Env, HttpRequest};
 
-use models::{EncryptedFormResponse, FormId, FormResponse, FormTemplate};
+use models::{EncryptedFormSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse};
 
 const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
 const CORS_ALLOWED_METHODS: [Method; 3] = [Method::GET, Method::POST, Method::DELETE];
 const CORS_ALLOWED_HEADERS: [HeaderName; 1] = [CONTENT_TYPE];
+
+const KV_BINDING: &str = "KV";
 
 fn cors_layer() -> CorsLayer {
     let cors_layer = CorsLayer::new()
@@ -32,29 +34,38 @@ fn cors_layer() -> CorsLayer {
         })
 }
 
-fn router() -> Router {
-    Router::new()
-        .route("/forms", post(publish_form))
-        .route("/forms/:form_id", get(get_form))
-        .route("/forms/:form_id", delete(delete_form))
-        .route("/responses/:form_id", post(store_form_response))
-        .route("/responses/:form_id", get(list_form_responses))
-        .route("/responses/:form_id", delete(delete_form_response))
-        .layer(TraceLayer::new_for_http())
-        .layer(cors_layer())
-}
-
-#[event(fetch)]
-async fn fetch(req: HttpRequest, _env: Env, _ctx: Context) -> Result<Response<Body>> {
-    console_error_panic_hook::set_once();
-    Ok(router().call(req).await?)
-}
-
-pub async fn publish_form(Json(template): Json<FormTemplate>) -> Json<FormResponse> {
+async fn auth_layer(req: Request<Body>) -> Result<Request<Body>, Response<Body>> {
     todo!()
 }
 
-pub async fn get_form(Path(form_id): Path<FormId>) -> Json<FormTemplate> {
+fn router(kv: KvStore) -> Router {
+    Router::new()
+        .layer(TraceLayer::new_for_http())
+        .layer(cors_layer())
+        .with_state(kv)
+        // Authenticated endpoints.
+        .route("/forms/:form_id", delete(delete_form))
+        .route("/submissions/:form_id", get(list_form_submissions))
+        .route("/submissions/:form_id", delete(delete_form_submission))
+        .route_layer(AsyncRequireAuthorizationLayer::new(auth_layer))
+        // Unauthenticated endpoints.
+        .route("/forms", post(publish_form))
+        .route("/forms/:form_id", get(get_form))
+        .route("/submissions/:form_id", post(store_form_submission))
+}
+
+#[event(fetch)]
+async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Response<Body>> {
+    console_error_panic_hook::set_once();
+    let kv = env.kv(KV_BINDING)?;
+    Ok(router(kv).call(req).await?)
+}
+
+pub async fn publish_form(Json(template): Json<FormTemplate>) -> Json<PublishFormResponse> {
+    todo!()
+}
+
+pub async fn get_form(Path(form_id): Path<FormId>) -> Json<FormResponse> {
     todo!()
 }
 
@@ -62,17 +73,19 @@ pub async fn delete_form(Path(form_id): Path<FormId>) -> StatusCode {
     todo!()
 }
 
-pub async fn store_form_response(
+pub async fn store_form_submission(
     Path(form_id): Path<FormId>,
-    body: EncryptedFormResponse,
+    body: EncryptedFormSubmission,
 ) -> StatusCode {
     todo!()
 }
 
-pub async fn list_form_responses(Path(form_id): Path<FormId>) -> Json<Vec<EncryptedFormResponse>> {
+pub async fn list_form_submissions(
+    Path(form_id): Path<FormId>,
+) -> Json<Vec<EncryptedFormSubmission>> {
     todo!()
 }
 
-pub async fn delete_form_response(Path(form_id): Path<FormId>) -> StatusCode {
+pub async fn delete_form_submission(Path(form_id): Path<FormId>) -> StatusCode {
     todo!()
 }
