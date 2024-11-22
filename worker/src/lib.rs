@@ -12,7 +12,7 @@ use axum::{
         header::{HeaderName, AUTHORIZATION, CONTENT_TYPE},
         HeaderValue, Method, Response, StatusCode,
     },
-    response::ErrorResponse,
+    response::{ErrorResponse, NoContent},
     routing::{delete, get, post},
     Router,
 };
@@ -81,14 +81,14 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
 pub async fn publish_form(
     State(state): State<Arc<AppState>>,
     Json(template): Json<FormTemplate>,
-) -> Json<PublishFormResponse> {
+) -> Result<Json<PublishFormResponse>, ErrorResponse> {
     todo!()
 }
 
 pub async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
-) -> Json<FormResponse> {
+) -> Result<Json<FormResponse>, ErrorResponse> {
     todo!()
 }
 
@@ -96,8 +96,8 @@ pub async fn delete_form(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
-) -> Result<StatusCode, ErrorResponse> {
-    // authorize(form_id, api_token, Arc::clone(&state)).await?;
+) -> Result<NoContent, ErrorResponse> {
+    authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }
 
@@ -105,7 +105,7 @@ pub async fn store_form_submission(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
     body: EncryptedFormSubmission,
-) -> StatusCode {
+) -> Result<StatusCode, ErrorResponse> {
     todo!()
 }
 
@@ -114,7 +114,7 @@ pub async fn list_form_submissions(
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<EncryptedFormSubmission>>, ErrorResponse> {
-    // authorize(form_id, api_token, state).await?;
+    authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }
 
@@ -122,7 +122,7 @@ pub async fn delete_form_submission(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
-) -> Result<StatusCode, ErrorResponse> {
-    // authorize(form_id, api_token, state).await?;
+) -> Result<NoContent, ErrorResponse> {
+    authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }

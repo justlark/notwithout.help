@@ -10,6 +10,7 @@ fn submission_key(form_id: FormId, submission_id: SubmissionId) -> String {
     format!("submission:{}:{}", form_id, submission_id)
 }
 
+#[worker::send]
 pub async fn get_form(kv: &KvStore, form_id: FormId) -> worker::Result<Option<FormTemplate>> {
-    Ok(kv.get(&form_key(form_id)).json().await?)
+    Ok(kv.get(&form_key(form_id)).json::<FormTemplate>().await?)
 }

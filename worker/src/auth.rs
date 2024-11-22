@@ -3,11 +3,9 @@ use std::sync::Arc;
 use axum::{
     body::Body,
     http::{header::AUTHORIZATION, Request, Response, StatusCode},
-    response::ErrorResponse,
+    response::{ErrorResponse, IntoResponse},
 };
-use constant_time_eq::constant_time_eq;
 use futures::future::{BoxFuture, FutureExt};
-use secrecy::ExposeSecret;
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
@@ -17,13 +15,6 @@ use crate::{
 
 const BEARER_PREFIX: &str = "Bearer ";
 
-fn unauthorized_response() -> Response<Body> {
-    Response::builder()
-        .status(StatusCode::UNAUTHORIZED)
-        .body(Body::empty())
-        .unwrap()
-}
-
 pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
     impl Fn(Request<Body>) -> BoxFuture<'a, Result<Request<Body>, Response<Body>>> + Clone,
 > {
@@ -32,14 +23,16 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
             let auth_header = req
                 .headers()
                 .get(AUTHORIZATION)
-                .ok_or_else(unauthorized_response)?;
+                .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())?;
 
-            let auth_header_value = auth_header.to_str().map_err(|_| unauthorized_response())?;
+            let auth_header_value = auth_header
+                .to_str()
+                .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?;
 
             let api_token = auth_header_value
                 .strip_prefix(BEARER_PREFIX)
                 .map(ApiToken::from)
-                .ok_or_else(unauthorized_response)?;
+                .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())?;
 
             req.extensions_mut().insert(api_token);
 
@@ -49,7 +42,6 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
     })
 }
 
-#[must_use]
 pub async fn authorize(
     form_id: FormId,
     api_token: ApiToken,
@@ -58,7 +50,7 @@ pub async fn authorize(
     let form = store::get_form(&state.kv, form_id)
         .await
         .map_err(|_| StatusCode::UNAUTHORIZED)?
-        .ok_or_else(|| StatusCode::UNAUTHORIZED)?;
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     if form.api_token == api_token {
         Ok(())
