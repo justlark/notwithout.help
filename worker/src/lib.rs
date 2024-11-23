@@ -14,6 +14,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use secrets::{new_form_id, new_submission_id};
 use tower_http::{sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
 use tower_service::Service;
 use worker::{self, d1::D1Database, event, Context, Env, HttpRequest};
@@ -60,7 +61,15 @@ pub async fn publish_form(
     State(state): State<Arc<AppState>>,
     Json(template): Json<FormTemplate>,
 ) -> Result<Json<PublishFormResponse>, ErrorResponse> {
-    todo!()
+    let form_id = new_form_id();
+
+    state
+        .store
+        .put_form(form_id.clone(), template)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(PublishFormResponse { form_id }))
 }
 
 #[axum::debug_handler]
@@ -68,7 +77,16 @@ pub async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<FormResponse>, ErrorResponse> {
-    todo!()
+    let template = state
+        .store
+        .get_form(form_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    match template {
+        Some(template) => Ok(Json(template.into())),
+        None => Err(StatusCode::NOT_FOUND.into()),
+    }
 }
 
 #[axum::debug_handler]
@@ -77,8 +95,15 @@ pub async fn delete_form(
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
-    authorize(form_id, api_token, Arc::clone(&state)).await?;
-    todo!()
+    authorize(form_id.clone(), api_token, Arc::clone(&state)).await?;
+
+    state
+        .store
+        .delete_form_and_submissons(form_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(NoContent)
 }
 
 #[axum::debug_handler]
@@ -87,7 +112,15 @@ pub async fn store_form_submission(
     Path(form_id): Path<FormId>,
     body: String,
 ) -> Result<StatusCode, ErrorResponse> {
-    todo!()
+    let submission_id = new_submission_id();
+
+    state
+        .store
+        .put_submission(form_id, submission_id, body.into())
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(StatusCode::CREATED)
 }
 
 #[axum::debug_handler]
@@ -96,6 +129,13 @@ pub async fn list_form_submissions(
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<Submission>>, ErrorResponse> {
-    authorize(form_id, api_token, Arc::clone(&state)).await?;
-    todo!()
+    authorize(form_id.clone(), api_token, Arc::clone(&state)).await?;
+
+    Ok(Json(
+        state
+            .store
+            .list_submissions(form_id)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+    ))
 }
