@@ -3,7 +3,7 @@ mod models;
 mod secrets;
 mod store;
 
-use std::{fmt, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     body::Body,
@@ -22,9 +22,7 @@ use tower_service::Service;
 use worker::{self, d1::D1Database, event, Context, Env, HttpRequest};
 
 use auth::{auth_layer, authorize};
-use models::{
-    ApiToken, EncryptedSubmission, FormId, FormResponse, FormTemplate, PublishFormResponse,
-};
+use models::{ApiToken, FormId, FormResponse, FormTemplate, PublishFormResponse, Submission};
 
 const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
 const CORS_ALLOWED_METHODS: [Method; 3] = [Method::GET, Method::POST, Method::DELETE];
@@ -115,7 +113,7 @@ pub async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
-) -> Result<Json<Vec<EncryptedSubmission>>, ErrorResponse> {
+) -> Result<Json<Vec<Submission>>, ErrorResponse> {
     authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }

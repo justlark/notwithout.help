@@ -1,5 +1,6 @@
 use std::fmt;
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use worker::wasm_bindgen::JsValue;
 
@@ -44,7 +45,7 @@ macro_rules! string_newtype {
 
 string_newtype!(SubmissionId);
 string_newtype!(FormId);
-string_newtype!(EncryptedSubmission);
+string_newtype!(EncryptedSubmissionBody);
 string_newtype!(PublicEncryptionKey);
 
 pub type ApiToken = Secret;
@@ -80,4 +81,30 @@ impl From<FormTemplate> for FormResponse {
 #[derive(Debug, Serialize)]
 pub struct PublishFormResponse {
     pub form_id: FormId,
+}
+
+#[derive(Debug)]
+pub struct Submission {
+    pub encrypted_body: EncryptedSubmissionBody,
+    pub created_at: DateTime<Utc>,
+}
+
+impl Serialize for Submission {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        #[derive(Serialize)]
+        struct Inner {
+            encrypted_body: EncryptedSubmissionBody,
+            created_at: String,
+        }
+
+        let inner = Inner {
+            encrypted_body: self.encrypted_body.clone(),
+            created_at: self.created_at.to_rfc3339(),
+        };
+
+        inner.serialize(serializer)
+    }
 }

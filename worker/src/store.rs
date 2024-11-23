@@ -1,8 +1,11 @@
 use std::{collections::HashMap, fmt};
 
+use chrono::NaiveDateTime;
 use worker::{d1::D1Database, D1Result};
 
-use crate::models::{EncryptedSubmission, FormId, FormTemplate, SubmissionId};
+use crate::models::{EncryptedSubmissionBody, FormId, FormTemplate, Submission, SubmissionId};
+
+const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 pub struct Store {
     db: D1Database,
@@ -25,23 +28,36 @@ impl Store {
     pub async fn list_submissions(
         &self,
         form_id: FormId,
-    ) -> worker::Result<HashMap<SubmissionId, EncryptedSubmission>> {
+    ) -> anyhow::Result<HashMap<SubmissionId, Submission>> {
         let stmt = self.db.prepare(
             "
-            SELECT (submission_id, encrypted_body)
+            SELECT (submission_id, encrypted_body, created_at)
             FROM submissions
             JOIN forms ON submissions.form = forms.id
-            WHERE forms.from_id = ?;
+            WHERE forms.from_id = ?
+            ORDER BY created_at DESC;
             ",
         );
 
-        Ok(stmt
-            .bind(&[form_id.into()])?
+        stmt.bind(&[form_id.into()])?
             .all()
             .await?
-            .results::<(SubmissionId, EncryptedSubmission)>()?
+            .results::<(SubmissionId, EncryptedSubmissionBody, String)>()?
             .into_iter()
-            .collect())
+            .map(|(submission_id, encrypted_body, created_at)| {
+                Ok((
+                    submission_id,
+                    Submission {
+                        encrypted_body,
+                        created_at: NaiveDateTime::parse_from_str(
+                            &created_at,
+                            SQLITE_DATETIME_FORMAT,
+                        )?
+                        .and_utc(),
+                    },
+                ))
+            })
+            .collect::<Result<_, anyhow::Error>>()
     }
 
     #[worker::send]
@@ -49,8 +65,8 @@ impl Store {
         &self,
         form_id: FormId,
         submission_id: SubmissionId,
-        encrypted_submission: EncryptedSubmission,
-    ) -> worker::Result<()> {
+        encrypted_submission: EncryptedSubmissionBody,
+    ) -> anyhow::Result<()> {
         let stmt = self.db.prepare(
             "
             INSERT INTO submissions (form, submission_id, encrypted_body)
@@ -73,7 +89,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn get_form(&self, form_id: FormId) -> worker::Result<Option<FormTemplate>> {
+    pub async fn get_form(&self, form_id: FormId) -> anyhow::Result<Option<FormTemplate>> {
         let stmt = self.db.prepare(
             "
             SELECT (template)
@@ -91,7 +107,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn put_form(&self, form_id: FormId, template: FormTemplate) -> worker::Result<()> {
+    pub async fn put_form(&self, form_id: FormId, template: FormTemplate) -> anyhow::Result<()> {
         let stmt = self.db.prepare(
             "
             INSERT INTO forms (form_id, template)
@@ -108,7 +124,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn delete_form_and_submissons(&self, form_id: FormId) -> worker::Result<()> {
+    pub async fn delete_form_and_submissons(&self, form_id: FormId) -> anyhow::Result<()> {
         let delete_submissions_stmt = self
             .db
             .prepare(
