@@ -73,6 +73,41 @@ impl<'a> Store<'a> {
     }
 
     #[worker::send]
+    pub async fn get_form(&self, form_id: FormId) -> worker::Result<Option<FormTemplate>> {
+        let stmt = self.db.prepare(
+            "
+            SELECT (template)
+            FROM forms
+            WHERE form_id = ?;
+            ",
+        );
+
+        Ok(stmt
+            .bind(&[form_id.into()])?
+            .first::<String>(Some("template"))
+            .await?
+            .map(|raw| serde_json::from_str(&raw))
+            .transpose()?)
+    }
+
+    #[worker::send]
+    pub async fn put_form(&self, form_id: FormId, template: FormTemplate) -> worker::Result<()> {
+        let stmt = self.db.prepare(
+            "
+            INSERT INTO forms (form_id, template)
+            VALUES (?, ?);
+            ",
+        );
+
+        stmt.bind(&[form_id.into(), serde_json::to_string(&template)?.into()])?
+            .run()
+            .await?
+            .meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
     pub async fn delete_form_and_submissons(&self, form_id: FormId) -> worker::Result<()> {
         let delete_submissions_stmt = self
             .db
@@ -103,23 +138,5 @@ impl<'a> Store<'a> {
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(())
-    }
-
-    #[worker::send]
-    pub async fn get_form(&self, form_id: FormId) -> worker::Result<Option<FormTemplate>> {
-        let stmt = self.db.prepare(
-            "
-            SELECT (template)
-            FROM forms
-            WHERE form_id = ?;
-            ",
-        );
-
-        Ok(stmt
-            .bind(&[form_id.into()])?
-            .first::<String>(Some("template"))
-            .await?
-            .map(|raw| serde_json::from_str(&raw))
-            .transpose()?)
     }
 }
