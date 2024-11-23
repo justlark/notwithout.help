@@ -1,4 +1,5 @@
 mod auth;
+mod cors;
 mod models;
 mod secrets;
 mod store;
@@ -8,43 +9,25 @@ use std::sync::Arc;
 use axum::{
     body::Body,
     extract::{Extension, Json, Path, State},
-    http::{
-        header::{HeaderName, AUTHORIZATION, CONTENT_TYPE},
-        HeaderValue, Method, Response, StatusCode,
-    },
+    http::{header::AUTHORIZATION, Response, StatusCode},
     response::{ErrorResponse, NoContent},
     routing::{delete, get, post},
     Router,
 };
-use store::Store;
-use tower_http::{cors::CorsLayer, sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
+use tower_http::{sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
 use tower_service::Service;
 use worker::{self, d1::D1Database, event, Context, Env, HttpRequest};
 
 use auth::{auth_layer, authorize};
+use cors::cors_layer;
 use models::{ApiToken, FormId, FormResponse, FormTemplate, PublishFormResponse, Submission};
-
-const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
-const CORS_ALLOWED_METHODS: [Method; 3] = [Method::GET, Method::POST, Method::DELETE];
-const CORS_ALLOWED_HEADERS: [HeaderName; 1] = [CONTENT_TYPE];
+use store::Store;
 
 const D1_BINDING: &str = "DB";
 
 #[derive(Debug)]
 pub struct AppState {
     store: Store,
-}
-
-fn cors_layer() -> CorsLayer {
-    let cors_layer = CorsLayer::new()
-        .allow_methods(CORS_ALLOWED_METHODS)
-        .allow_headers(CORS_ALLOWED_HEADERS);
-
-    CORS_ALLOWED_ORIGINS
-        .iter()
-        .fold(cors_layer, |cors_layer, origin| {
-            cors_layer.allow_origin(origin.parse::<HeaderValue>().unwrap())
-        })
 }
 
 fn router(db: D1Database) -> Router {
