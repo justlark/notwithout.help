@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt};
 
-use worker::d1::D1Database;
+use worker::{d1::D1Database, D1Result};
 
 use crate::models::{EncryptedSubmission, FormId, FormTemplate, SubmissionId};
 
@@ -68,6 +68,39 @@ impl<'a> Store<'a> {
         .run()
         .await?
         .meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
+    pub async fn delete_form_and_submissons(&self, form_id: FormId) -> worker::Result<()> {
+        let delete_submissions_stmt = self
+            .db
+            .prepare(
+                "
+                DELETE FROM submissions
+                JOIN forms ON submissions.form = forms.id
+                WHERE forms.form_id = ?;
+                ",
+            )
+            .bind(&[form_id.clone().into()])?;
+
+        let delete_form_stmt = self
+            .db
+            .prepare(
+                "
+                DELETE FROM forms
+                WHERE forms.form_id = ?;
+                ",
+            )
+            .bind(&[form_id.into()])?;
+
+        self.db
+            .batch(vec![delete_submissions_stmt, delete_form_stmt])
+            .await?
+            .iter()
+            .map(D1Result::meta)
+            .collect::<Result<Vec<_>, _>>()?;
 
         Ok(())
     }
