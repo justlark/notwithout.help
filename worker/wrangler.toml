@@ -5,3 +5,16 @@ compatibility_date = "2024-11-22"
 [build]
 command = "cargo install -q worker-build && worker-build --release"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "matchdrop"
+database_id = "efb6e3b8-10dd-4e53-adaa-406dc2c71b72"
+preview_database_id = "b41882fa-ff12-4468-9ac5-297a2d3454bc"
+
+[env.dev]
+
+  [[env.dev.d1_databases]]
+  binding = "DB"
+  database_name = "matchdrop-dev"
+  database_id = "b41882fa-ff12-4468-9ac5-297a2d3454bc"
+
