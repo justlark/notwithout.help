@@ -35,9 +35,9 @@ macro_rules! string_newtype {
             }
         }
 
-        impl Into<JsValue> for $name {
-            fn into(self) -> JsValue {
-                JsValue::from_str(&self.0)
+        impl From<$name> for JsValue {
+            fn from(s: $name) -> Self {
+                s.0.into()
             }
         }
     };
@@ -45,11 +45,17 @@ macro_rules! string_newtype {
 
 string_newtype!(SubmissionId);
 string_newtype!(FormId);
+
+// The submission body as a base64-encoded encrypted JSON object. Because it's encrypted
+// client-side, the shape of the JSON object is opaque to this worker.
 string_newtype!(EncryptedSubmissionBody);
+
+// The organizers' public encryption key used by clients to encrypt their submissions.
 string_newtype!(PublicEncryptionKey);
 
 pub type ApiToken = Secret;
 
+// The form template, which is serialized to JSON and stored in the database.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
     pub public_key: PublicEncryptionKey,
@@ -59,6 +65,7 @@ pub struct FormTemplate {
     pub contact_methods: Vec<String>,
 }
 
+// The form template response object sent to clients which **DOES NOT** include the API token.
 #[derive(Debug, Serialize)]
 pub struct FormResponse {
     pub public_key: PublicEncryptionKey,

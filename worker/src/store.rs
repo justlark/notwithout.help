@@ -146,6 +146,7 @@ impl Store {
             )
             .bind(&[form_id.into()])?;
 
+        // These queries should be batched so they happen in a single atomic transaction.
         self.db
             .batch(vec![delete_submissions_stmt, delete_form_stmt])
             .await?
