@@ -35,7 +35,6 @@ fn router(db: D1Database) -> Router {
         // Authenticated endpoints.
         .route("/forms/:form_id", delete(delete_form))
         .route("/submissions/:form_id", get(list_form_submissions))
-        .route("/submissions/:form_id", delete(delete_form_submission))
         .route_layer(auth_layer())
         // Unauthenticated endpoints.
         .route("/forms", post(publish_form))
@@ -97,16 +96,6 @@ pub async fn list_form_submissions(
     Extension(api_token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<Submission>>, ErrorResponse> {
-    authorize(form_id, api_token, Arc::clone(&state)).await?;
-    todo!()
-}
-
-#[axum::debug_handler]
-pub async fn delete_form_submission(
-    State(state): State<Arc<AppState>>,
-    Extension(api_token): Extension<ApiToken>,
-    Path(form_id): Path<FormId>,
-) -> Result<NoContent, ErrorResponse> {
     authorize(form_id, api_token, Arc::clone(&state)).await?;
     todo!()
 }
