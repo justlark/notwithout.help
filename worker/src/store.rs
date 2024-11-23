@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
 use chrono::NaiveDateTime;
 use worker::{d1::D1Database, D1Result};
@@ -25,13 +25,10 @@ impl Store {
 
 impl Store {
     #[worker::send]
-    pub async fn list_submissions(
-        &self,
-        form_id: FormId,
-    ) -> anyhow::Result<HashMap<SubmissionId, Submission>> {
+    pub async fn list_submissions(&self, form_id: FormId) -> anyhow::Result<Vec<Submission>> {
         let stmt = self.db.prepare(
             "
-            SELECT (submission_id, encrypted_body, created_at)
+            SELECT (encrypted_body, created_at)
             FROM submissions
             JOIN forms ON submissions.form = forms.id
             WHERE forms.from_id = ?
@@ -42,22 +39,16 @@ impl Store {
         stmt.bind(&[form_id.into()])?
             .all()
             .await?
-            .results::<(SubmissionId, EncryptedSubmissionBody, String)>()?
+            .results::<(EncryptedSubmissionBody, String)>()?
             .into_iter()
-            .map(|(submission_id, encrypted_body, created_at)| {
-                Ok((
-                    submission_id,
-                    Submission {
-                        encrypted_body,
-                        created_at: NaiveDateTime::parse_from_str(
-                            &created_at,
-                            SQLITE_DATETIME_FORMAT,
-                        )?
+            .map(|(encrypted_body, created_at)| {
+                Ok(Submission {
+                    encrypted_body,
+                    created_at: NaiveDateTime::parse_from_str(&created_at, SQLITE_DATETIME_FORMAT)?
                         .and_utc(),
-                    },
-                ))
+                })
             })
-            .collect::<Result<_, anyhow::Error>>()
+            .collect::<anyhow::Result<Vec<_>>>()
     }
 
     #[worker::send]
