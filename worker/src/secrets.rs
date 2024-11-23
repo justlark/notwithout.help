@@ -3,6 +3,8 @@ use rand::distributions::{Alphanumeric, DistString};
 use secrecy::{zeroize::Zeroize, CloneableSecret, ExposeSecret, SecretBox, SerializableSecret};
 use serde::{Deserialize, Serialize};
 
+use crate::models::{FormId, SubmissionId};
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct SerializableString(String);
@@ -47,10 +49,10 @@ fn random_id(len: usize) -> String {
 const FORM_ID_LEN: usize = 8;
 const SUBMISSION_ID_LEN: usize = 8;
 
-pub fn new_form_id() -> String {
-    random_id(FORM_ID_LEN)
+pub fn new_form_id() -> FormId {
+    random_id(FORM_ID_LEN).into()
 }
 
-pub fn new_submission_id() -> String {
-    random_id(SUBMISSION_ID_LEN)
+pub fn new_submission_id() -> SubmissionId {
+    random_id(SUBMISSION_ID_LEN).into()
 }
