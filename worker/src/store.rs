@@ -54,7 +54,7 @@ pub async fn list_submissions(kv: &KvStore, form_id: FormId) -> worker::Result<V
             k.name
                 .strip_prefix(&prefix)
                 .expect("unexpected key name")
-                .to_string()
+                .into()
         }));
 
         match resp.cursor {

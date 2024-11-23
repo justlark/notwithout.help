@@ -1,11 +1,45 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use crate::secrets::Secret;
 
-pub type EncryptedSubmission = String;
-pub type FormId = String;
-pub type SubmissionId = String;
-pub type PublicEncryptionKey = String;
+macro_rules! string_newtype {
+    ($name:ident) => {
+        #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+        pub struct $name(String);
+
+        impl AsRef<str> for $name {
+            fn as_ref(&self) -> &str {
+                &self.0
+            }
+        }
+
+        impl From<String> for $name {
+            fn from(s: String) -> Self {
+                Self(s)
+            }
+        }
+
+        impl From<&str> for $name {
+            fn from(s: &str) -> Self {
+                Self(s.to_string())
+            }
+        }
+
+        impl fmt::Display for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.0)
+            }
+        }
+    };
+}
+
+string_newtype!(SubmissionId);
+string_newtype!(FormId);
+string_newtype!(EncryptedSubmission);
+string_newtype!(PublicEncryptionKey);
+
 pub type ApiToken = Secret;
 
 #[derive(Debug, Serialize, Deserialize)]

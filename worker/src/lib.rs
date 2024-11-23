@@ -78,6 +78,7 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
     Ok(router(kv).call(req).await?)
 }
 
+#[axum::debug_handler]
 pub async fn publish_form(
     State(state): State<Arc<AppState>>,
     Json(template): Json<FormTemplate>,
@@ -85,6 +86,7 @@ pub async fn publish_form(
     todo!()
 }
 
+#[axum::debug_handler]
 pub async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
@@ -92,6 +94,7 @@ pub async fn get_form(
     todo!()
 }
 
+#[axum::debug_handler]
 pub async fn delete_form(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
@@ -101,14 +104,16 @@ pub async fn delete_form(
     todo!()
 }
 
+#[axum::debug_handler]
 pub async fn store_form_submission(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
-    body: EncryptedSubmission,
+    body: String,
 ) -> Result<StatusCode, ErrorResponse> {
     todo!()
 }
 
+#[axum::debug_handler]
 pub async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
@@ -118,6 +123,7 @@ pub async fn list_form_submissions(
     todo!()
 }
 
+#[axum::debug_handler]
 pub async fn delete_form_submission(
     State(state): State<Arc<AppState>>,
     Extension(api_token): Extension<ApiToken>,
