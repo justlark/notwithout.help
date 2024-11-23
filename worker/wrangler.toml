@@ -8,13 +8,12 @@ command = "cargo install -q worker-build && worker-build --release"
 [[d1_databases]]
 binding = "DB"
 database_name = "matchdrop"
-database_id = "efb6e3b8-10dd-4e53-adaa-406dc2c71b72"
-preview_database_id = "b41882fa-ff12-4468-9ac5-297a2d3454bc"
+database_id = "be75842d-ef1d-4602-a6c9-3d6d30315d66"
+preview_database_id = "4895dbd4-f3c5-4fc5-9015-61384c4510de"
 
 [env.dev]
 
   [[env.dev.d1_databases]]
   binding = "DB"
   database_name = "matchdrop-dev"
-  database_id = "b41882fa-ff12-4468-9ac5-297a2d3454bc"
-
+  database_id = "4895dbd4-f3c5-4fc5-9015-61384c4510de"

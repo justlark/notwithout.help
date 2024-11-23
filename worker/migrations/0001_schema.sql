@@ -3,7 +3,7 @@ CREATE TABLE "forms" (
   "id" integer PRIMARY KEY,
   "form_id" text NOT NULL UNIQUE,
   "template" text NOT NULL,
-  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "submissions" (
@@ -11,5 +11,5 @@ CREATE TABLE "submissions" (
   "form" integer REFERENCES "forms" ("id"),
   "submission_id" text NOT NULL UNIQUE,
   "encrypted_body" text NOT NULL,
-  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
