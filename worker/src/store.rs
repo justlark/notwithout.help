@@ -1,80 +1,45 @@
-use worker::{self, kv::KvStore};
+use std::{collections::HashMap, fmt};
 
-use crate::models::{EncryptedSubmission, FormId, FormTemplate, SubmissionId};
+use worker::d1::D1Database;
 
-fn form_key(form_id: FormId) -> String {
-    format!("form:{}", form_id)
+use crate::models::{EncryptedSubmission, FormId, SubmissionId};
+
+pub struct Store {
+    db: D1Database,
 }
 
-fn submission_key(form_id: FormId, submission_id: SubmissionId) -> String {
-    format!("submission:{}:{}", form_id, submission_id)
-}
-
-fn submissions_list_key(form_id: FormId) -> String {
-    format!("submission:{}:", form_id)
-}
-
-#[worker::send]
-pub async fn get_form(kv: &KvStore, form_id: FormId) -> worker::Result<Option<FormTemplate>> {
-    Ok(kv.get(&form_key(form_id)).json().await?)
-}
-
-#[worker::send]
-pub async fn put_form(kv: &KvStore, form_id: FormId, form: &FormTemplate) -> worker::Result<()> {
-    Ok(kv.put(&form_key(form_id), form)?.execute().await?)
-}
-
-#[worker::send]
-pub async fn get_submission(
-    kv: &KvStore,
-    form_id: FormId,
-    submission_id: SubmissionId,
-) -> worker::Result<Option<EncryptedSubmission>> {
-    Ok(kv
-        .get(&submission_key(form_id, submission_id))
-        .json()
-        .await?)
-}
-
-#[worker::send]
-pub async fn list_submissions(kv: &KvStore, form_id: FormId) -> worker::Result<Vec<SubmissionId>> {
-    let prefix = submissions_list_key(form_id);
-    let mut submissions = Vec::new();
-    let mut cursor: Option<String> = None;
-
-    loop {
-        let mut opts = kv.list().prefix(prefix.clone());
-
-        if let Some(cur) = cursor {
-            opts = opts.cursor(cur);
-        }
-
-        let resp = opts.execute().await?;
-        submissions.extend(resp.keys.into_iter().map(|k| {
-            k.name
-                .strip_prefix(&prefix)
-                .expect("unexpected key name")
-                .into()
-        }));
-
-        match resp.cursor {
-            Some(cur) if !resp.list_complete => {
-                cursor = Some(cur);
-            }
-            _ => return Ok(submissions),
-        }
+impl fmt::Debug for Store {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Store").finish_non_exhaustive()
     }
 }
 
-#[worker::send]
-pub async fn put_submission(
-    kv: &KvStore,
-    form_id: FormId,
-    submission_id: SubmissionId,
-    submission: EncryptedSubmission,
-) -> worker::Result<()> {
-    Ok(kv
-        .put(&submission_key(form_id, submission_id), submission)?
-        .execute()
-        .await?)
+impl Store {
+    pub fn new(db: D1Database) -> Self {
+        Self { db }
+    }
+}
+
+impl Store {
+    pub async fn list_submissions(
+        &self,
+        form_id: FormId,
+    ) -> worker::Result<HashMap<SubmissionId, EncryptedSubmission>> {
+        let stmt = self.db.prepare(
+            "
+            SELECT (submission_id, encrypted_body)
+            FROM submissions
+            JOIN forms ON submissions.form = forms.id
+            WHERE forms.from_id = ?;
+            ",
+        );
+
+        Ok(stmt
+            .bind(&[form_id.to_string().into()])?
+            .all()
+            .await?
+            .results::<(SubmissionId, EncryptedSubmission)>()?
+            .into_iter()
+            .collect())
+    }
 }

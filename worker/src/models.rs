@@ -6,7 +6,7 @@ use crate::secrets::Secret;
 
 macro_rules! string_newtype {
     ($name:ident) => {
-        #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+        #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
         pub struct $name(String);
 
         impl AsRef<str> for $name {
