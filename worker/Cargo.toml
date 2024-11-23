@@ -1,5 +1,5 @@
 [package]
-name = "activist-matchmaker"
+name = "matchdrop"
 version = "0.1.0"
 edition = "2021"
 authors = ["Lark <lark@lark.gay>"]
