@@ -48,9 +48,8 @@ pub async fn authorize(
     api_token: ApiToken,
     state: Arc<AppState>,
 ) -> Result<(), ErrorResponse> {
-    let store = Store::new(&state.db);
-
-    let form = store
+    let form = state
+        .store
         .get_form(form_id)
         .await
         .map_err(|_| StatusCode::UNAUTHORIZED)?

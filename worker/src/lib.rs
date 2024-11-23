@@ -16,6 +16,7 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use store::Store;
 use tower_http::{cors::CorsLayer, sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
 use tower_service::Service;
 use worker::{self, d1::D1Database, event, Context, Env, HttpRequest};
@@ -31,14 +32,9 @@ const CORS_ALLOWED_HEADERS: [HeaderName; 1] = [CONTENT_TYPE];
 
 const D1_BINDING: &str = "DB";
 
+#[derive(Debug)]
 pub struct AppState {
-    db: D1Database,
-}
-
-impl fmt::Debug for AppState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AppState").finish_non_exhaustive()
-    }
+    store: Store,
 }
 
 fn cors_layer() -> CorsLayer {
@@ -67,7 +63,9 @@ fn router(db: D1Database) -> Router {
         .layer(cors_layer())
         .layer(SetSensitiveHeadersLayer::new([AUTHORIZATION]))
         .layer(TraceLayer::new_for_http())
-        .with_state(Arc::new(AppState { db }))
+        .with_state(Arc::new(AppState {
+            store: Store::new(db),
+        }))
 }
 
 #[event(fetch)]

@@ -4,23 +4,23 @@ use worker::{d1::D1Database, D1Result};
 
 use crate::models::{EncryptedSubmission, FormId, FormTemplate, SubmissionId};
 
-pub struct Store<'a> {
-    db: &'a D1Database,
+pub struct Store {
+    db: D1Database,
 }
 
-impl<'a> fmt::Debug for Store<'a> {
+impl fmt::Debug for Store {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Store").finish_non_exhaustive()
     }
 }
 
-impl<'a> Store<'a> {
-    pub fn new(db: &'a D1Database) -> Self {
+impl Store {
+    pub fn new(db: D1Database) -> Self {
         Self { db }
     }
 }
 
-impl<'a> Store<'a> {
+impl Store {
     #[worker::send]
     pub async fn list_submissions(
         &self,
