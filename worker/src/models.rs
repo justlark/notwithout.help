@@ -1,6 +1,7 @@
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use worker::wasm_bindgen::JsValue;
 
 use crate::secrets::Secret;
 
@@ -30,6 +31,12 @@ macro_rules! string_newtype {
         impl fmt::Display for $name {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(f, "{}", self.0)
+            }
+        }
+
+        impl Into<JsValue> for $name {
+            fn into(self) -> JsValue {
+                JsValue::from_str(&self.0)
             }
         }
     };

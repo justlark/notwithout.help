@@ -35,11 +35,38 @@ impl Store {
         );
 
         Ok(stmt
-            .bind(&[form_id.to_string().into()])?
+            .bind(&[form_id.into()])?
             .all()
             .await?
             .results::<(SubmissionId, EncryptedSubmission)>()?
             .into_iter()
             .collect())
+    }
+
+    pub async fn put_submission(
+        &self,
+        form_id: FormId,
+        submission_id: SubmissionId,
+        encrypted_submission: EncryptedSubmission,
+    ) -> worker::Result<()> {
+        let stmt = self.db.prepare(
+            "
+            INSERT INTO submissions (form, submission_id, encrypted_body)
+            SELECT forms.id, ?, ?
+            FROM forms
+            WHERE forms.form_id = ?;
+            ",
+        );
+
+        stmt.bind(&[
+            submission_id.into(),
+            encrypted_submission.into(),
+            form_id.into(),
+        ])?
+        .run()
+        .await?
+        .meta()?;
+
+        Ok(())
     }
 }
