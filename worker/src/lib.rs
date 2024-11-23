@@ -18,7 +18,7 @@ use axum::{
 };
 use tower_http::{cors::CorsLayer, sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
 use tower_service::Service;
-use worker::{self, event, kv::KvStore, Context, Env, HttpRequest};
+use worker::{self, d1::D1Database, event, Context, Env, HttpRequest};
 
 use auth::{auth_layer, authorize};
 use models::{
@@ -29,11 +29,10 @@ const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
 const CORS_ALLOWED_METHODS: [Method; 3] = [Method::GET, Method::POST, Method::DELETE];
 const CORS_ALLOWED_HEADERS: [HeaderName; 1] = [CONTENT_TYPE];
 
-const KV_BINDING: &str = "KV";
+const D1_BINDING: &str = "DB";
 
-#[derive(Clone)]
 pub struct AppState {
-    kv: KvStore,
+    db: D1Database,
 }
 
 impl fmt::Debug for AppState {
@@ -54,7 +53,7 @@ fn cors_layer() -> CorsLayer {
         })
 }
 
-fn router(kv: KvStore) -> Router {
+fn router(db: D1Database) -> Router {
     Router::new()
         // Authenticated endpoints.
         .route("/forms/:form_id", delete(delete_form))
@@ -68,13 +67,13 @@ fn router(kv: KvStore) -> Router {
         .layer(cors_layer())
         .layer(SetSensitiveHeadersLayer::new([AUTHORIZATION]))
         .layer(TraceLayer::new_for_http())
-        .with_state(Arc::new(AppState { kv }))
+        .with_state(Arc::new(AppState { db }))
 }
 
 #[event(fetch)]
 async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Response<Body>> {
     console_error_panic_hook::set_once();
-    let kv = env.kv(KV_BINDING)?;
+    let kv = env.d1(D1_BINDING)?;
     Ok(router(kv).call(req).await?)
 }
 

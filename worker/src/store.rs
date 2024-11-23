@@ -2,25 +2,26 @@ use std::{collections::HashMap, fmt};
 
 use worker::d1::D1Database;
 
-use crate::models::{EncryptedSubmission, FormId, SubmissionId};
+use crate::models::{EncryptedSubmission, FormId, FormTemplate, SubmissionId};
 
-pub struct Store {
-    db: D1Database,
+pub struct Store<'a> {
+    db: &'a D1Database,
 }
 
-impl fmt::Debug for Store {
+impl<'a> fmt::Debug for Store<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Store").finish_non_exhaustive()
     }
 }
 
-impl Store {
-    pub fn new(db: D1Database) -> Self {
+impl<'a> Store<'a> {
+    pub fn new(db: &'a D1Database) -> Self {
         Self { db }
     }
 }
 
-impl Store {
+impl<'a> Store<'a> {
+    #[worker::send]
     pub async fn list_submissions(
         &self,
         form_id: FormId,
@@ -43,6 +44,7 @@ impl Store {
             .collect())
     }
 
+    #[worker::send]
     pub async fn put_submission(
         &self,
         form_id: FormId,
@@ -68,5 +70,23 @@ impl Store {
         .meta()?;
 
         Ok(())
+    }
+
+    #[worker::send]
+    pub async fn get_form(&self, form_id: FormId) -> worker::Result<Option<FormTemplate>> {
+        let stmt = self.db.prepare(
+            "
+            SELECT (template)
+            FROM forms
+            WHERE form_id = ?;
+            ",
+        );
+
+        Ok(stmt
+            .bind(&[form_id.into()])?
+            .first::<String>(Some("template"))
+            .await?
+            .map(|raw| serde_json::from_str(&raw))
+            .transpose()?)
     }
 }

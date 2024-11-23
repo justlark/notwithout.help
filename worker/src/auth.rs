@@ -10,7 +10,8 @@ use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
     models::{ApiToken, FormId},
-    store, AppState,
+    store::{self, Store},
+    AppState,
 };
 
 const BEARER_PREFIX: &str = "Bearer ";
@@ -47,7 +48,10 @@ pub async fn authorize(
     api_token: ApiToken,
     state: Arc<AppState>,
 ) -> Result<(), ErrorResponse> {
-    let form = store::get_form(&state.kv, form_id)
+    let store = Store::new(&state.db);
+
+    let form = store
+        .get_form(form_id)
         .await
         .map_err(|_| StatusCode::UNAUTHORIZED)?
         .ok_or(StatusCode::UNAUTHORIZED)?;

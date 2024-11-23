@@ -522,6 +522,7 @@ dependencies = [
  "rand",
  "secrecy",
  "serde",
+ "serde_json",
  "tower-http",
  "tower-service",
  "worker",
