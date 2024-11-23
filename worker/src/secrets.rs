@@ -19,6 +19,7 @@ impl Zeroize for SerializableString {
     }
 }
 
+// A string which does constant-time equality checks and is zeroized when dropped.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Secret(SecretBox<SerializableString>);

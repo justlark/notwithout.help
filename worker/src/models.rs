@@ -53,6 +53,10 @@ string_newtype!(EncryptedSubmissionBody);
 // The organizers' public encryption key used by clients to encrypt their submissions.
 string_newtype!(PublicEncryptionKey);
 
+// This token is provided by the organizer's client and is needed in order to delete the form and
+// its submissions. In practice, to avoid the need to embed two separate secrets in the secret URL,
+// this is implemented as a hash of the private key. It's important that we use a **hash** of the
+// private key, because this worker must never see the private key.
 pub type ApiToken = Secret;
 
 // The form template, which is serialized to JSON and stored in the database.
