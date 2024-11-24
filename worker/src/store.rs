@@ -2,7 +2,7 @@ use std::fmt;
 
 use chrono::NaiveDateTime;
 use serde::Deserialize;
-use worker::{d1::D1Database, D1Result};
+use worker::{d1::D1Database, query, D1Result};
 
 use crate::models::{EncryptedSubmissionBody, FormId, FormTemplate, Submission, SubmissionId};
 
@@ -27,7 +27,8 @@ impl Store {
 impl Store {
     #[worker::send]
     pub async fn list_submissions(&self, form_id: FormId) -> anyhow::Result<Vec<Submission>> {
-        let stmt = self.db.prepare(
+        let stmt = query!(
+            &self.db,
             "
             SELECT submissions.encrypted_body, submissions.created_at
             FROM submissions
@@ -35,7 +36,8 @@ impl Store {
             WHERE forms.form_id = ?
             ORDER BY submissions.created_at DESC;
             ",
-        );
+            form_id,
+        )?;
 
         #[derive(Debug, Deserialize)]
         struct Row {
@@ -43,8 +45,7 @@ impl Store {
             created_at: String,
         }
 
-        stmt.bind(&[form_id.into()])?
-            .all()
+        stmt.all()
             .await?
             .results::<Row>()?
             .into_iter()
@@ -68,24 +69,20 @@ impl Store {
         submission_id: SubmissionId,
         encrypted_submission: EncryptedSubmissionBody,
     ) -> anyhow::Result<bool> {
-        let stmt = self.db.prepare(
+        let stmt = query!(
+            &self.db,
             "
             INSERT INTO submissions (form, submission_id, encrypted_body)
             SELECT forms.id, ?, ?
             FROM forms
             WHERE forms.form_id = ?;
             ",
-        );
+            submission_id,
+            encrypted_submission,
+            form_id,
+        )?;
 
-        let meta = stmt
-            .bind(&[
-                submission_id.into(),
-                encrypted_submission.into(),
-                form_id.into(),
-            ])?
-            .run()
-            .await?
-            .meta()?;
+        let meta = stmt.run().await?.meta()?;
 
         if let Some(meta) = meta {
             Ok(meta.changed_db.unwrap_or(false))
@@ -96,16 +93,17 @@ impl Store {
 
     #[worker::send]
     pub async fn get_form(&self, form_id: FormId) -> anyhow::Result<Option<FormTemplate>> {
-        let stmt = self.db.prepare(
+        let stmt = query!(
+            &self.db,
             "
             SELECT template
             FROM forms
             WHERE form_id = ?;
             ",
-        );
+            form_id,
+        )?;
 
         Ok(stmt
-            .bind(&[form_id.into()])?
             .first::<String>(Some("template"))
             .await?
             .map(|raw| serde_json::from_str(&raw))
@@ -114,47 +112,45 @@ impl Store {
 
     #[worker::send]
     pub async fn put_form(&self, form_id: FormId, template: FormTemplate) -> anyhow::Result<()> {
-        let stmt = self.db.prepare(
+        let stmt = query!(
+            &self.db,
             "
             INSERT INTO forms (form_id, template)
             VALUES (?, ?);
             ",
-        );
+            form_id,
+            serde_json::to_string(&template)?,
+        )?;
 
-        stmt.bind(&[form_id.into(), serde_json::to_string(&template)?.into()])?
-            .run()
-            .await?
-            .meta()?;
+        stmt.run().await?.meta()?;
 
         Ok(())
     }
 
     #[worker::send]
     pub async fn delete_form_and_submissons(&self, form_id: FormId) -> anyhow::Result<()> {
-        let delete_submissions_stmt = self
-            .db
-            .prepare(
-                "
-                DELETE FROM submissions
-                WHERE submissions.id IN (
-                    SELECT submissions.id
-                    FROM submissions
-                    JOIN forms ON submissions.form = forms.id
-                    WHERE forms.form_id = ?
-                );
-                ",
-            )
-            .bind(&[form_id.clone().into()])?;
+        let delete_submissions_stmt = query!(
+            &self.db,
+            "
+            DELETE FROM submissions
+            WHERE submissions.id IN (
+                SELECT submissions.id
+                FROM submissions
+                JOIN forms ON submissions.form = forms.id
+                WHERE forms.form_id = ?
+            );
+            ",
+            form_id,
+        )?;
 
-        let delete_form_stmt = self
-            .db
-            .prepare(
-                "
-                DELETE FROM forms
-                WHERE forms.form_id = ?;
-                ",
-            )
-            .bind(&[form_id.into()])?;
+        let delete_form_stmt = query!(
+            &self.db,
+            "
+            DELETE FROM forms
+            WHERE forms.form_id = ?;
+            ",
+            form_id,
+        )?;
 
         // These queries should be batched so they happen in a single atomic transaction.
         self.db
