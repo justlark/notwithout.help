@@ -19,7 +19,9 @@ impl Zeroize for SerializableString {
     }
 }
 
-// A string which does constant-time equality checks and is zeroized when dropped.
+// A string which does constant-time equality checks and is zeroized when dropped. This is intended
+// as security hardening--not a guarantee. It could be the case that the string is leaked somewhere
+// when it's serialized.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Secret(SecretBox<SerializableString>);
