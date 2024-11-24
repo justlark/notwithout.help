@@ -1,11 +1,33 @@
 use std::fmt;
 
-use chrono::NaiveDateTime;
-use worker::{d1::D1Database, D1Result};
+use chrono::prelude::*;
+use worker::{d1::D1Database, D1Result, Date};
 
 use crate::models::{EncryptedSubmissionBody, FormId, FormTemplate, Submission, SubmissionId};
 
+// This datetime format is natively understood by SQLite.
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+
+// SQLite allows you to default a column to the current timestamp via:
+//
+//   DEFAULT CURRENT_TIMESTAMP
+//
+// However, this doesn't seem to work in a Cloudflare Workers / Wasm environment. So, we need to
+// get the current time using the API provided by the Workers runtime and format and insert it
+// manually.
+fn current_timestamp() -> String {
+    let js_date = Date::now();
+
+    let datetime = DateTime::from_timestamp_millis(
+        js_date
+            .as_millis()
+            .try_into()
+            .expect("timestamp out of range"),
+    )
+    .expect("timestamp out of range");
+
+    datetime.format(SQLITE_DATETIME_FORMAT).to_string()
+}
 
 pub struct Store {
     db: D1Database,
@@ -60,8 +82,8 @@ impl Store {
     ) -> anyhow::Result<bool> {
         let stmt = self.db.prepare(
             "
-            INSERT INTO submissions (form, submission_id, encrypted_body)
-            SELECT forms.id, ?, ?
+            INSERT INTO submissions (form, submission_id, encrypted_body, created_at)
+            SELECT forms.id, ?, ?, ?
             FROM forms
             WHERE forms.form_id = ?;
             ",
@@ -71,6 +93,7 @@ impl Store {
             .bind(&[
                 submission_id.into(),
                 encrypted_submission.into(),
+                current_timestamp().into(),
                 form_id.into(),
             ])?
             .run()
@@ -106,15 +129,19 @@ impl Store {
     pub async fn put_form(&self, form_id: FormId, template: FormTemplate) -> anyhow::Result<()> {
         let stmt = self.db.prepare(
             "
-            INSERT INTO forms (form_id, template)
-            VALUES (?, ?);
+            INSERT INTO forms (form_id, template, created_at)
+            VALUES (?, ?, ?);
             ",
         );
 
-        stmt.bind(&[form_id.into(), serde_json::to_string(&template)?.into()])?
-            .run()
-            .await?
-            .meta()?;
+        stmt.bind(&[
+            form_id.into(),
+            serde_json::to_string(&template)?.into(),
+            current_timestamp().into(),
+        ])?
+        .run()
+        .await?
+        .meta()?;
 
         Ok(())
     }
