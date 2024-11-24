@@ -1,9 +1,9 @@
-resource "cloudflare_d1_database" "matchdrop" {
+resource "cloudflare_d1_database" "this" {
   account_id = var.cloudflare_account_id
-  name       = "matchdrop"
+  name       = "notwithouthelp"
 }
 
-resource "cloudflare_d1_database" "matchdrop_dev" {
+resource "cloudflare_d1_database" "this_dev" {
   account_id = var.cloudflare_account_id
-  name       = "matchdrop-dev"
+  name       = "notwithouthelp-dev"
 }

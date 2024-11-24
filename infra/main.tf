@@ -10,7 +10,7 @@ terraform {
     organization = "lark"
 
     workspaces {
-      name = "matchdrop"
+      name = "notwithouthelp"
     }
   }
 }
