@@ -1,7 +1,11 @@
 use axum::http::{header::CONTENT_TYPE, HeaderName, HeaderValue, Method};
 use tower_http::cors::CorsLayer;
 
-const CORS_ALLOWED_ORIGINS: [&str; 1] = ["https://example.com"];
+const CORS_ALLOWED_ORIGINS: [&str; 3] = [
+    "https://notwithout.help",
+    "https://notwithouthelp.pages.dev",
+    "https://dev.notwithouthelp.pages.dev",
+];
 const CORS_ALLOWED_METHODS: [Method; 3] = [Method::GET, Method::POST, Method::DELETE];
 const CORS_ALLOWED_HEADERS: [HeaderName; 1] = [CONTENT_TYPE];
 
