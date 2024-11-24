@@ -37,11 +37,23 @@ pub struct AppState {
 
 fn router(db: D1Database) -> Router {
     Router::new()
-        // Authenticated endpoints.
-        .route("/forms/:form_id", delete(delete_form))
+        // AUTHENTICATED ENDPOINTS
+        //
+        // Remember: The submissions themselves are encrypted client-side. The reason why we still
+        // authenticate the endpoint to get the ciphertext is to prevent the following situation:
+        // 1. A bad actor downloads the ciphertext of the submissions from the unauthenticated
+        //    endpoint (but cannot decrypt them).
+        // 2. The organizer calls the endpoint to delete the form and its submissions, wiping them
+        //    from the database.
+        // 3. The organizer leaks the private key (the secret link), not realizing that someone
+        //    else may have access to the ciphertext, which they can now decrypt.
+        //
+        // We also authenticate the endpoint for deleting the form and its submissions, because
+        // only the organizer should be able to do this.
         .route("/submissions/:form_id", get(list_form_submissions))
+        .route("/forms/:form_id", delete(delete_form))
         .route_layer(auth_layer())
-        // Unauthenticated endpoints.
+        // UNAUTHENTICATED ENDPOINTS
         .route("/forms", post(publish_form))
         .route("/forms/:form_id", get(get_form))
         .route("/submissions/:form_id", post(store_form_submission))
