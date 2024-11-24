@@ -9,13 +9,12 @@ use std::sync::Arc;
 use axum::{
     body::Body,
     extract::{Extension, Json, Path, State},
-    http::{header::AUTHORIZATION, Response, StatusCode},
+    http::{Response, StatusCode},
     response::{ErrorResponse, NoContent},
     routing::{delete, get, post},
     Router,
 };
 use secrets::{new_form_id, new_submission_id};
-use tower_http::sensitive_headers::SetSensitiveHeadersLayer;
 use tower_service::Service;
 use worker::{self, console_error, d1::D1Database, event, Context, Env, HttpRequest};
 

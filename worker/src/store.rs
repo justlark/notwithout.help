@@ -1,6 +1,7 @@
 use std::fmt;
 
 use chrono::NaiveDateTime;
+use serde::Deserialize;
 use worker::{d1::D1Database, D1Result};
 
 use crate::models::{EncryptedSubmissionBody, FormId, FormTemplate, Submission, SubmissionId};
@@ -28,24 +29,33 @@ impl Store {
     pub async fn list_submissions(&self, form_id: FormId) -> anyhow::Result<Vec<Submission>> {
         let stmt = self.db.prepare(
             "
-            SELECT (encrypted_body, created_at)
+            SELECT submissions.encrypted_body, submissions.created_at
             FROM submissions
             JOIN forms ON submissions.form = forms.id
-            WHERE forms.from_id = ?
-            ORDER BY created_at DESC;
+            WHERE forms.form_id = ?
+            ORDER BY submissions.created_at DESC;
             ",
         );
+
+        #[derive(Debug, Deserialize)]
+        struct Row {
+            encrypted_body: EncryptedSubmissionBody,
+            created_at: String,
+        }
 
         stmt.bind(&[form_id.into()])?
             .all()
             .await?
-            .results::<(EncryptedSubmissionBody, String)>()?
+            .results::<Row>()?
             .into_iter()
-            .map(|(encrypted_body, created_at)| {
+            .map(|row| {
                 Ok(Submission {
-                    encrypted_body,
-                    created_at: NaiveDateTime::parse_from_str(&created_at, SQLITE_DATETIME_FORMAT)?
-                        .and_utc(),
+                    encrypted_body: row.encrypted_body,
+                    created_at: NaiveDateTime::parse_from_str(
+                        &row.created_at,
+                        SQLITE_DATETIME_FORMAT,
+                    )?
+                    .and_utc(),
                 })
             })
             .collect::<anyhow::Result<Vec<_>>>()
@@ -88,7 +98,7 @@ impl Store {
     pub async fn get_form(&self, form_id: FormId) -> anyhow::Result<Option<FormTemplate>> {
         let stmt = self.db.prepare(
             "
-            SELECT (template)
+            SELECT template
             FROM forms
             WHERE form_id = ?;
             ",
@@ -126,8 +136,12 @@ impl Store {
             .prepare(
                 "
                 DELETE FROM submissions
-                JOIN forms ON submissions.form = forms.id
-                WHERE forms.form_id = ?;
+                WHERE submissions.id IN (
+                    SELECT submissions.id
+                    FROM submissions
+                    JOIN forms ON submissions.form = forms.id
+                    WHERE forms.form_id = ?
+                );
                 ",
             )
             .bind(&[form_id.clone().into()])?;
