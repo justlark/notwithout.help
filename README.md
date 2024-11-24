@@ -1,4 +1,4 @@
-# Activist Matchmaker
+# Not Without Help
 
 ## Copyright
 
