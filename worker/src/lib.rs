@@ -15,9 +15,9 @@ use axum::{
     Router,
 };
 use secrets::{new_form_id, new_submission_id};
-use tower_http::{sensitive_headers::SetSensitiveHeadersLayer, trace::TraceLayer};
+use tower_http::sensitive_headers::SetSensitiveHeadersLayer;
 use tower_service::Service;
-use worker::{self, d1::D1Database, event, Context, Env, HttpRequest};
+use worker::{self, console_error, d1::D1Database, event, Context, Env, HttpRequest};
 
 use auth::{auth_layer, authorize};
 use cors::cors_layer;
@@ -25,6 +25,11 @@ use models::{ApiToken, FormId, FormResponse, FormTemplate, PublishFormResponse, 
 use store::Store;
 
 const D1_BINDING: &str = "DB";
+
+fn handle_error(err: anyhow::Error) -> ErrorResponse {
+    console_error!("Error: {:?}", err);
+    StatusCode::INTERNAL_SERVER_ERROR.into()
+}
 
 #[derive(Debug)]
 pub struct AppState {
@@ -42,8 +47,6 @@ fn router(db: D1Database) -> Router {
         .route("/forms/:form_id", get(get_form))
         .route("/submissions/:form_id", post(store_form_submission))
         .layer(cors_layer())
-        .layer(SetSensitiveHeadersLayer::new([AUTHORIZATION]))
-        .layer(TraceLayer::new_for_http())
         .with_state(Arc::new(AppState {
             store: Store::new(db),
         }))
@@ -67,7 +70,7 @@ pub async fn publish_form(
         .store
         .put_form(form_id.clone(), template)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(handle_error)?;
 
     Ok((StatusCode::CREATED, Json(PublishFormResponse { form_id })))
 }
@@ -77,11 +80,7 @@ pub async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<FormResponse>, ErrorResponse> {
-    let template = state
-        .store
-        .get_form(form_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let template = state.store.get_form(form_id).await.map_err(handle_error)?;
 
     match template {
         Some(template) => Ok(Json(template.into())),
@@ -101,7 +100,7 @@ pub async fn delete_form(
         .store
         .delete_form_and_submissons(form_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(handle_error)?;
 
     Ok(NoContent)
 }
@@ -118,7 +117,7 @@ pub async fn store_form_submission(
         .store
         .put_submission(form_id, submission_id, body.into())
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(handle_error)?;
 
     if created {
         Ok(StatusCode::CREATED)
@@ -139,7 +138,7 @@ pub async fn list_form_submissions(
         .store
         .list_submissions(form_id)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(handle_error)?;
 
     if submissions.is_empty() {
         Err(StatusCode::NOT_FOUND.into())
