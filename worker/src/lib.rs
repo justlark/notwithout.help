@@ -60,7 +60,7 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
 pub async fn publish_form(
     State(state): State<Arc<AppState>>,
     Json(template): Json<FormTemplate>,
-) -> Result<Json<PublishFormResponse>, ErrorResponse> {
+) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
     let form_id = new_form_id();
 
     state
@@ -69,7 +69,7 @@ pub async fn publish_form(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(PublishFormResponse { form_id }))
+    Ok((StatusCode::CREATED, Json(PublishFormResponse { form_id })))
 }
 
 #[axum::debug_handler]
@@ -114,13 +114,17 @@ pub async fn store_form_submission(
 ) -> Result<StatusCode, ErrorResponse> {
     let submission_id = new_submission_id();
 
-    state
+    let created = state
         .store
         .put_submission(form_id, submission_id, body.into())
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(StatusCode::CREATED)
+    if created {
+        Ok(StatusCode::CREATED)
+    } else {
+        Err(StatusCode::NOT_FOUND.into())
+    }
 }
 
 #[axum::debug_handler]
@@ -131,11 +135,15 @@ pub async fn list_form_submissions(
 ) -> Result<Json<Vec<Submission>>, ErrorResponse> {
     authorize(form_id.clone(), api_token, Arc::clone(&state)).await?;
 
-    Ok(Json(
-        state
-            .store
-            .list_submissions(form_id)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
-    ))
+    let submissions = state
+        .store
+        .list_submissions(form_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if submissions.is_empty() {
+        Err(StatusCode::NOT_FOUND.into())
+    } else {
+        Ok(Json(submissions))
+    }
 }

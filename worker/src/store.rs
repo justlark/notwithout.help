@@ -57,7 +57,7 @@ impl Store {
         form_id: FormId,
         submission_id: SubmissionId,
         encrypted_submission: EncryptedSubmissionBody,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<bool> {
         let stmt = self.db.prepare(
             "
             INSERT INTO submissions (form, submission_id, encrypted_body)
@@ -67,16 +67,21 @@ impl Store {
             ",
         );
 
-        stmt.bind(&[
-            submission_id.into(),
-            encrypted_submission.into(),
-            form_id.into(),
-        ])?
-        .run()
-        .await?
-        .meta()?;
+        let meta = stmt
+            .bind(&[
+                submission_id.into(),
+                encrypted_submission.into(),
+                form_id.into(),
+            ])?
+            .run()
+            .await?
+            .meta()?;
 
-        Ok(())
+        if let Some(meta) = meta {
+            Ok(meta.changed_db.unwrap_or(false))
+        } else {
+            Ok(false)
+        }
     }
 
     #[worker::send]
