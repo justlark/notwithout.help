@@ -9,159 +9,171 @@ are at risk, do not depend on this software to protect you.
 
 ## Overview
 
-This app allows users, called *organizers* to create web forms and request
-information from others, called *submissions*. Submissions are encrypted
+This app allows users, called **Organizers** to create end-to-end encrypted web
+forms, collecting **Submissions** from others. **Submissions** are encrypted
 client-side such that they cannot be read by the server.
 
-When an organizer creates a form, they are given two links: a *sharing link*
-that can be used to fill out the form, and a *secret link* that can be used to
-view the form submissions.
+When an **Organizer** creates a **Form**, they are given two links: a **Sharing
+Link** that can be followed to fill out the **Form**, and a **Secret Link**
+that can be used to view the **Submissions**.
 
-The *organizer's private key* is generated on the organizer's device, and its
-corresponding public key is sent to the server when a form is created. The
-*organizer's public key* is send to clients and used to encrypt submissions via
-a libsodium [sealed
-box](https://doc.libsodium.org/public-key_cryptography/sealed_boxes).
+The **Organizer's Private Key** is generated on the organizer's device, and its
+corresponding public key is sent to the server when a **Form** is created. The
+**Organizer's Public Key** is then sent to clients and used to encrypt
+**Submissions** via a libsodium [**Sealed
+Box**](https://doc.libsodium.org/public-key_cryptography/sealed_boxes).
 
 ## Anatomy of a link
 
-Sharing links have this format:
+A **Sharing Link** has this format:
 
 ```
 https://notwithout.help/share/#/<form_id>
 ```
 
-And secret links have this format:
+A **Secret Link** has this format:
 
 ```
-https://notwithout.help/view/#/<form_id>/<key_index>/<symmetric_key>
+https://notwithout.help/view/#/<form_id>/<key_id>/<key>
 ```
 
-- `form_id`: The unique identifier for the form.
-- `key_index`: A unique identifier for the `symmetric_key`.
-- `symmetric_key`: A symmetric encryption key used to decrypt the organizer's
-  private key.
+- `form_id`: The **Form ID**, a unique identifier for the **Form**.
+- `key_id`: A **Key ID**, a unique identifier for a **Wrapped Private Key**.
+- `key`: A **Symmetric Wrapping Key**, used to decrypt a **Wrapped Private
+  Key** to reveal the **Organizer's Private Key** (see [Access
+  management](#access-management)).
 
-The `symmetric_key` is stored in the URL fragment rather than the path or query
+The `key` is stored in the URL fragment rather than the path or query
 parameters so it's not leaked to the CDN.
 
 The `form_id` is also stored in the URL fragment so the CDN does not know which
-form a user is filling out.
+**Form** a user is filling out.
 
 ## Access management
 
-After creating a form, the organizer is given the sharing link and a secret
-link. Organizers can create additional secret links as well. Secret links can
-have comments attached to them and can be revoked at any time.
+After creating a **Form**, the **Organizer** is given the **Sharing Link** and
+a **Secret Link**. Organizers can create additional secret links as well.
+Secret links can have comments attached to them and can be revoked at any time.
 
-When a secret link is generated:
+When a **Secret Link** is generated:
 
-1. The client generates a random symmetric encryption key called the *symmetric
-   wrapping key*.
-2. The client uses the symmetric wrapping key to encrypt the organizer's
-   private key via a libsodium [secret
-   box](https://doc.libsodium.org/secret-key_cryptography/secretbox) to
-   generate a *wrapped private key*.
-3. A user-provided comment for the key is encrypted with the organizer's public
-   key via a libsodium sealed box
-4. The client sends the wrapped private key, along with the encrypted comment,
-   to the server.
-5. The server returns a unique ID for the wrapped private key called the *key
-   index*.
+1. The client generates a random symmetric encryption key called the
+   **Symmetric Wrapping Key**.
+2. The client uses the **Symmetric Wrapping Key** to encrypt the **Organizer's
+   Private Key** via a libsodium [**Secret
+   Box**](https://doc.libsodium.org/secret-key_cryptography/secretbox) to
+   generate a **Wrapped Private Key**.
+3. A user-provided comment for the key is encrypted with the **Organizer's
+   Public Key** via a **Sealed Box**.
+4. The client sends the **Wrapped Private Key**, along with the encrypted
+   comment, to the server.
+5. The server returns a unique ID for the **Wrapped Private Key** called the
+   **Key ID**.
 
-When a secret link is used:
+When a **Secret Link** is used:
 
-1. The client uses the form ID and the key index to request the corresponding
-   wrapped private key from the server.
-2. The client uses the symmetric wrapping key to decrypt the wrapped private
-   key and reveal the organizer's private key.
-3. The organizer's private key is used to authenticate with the API (see
-   [Authentication](#authentication)) and decrypt the form submissions.
+1. The client uses the **Form ID** and the **Key ID** to request the
+   corresponding **Wrapped Private Key** from the server.
+2. The client uses the **Symmetric Wrapping Key** to decrypt the **Wrapped
+   Private Key** and reveal the **Organizer's Private Key**.
+3. The **Organizer's Private Key** is used to authenticate with the API (see
+   [Authentication](#authentication)) and decrypt the **Submissions**.
+
+Note that once an adversary has a valid **Secret Link** and has extracted the
+**Organizer's Secret Key** from it, revoking that **Wrapped Secret Key** does
+not deny them API access or the ability to decrypt **Submissions**. All
+revoking a **Wrapped Secret Key** does is delete it from the database,
+preventing future access to it.
 
 ## Authentication
 
 Some API endpoints require authentication. See the [API](#api) section for
 details.
 
-When a form is created:
+When a **Form** is created:
 
-1. The server generates a random 32-byte secret called the *API secret*.
-2. The API secret is encrypted with the organizer's public key via a libsodium
-   sealed box to form the *API challenge*. It is then stored in the database.
-3. The API secret is hashed using the Argon2id password hashing algorithm and
-   stored in the database. Because the API secret is randomly generated, a
-   static salt is used rather than a separate salt per secret.
-4. At this point, the API secret is dropped and zeroized.
+1. The server generates a random 32-byte secret called the **API Secret**.
+2. The **API Secret** is encrypted with the **Organizer's Public Key** via a
+   **Sealed Box** to form the **API Challenge**. It is then stored in the
+   database.
+3. The **API Secret** is hashed using the Argon2id password hashing algorithm
+   and stored in the database. Because the **API Secret** is randomly
+   generated, a static salt is used rather than a separate salt per secret.
+4. At this point, the **API Secret** is dropped and zeroized.
 
 When a client makes an authenticated API request:
 
-1. The client uses the form ID to request the API challenge from the server.
-2. The client uses the organizer's private key to decrypt the API challenge and
-   reveal the API secret.
-3. The API secret is included in requests as a bearer token.
-4. The API secret is hashed and compared to the hash stored in the database
+1. The client uses the **Form ID** to request the **API Challenge** from the
+   server.
+2. The client uses the **Organizer's Private Key** to decrypt the **API
+   Challenge** and reveal the **API Secret**.
+3. The **API Secret** is included in requests as a bearer token.
+4. The **API Secret** is hashed and compared to the hash stored in the database
    using a constant-time algorithm.
 5. If the hashed secrets match, the user is authenticated.
 
 ## API
 
-This section describes the API endpoints exposed by the server, including which
-are authenticated and unauthenticated.
+This section lists the authenticated and unauthenticated API endpoints exposed
+by the server.
 
 ### Authenticated endpoints
 
-#### Request the encrypted submissions for a given form
+Request the encrypted **Submissions** for a **Form**.
 
 ```
 GET /submissions/:form_id
 ```
 
-#### Delete the form and all submissions
+Delete the **Form** from the database, along with all its associated
+**Submissions**, and **Wrapped Private Keys**.
 
 ```
 DELETE /forms/:form_id
 ```
 
-#### Send a wrapped private key to the server
+Associate a **Wrapped Private Key** and its associated encrypted comment with a
+**Form**.
 
 ```
 POST /keys/:form_id
 ```
 
-#### List a form's wrapped private keys and their encrypted comments
+List the **Wrapped Private Keys** associated with a **Form**, along with their
+respective encrypted comments.
 
 ```
 GET /keys/:form_id
 ```
 
-#### Revoke a wrapped private key
+Revoke a **Wrapped Private Key**.
 
 ```
-DELETE /keys/:form_id/:key_index
+DELETE /keys/:form_id/:key_id
 ```
 
 ### Unauthenticated endpoints
 
-#### Create a new form
+Create a new **Form**.
 
 ```
 POST /forms
 ```
 
-#### Get a form by its ID
+Get a **Form** by its **Form ID**.
 
 ```
 GET /forms/:form_id
 ```
 
-#### Send an encrypted form submission
+Send an encrypted **Submission**.
 
 ```
 POST /submissions/:form_id
 ```
 
-#### Get a wrapped private key by its key index
+Get a **Wrapped Private Key** by its **Key ID**.
 
 ```
-GET /keys/:form_id/:key_index
+GET /keys/:form_id/:key_id
 ```
