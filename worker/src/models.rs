@@ -4,10 +4,12 @@ use chrono::{DateTime, Utc};
 use rand::distributions::{Alphanumeric, DistString};
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
-use sha2::{digest::Digest, Sha256};
 use worker::console_log;
 
-use crate::{secrets::Secret, WorkerEnv};
+use crate::{
+    secrets::{PasswordHash, Secret},
+    WorkerEnv,
+};
 
 pub fn random_id(len: usize) -> String {
     Alphanumeric.sample_string(&mut rand::thread_rng(), len)
@@ -108,10 +110,7 @@ impl ApiSecret {
     }
 
     pub fn to_hashed(&self) -> anyhow::Result<HashedApiSecret> {
-        let digest = Sha256::digest(self.0.expose_secret());
-        let mut arr = [0u8; HashedApiSecret::LEN_BYTES];
-        arr.copy_from_slice(&digest);
-        Ok(HashedApiSecret(arr))
+        PasswordHash::from_password(self.0.expose_secret()).map(HashedApiSecret)
     }
 
     // This is for debugging purposes only. When running the worker locally, this allows us to hit
@@ -131,18 +130,14 @@ impl ApiSecret {
 
 // TODO: Document
 #[derive(Debug, PartialEq, Eq)]
-pub struct HashedApiSecret([u8; Self::LEN_BYTES]);
-
-impl HashedApiSecret {
-    pub const LEN_BYTES: usize = 32;
-}
+pub struct HashedApiSecret(PasswordHash);
 
 impl Serialize for HashedApiSecret {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        hex::encode(self.0).serialize(serializer)
+        hex::encode(self.0.as_ref()).serialize(serializer)
     }
 }
 
@@ -152,20 +147,10 @@ impl<'de> Deserialize<'de> for HashedApiSecret {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
+        let decoded = hex::decode(&s).map_err(serde::de::Error::custom)?;
+        let output = PasswordHash::new(&decoded).map_err(serde::de::Error::custom)?;
 
-        let bytes = hex::decode(&s).map_err(serde::de::Error::custom)?;
-        if bytes.len() != Self::LEN_BYTES {
-            return Err(serde::de::Error::custom(format!(
-                "expected {} bytes but got {} bytes",
-                Self::LEN_BYTES,
-                bytes.len()
-            )));
-        }
-
-        let mut arr = [0u8; Self::LEN_BYTES];
-        arr.copy_from_slice(&bytes);
-
-        Ok(HashedApiSecret(arr))
+        Ok(HashedApiSecret(output))
     }
 }
 
