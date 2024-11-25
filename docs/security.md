@@ -53,7 +53,8 @@ The `form_id` is also stored in the URL fragment so the CDN does not know which
 
 After creating a **Form**, the **Organizer** is given the **Sharing Link** and
 a **Secret Link**. Organizers can create additional secret links as well.
-Secret links can have comments attached to them and can be revoked at any time.
+Secret links can have comments attached to them and can be disabled at any
+time.
 
 When a **Secret Link** is generated:
 
@@ -79,11 +80,12 @@ When a **Secret Link** is used:
 3. The **Organizer's Private Key** is used to authenticate with the API (see
    [Authentication](#authentication)) and decrypt the **Submissions**.
 
-Note that once an adversary has a valid **Secret Link** and has extracted the
-**Organizer's Secret Key** from it, revoking that **Wrapped Secret Key** does
-not deny them API access or the ability to decrypt **Submissions**. All
-revoking a **Wrapped Secret Key** does is delete it from the database,
-preventing future access to it.
+**Secret Links** can be disabled by deleting their associated **Wrapped Private
+Keys** from the database. However, note that once an adversary has a valid
+**Secret Link** and has requested the associated **Wrapped Secret Key** from
+the server, disabling the **Secret Link** does not prevent them from extracting
+the **Organizer's Private Key** from the **Wrapped Secret Key**. They will
+still have API access and will still be able to decrypt **Submissions**.
 
 ## Authentication
 
