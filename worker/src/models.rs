@@ -76,12 +76,14 @@ impl PublicEncryptionKey {
     }
 }
 
-// TODO: Document
+// The base64-encoded ciphertext of the API secret, encrypted with the public key for the form.
+// Clients can decrypt this challenge with their corresponding private key to reveal the API secret
+// and make authenticated API requests.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ApiChallenge(String);
 
-// TODO: Document
+// The API secret, a bearer token used to make authenticated API requests.
 #[derive(Debug, Clone)]
 pub struct ApiSecret(Secret);
 
@@ -128,7 +130,7 @@ impl ApiSecret {
     }
 }
 
-// TODO: Document
+// The hashed API secret, which is stored in the database to validate authenticated API requests.
 #[derive(Debug, PartialEq, Eq)]
 pub struct HashedApiSecret(PasswordHash);
 
@@ -154,7 +156,9 @@ impl<'de> Deserialize<'de> for HashedApiSecret {
     }
 }
 
-// TODO: Document
+// The private key for the form, encrypted with a symmetric key that only the client knows. This
+// configuration allows for generating new secret links and revoking old ones without needing to
+// re-encrypt any data or generate a new sharing link.
 #[derive(Debug)]
 pub struct WrappedPrivateKey(Vec<u8>);
 

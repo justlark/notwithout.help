@@ -32,7 +32,13 @@ impl ExposeSecret<[u8]> for Secret {
 pub struct PasswordHash(Argon2Output);
 
 impl PasswordHash {
-    // TODO: Document
+    // Per the documentation, this is a 16-byte salt (the recommended length for Argon2) encoded to
+    // base64 *without padding characters*.
+    //
+    //   https://github.com/P-H-C/phc-string-format/blob/master/phc-sf-spec.md#b64
+    //
+    // Because the secret we're hashing (the API secret) is randomly generated, there's no need for
+    // a unique salt per secret.
     const APPLICATION_SALT: &str = "oPnyEaWz/Zq2SNZlzGjVCQ";
 
     pub fn new(bytes: &[u8]) -> anyhow::Result<Self> {
