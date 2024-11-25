@@ -5,6 +5,9 @@ compatibility_date = "2024-11-22"
 [build]
 command = "cargo install -q worker-build && worker-build --release"
 
+[vars]
+WORKER_ENV = "prod"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "notwithouthelp"
@@ -12,6 +15,9 @@ database_id = "26df79a5-35f2-405c-9911-d5dfd4fbe624"
 preview_database_id = "2d37dfc0-148f-4b60-badc-124ed3224fa2"
 
 [env.dev]
+
+  [env.dev.vars]
+  WORKER_ENV = "dev"
 
   [[env.dev.d1_databases]]
   binding = "DB"

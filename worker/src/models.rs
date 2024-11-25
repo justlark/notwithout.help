@@ -5,8 +5,9 @@ use rand::distributions::{Alphanumeric, DistString};
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
 use sha2::{digest::Digest, Sha256};
+use worker::console_log;
 
-use crate::secrets::Secret;
+use crate::{secrets::Secret, WorkerEnv};
 
 pub fn random_id(len: usize) -> String {
     Alphanumeric.sample_string(&mut rand::thread_rng(), len)
@@ -111,6 +112,20 @@ impl ApiSecret {
         let mut arr = [0u8; HashedApiSecret::LEN_BYTES];
         arr.copy_from_slice(&digest);
         Ok(HashedApiSecret(arr))
+    }
+
+    // This is for debugging purposes only. When running the worker locally, this allows us to hit
+    // the authenticated API endpoints manually without needing to complete the challenge to reveal
+    // the API secret, which requires libsodium.
+    pub fn dev_expose_secret_in_debug_log(&self, env: WorkerEnv) {
+        if env != WorkerEnv::Dev {
+            panic!("Attempted to expose API secret in a non-development environment.");
+        }
+
+        console_log!(
+            "API secret: {}",
+            BASE64_STANDARD.encode(self.0.expose_secret())
+        );
     }
 }
 

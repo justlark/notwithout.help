@@ -15,7 +15,7 @@ use axum::{
     Router,
 };
 use tower_service::Service;
-use worker::{self, console_error, d1::D1Database, event, Context, Env, HttpRequest};
+use worker::{self, console_error, event, Context, Env, HttpRequest};
 
 use auth::{auth_layer, authorize};
 use cors::cors_layer;
@@ -32,12 +32,29 @@ fn handle_error(err: anyhow::Error) -> ErrorResponse {
     StatusCode::INTERNAL_SERVER_ERROR.into()
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum WorkerEnv {
+    Dev,
+    Prod,
+}
+
+impl WorkerEnv {
+    pub fn get(env: &Env) -> Self {
+        match env.var("WORKER_ENV").unwrap().to_string().as_str() {
+            "dev" => Self::Dev,
+            "prod" => Self::Prod,
+            _ => panic!("var WORKER_ENV must be either 'prod' or 'dev'"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct AppState {
     store: Store,
+    env: WorkerEnv,
 }
 
-fn router(db: D1Database) -> Router {
+fn router(state: AppState) -> Router {
     Router::new()
         // AUTHENTICATED ENDPOINTS
         //
@@ -66,16 +83,19 @@ fn router(db: D1Database) -> Router {
         .route("/submissions/:form_id", post(store_form_submission))
         .route("/keys/:form_id/:key_index", get(get_key))
         .layer(cors_layer())
-        .with_state(Arc::new(AppState {
-            store: Store::new(db),
-        }))
+        .with_state(Arc::new(state))
 }
 
 #[event(fetch)]
 async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Response<Body>> {
     console_error_panic_hook::set_once();
-    let kv = env.d1(D1_BINDING)?;
-    Ok(router(kv).call(req).await?)
+
+    let state = AppState {
+        store: Store::new(env.d1(D1_BINDING)?),
+        env: WorkerEnv::get(&env),
+    };
+
+    Ok(router(state).call(req).await?)
 }
 
 #[axum::debug_handler]
@@ -85,6 +105,10 @@ pub async fn publish_form(
 ) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
     let form_id = FormId::new();
     let api_secret = ApiSecret::generate();
+
+    if state.env == WorkerEnv::Dev {
+        api_secret.dev_expose_secret_in_debug_log(state.env);
+    }
 
     let template = FormTemplate {
         hashed_api_secret: api_secret.to_hashed().map_err(handle_error)?,
