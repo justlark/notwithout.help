@@ -1,10 +1,5 @@
-use rand::{
-    distributions::{Alphanumeric, DistString},
-    RngCore,
-};
+use rand::RngCore;
 use secrecy::{ExposeSecret, SecretSlice};
-
-use crate::models::{FormId, SubmissionId};
 
 #[derive(Debug, Clone)]
 pub struct Secret(SecretSlice<u8>);
@@ -27,19 +22,4 @@ impl ExposeSecret<[u8]> for Secret {
     fn expose_secret(&self) -> &[u8] {
         self.0.expose_secret()
     }
-}
-
-fn random_id(len: usize) -> String {
-    Alphanumeric.sample_string(&mut rand::thread_rng(), len)
-}
-
-const FORM_ID_LEN: usize = 8;
-const SUBMISSION_ID_LEN: usize = 8;
-
-pub fn new_form_id() -> FormId {
-    random_id(FORM_ID_LEN).into()
-}
-
-pub fn new_submission_id() -> SubmissionId {
-    random_id(SUBMISSION_ID_LEN).into()
 }

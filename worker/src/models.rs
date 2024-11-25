@@ -1,61 +1,53 @@
-use std::fmt;
-
 use anyhow::anyhow;
 use base64::prelude::*;
 use chrono::{DateTime, Utc};
+use rand::distributions::{Alphanumeric, DistString};
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
 use sha2::{digest::Digest, Sha256};
-use worker::wasm_bindgen::JsValue;
 
 use crate::secrets::Secret;
 
-macro_rules! string_newtype {
-    ($name:ident) => {
-        #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-        pub struct $name(String);
-
-        impl AsRef<str> for $name {
-            fn as_ref(&self) -> &str {
-                &self.0
-            }
-        }
-
-        impl From<String> for $name {
-            fn from(s: String) -> Self {
-                Self(s)
-            }
-        }
-
-        impl From<&str> for $name {
-            fn from(s: &str) -> Self {
-                Self(s.to_string())
-            }
-        }
-
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-
-        impl From<$name> for JsValue {
-            fn from(s: $name) -> Self {
-                s.0.into()
-            }
-        }
-    };
+pub fn random_id(len: usize) -> String {
+    Alphanumeric.sample_string(&mut rand::thread_rng(), len)
 }
 
-string_newtype!(SubmissionId);
-string_newtype!(FormId);
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FormId(String);
+
+impl FormId {
+    const LEN: usize = 8;
+
+    pub fn new() -> Self {
+        Self(random_id(Self::LEN))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubmissionId(String);
+
+impl SubmissionId {
+    const LEN: usize = 8;
+
+    pub fn new() -> Self {
+        Self(random_id(Self::LEN))
+    }
+}
 
 // The submission body as a base64-encoded encrypted JSON object. Because it's encrypted
 // client-side, the shape of the JSON object is opaque to this worker.
-string_newtype!(EncryptedSubmissionBody);
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncryptedSubmissionBody(String);
+
+impl From<String> for EncryptedSubmissionBody {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
 
 // The organizers' public encryption key used by clients to encrypt their submissions.
-string_newtype!(PublicEncryptionKey);
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PublicEncryptionKey(String);
 
 impl PublicEncryptionKey {
     fn key(&self) -> anyhow::Result<crypto_box::PublicKey> {
@@ -66,7 +58,8 @@ impl PublicEncryptionKey {
 }
 
 // TODO: Document
-string_newtype!(ApiChallenge);
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiChallenge(String);
 
 // TODO: Document
 #[derive(Debug, Clone)]

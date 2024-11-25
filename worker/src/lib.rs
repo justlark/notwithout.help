@@ -14,7 +14,6 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
-use secrets::{new_form_id, new_submission_id};
 use tower_service::Service;
 use worker::{self, console_error, d1::D1Database, event, Context, Env, HttpRequest};
 
@@ -22,6 +21,7 @@ use auth::{auth_layer, authorize};
 use cors::cors_layer;
 use models::{
     ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, PublishFormResponse, Submission,
+    SubmissionId,
 };
 use store::Store;
 
@@ -77,7 +77,7 @@ pub async fn publish_form(
     State(state): State<Arc<AppState>>,
     Json(form): Json<FormRequest>,
 ) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
-    let form_id = new_form_id();
+    let form_id = FormId::new();
     let api_secret = ApiSecret::generate();
 
     let template = FormTemplate {
@@ -138,7 +138,7 @@ pub async fn store_form_submission(
     Path(form_id): Path<FormId>,
     body: String,
 ) -> Result<StatusCode, ErrorResponse> {
-    let submission_id = new_submission_id();
+    let submission_id = SubmissionId::new();
 
     let created = state
         .store
