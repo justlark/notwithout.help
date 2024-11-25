@@ -146,6 +146,20 @@ impl Store {
             form_id,
         )?;
 
+        let delete_keys_stmt = query!(
+            &self.db,
+            "
+            DELETE FROM keys
+            WHERE keys.id IN (
+                SELECT keys.id
+                FROM keys
+                JOIN forms ON keys.form = forms.id
+                WHERE forms.form_id = ?
+            );
+            ",
+            form_id,
+        )?;
+
         let delete_form_stmt = query!(
             &self.db,
             "
@@ -157,7 +171,11 @@ impl Store {
 
         // These queries should be batched so they happen in a single atomic transaction.
         self.db
-            .batch(vec![delete_submissions_stmt, delete_form_stmt])
+            .batch(vec![
+                delete_submissions_stmt,
+                delete_keys_stmt,
+                delete_form_stmt,
+            ])
             .await?
             .iter()
             .map(D1Result::meta)
