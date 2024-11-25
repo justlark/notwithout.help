@@ -58,6 +58,7 @@ fn router(db: D1Database) -> Router {
         .route("/submissions/:form_id", get(list_form_submissions))
         .route("/forms/:form_id", delete(delete_form))
         .route("/keys/:form_id", post(add_key))
+        .route("/keys/:form_id/:key_index", delete(delete_key))
         .route_layer(auth_layer())
         // UNAUTHENTICATED ENDPOINTS
         .route("/forms", post(publish_form))
@@ -219,4 +220,21 @@ pub async fn add_key(
     } else {
         Err(StatusCode::NOT_FOUND.into())
     }
+}
+
+#[axum::debug_handler]
+pub async fn delete_key(
+    State(state): State<Arc<AppState>>,
+    Extension(api_secret): Extension<ApiSecret>,
+    Path((form_id, key_index)): Path<(FormId, KeyIndex)>,
+) -> Result<NoContent, ErrorResponse> {
+    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
+
+    state
+        .store
+        .delete_key(form_id, key_index)
+        .await
+        .map_err(handle_error)?;
+
+    Ok(NoContent)
 }

@@ -167,6 +167,27 @@ impl Store {
     }
 
     #[worker::send]
+    pub async fn get_key(
+        &self,
+        form_id: FormId,
+        index: KeyIndex,
+    ) -> anyhow::Result<Option<WrappedPrivateKey>> {
+        let stmt = query!(
+            &self.db,
+            "
+            SELECT keys.key AS key
+            FROM keys
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ? AND keys.index = ?;
+            ",
+            form_id,
+            index,
+        )?;
+
+        Ok(stmt.first::<WrappedPrivateKey>(Some("key")).await?)
+    }
+
+    #[worker::send]
     pub async fn add_key(
         &self,
         form_id: FormId,
@@ -201,23 +222,24 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn get_key(
-        &self,
-        form_id: FormId,
-        index: KeyIndex,
-    ) -> anyhow::Result<Option<WrappedPrivateKey>> {
+    pub async fn delete_key(&self, form_id: FormId, index: KeyIndex) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
             "
-            SELECT keys.key AS key
-            FROM keys
-            JOIN forms ON keys.form = forms.id
-            WHERE forms.form_id = ? AND keys.index = ?;
+            DELETE FROM keys
+            WHERE keys.id IN (
+                SELECT keys.id
+                FROM keys
+                JOIN forms ON keys.form = forms.id
+                WHERE forms.form_id = ? AND keys.key_index = ?
+            );
             ",
             form_id,
             index,
         )?;
 
-        Ok(stmt.first::<WrappedPrivateKey>(Some("key")).await?)
+        stmt.run().await?.meta()?;
+
+        Ok(())
     }
 }
