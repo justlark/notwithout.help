@@ -21,7 +21,7 @@ use auth::{auth_layer, authorize};
 use cors::cors_layer;
 use models::{
     ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, GetKeyResponse, KeyIndex,
-    PostKeyRequest, PostKeyResponse, PublishFormResponse, Submission, SubmissionId,
+    KeyMetadata, PostKeyRequest, PostKeyResponse, PublishFormResponse, Submission, SubmissionId,
 };
 use store::Store;
 
@@ -66,15 +66,18 @@ fn router(state: AppState) -> Router {
         //    from the database.
         // 3. The organizer leaks the private key (the secret link), not realizing that someone
         //    else may have access to the ciphertext, which they can now decrypt.
-        //
-        // We authenticate the endpoints for deleting forms/submissions and keys because only the
+        .route("/submissions/:form_id", get(list_form_submissions))
+        // We authenticate the endpoint for deleting forms and their submissions because only the
         // organizer should be able to do this.
-        //
+        .route("/forms/:form_id", delete(delete_form))
         // Authenticating the endpoint for adding keys prevents bad actors from re-adding keys
         // which have been leaked and revoked.
-        .route("/submissions/:form_id", get(list_form_submissions))
-        .route("/forms/:form_id", delete(delete_form))
         .route("/keys/:form_id", post(add_key))
+        // Authenticating the endpoint for listing keys is necessary to avoid leaking key comments,
+        // which may contain personal information.
+        .route("/keys/:form_id", get(list_keys))
+        // We authenticate the endpoint for deleting keys because only the organizer should be able
+        // to do this.
         .route("/keys/:form_id/:key_index", delete(delete_key))
         .route_layer(auth_layer())
         // UNAUTHENTICATED ENDPOINTS
@@ -227,6 +230,23 @@ pub async fn get_key(
         Ok(Json(GetKeyResponse { key }))
     } else {
         Err(StatusCode::NOT_FOUND.into())
+    }
+}
+
+#[axum::debug_handler]
+pub async fn list_keys(
+    State(state): State<Arc<AppState>>,
+    Extension(api_secret): Extension<ApiSecret>,
+    Path(form_id): Path<FormId>,
+) -> Result<Json<Vec<KeyMetadata>>, ErrorResponse> {
+    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
+
+    let keys = state.store.list_keys(form_id).await.map_err(handle_error)?;
+
+    if keys.is_empty() {
+        Err(StatusCode::NOT_FOUND.into())
+    } else {
+        Ok(Json(keys))
     }
 }
 

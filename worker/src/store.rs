@@ -5,7 +5,7 @@ use serde::Deserialize;
 use worker::{d1::D1Database, query, D1Result};
 
 use crate::models::{
-    EncryptedSubmissionBody, FormId, FormTemplate, KeyIndex, Submission, SubmissionId,
+    EncryptedSubmissionBody, FormId, FormTemplate, KeyIndex, KeyMetadata, Submission, SubmissionId,
     WrappedPrivateKey,
 };
 
@@ -185,6 +185,23 @@ impl Store {
         )?;
 
         Ok(stmt.first::<WrappedPrivateKey>(Some("key")).await?)
+    }
+
+    #[worker::send]
+    pub async fn list_keys(&self, form_id: FormId) -> anyhow::Result<Vec<KeyMetadata>> {
+        let stmt = query!(
+            &self.db,
+            "
+            SELECT keys.key_index AS key_index, keys.comment AS comment
+            FROM keys
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ?
+            ORDER BY keys.key_index ASC;
+            ",
+            form_id,
+        )?;
+
+        Ok(stmt.all().await?.results::<KeyMetadata>()?)
     }
 
     #[worker::send]
