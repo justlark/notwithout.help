@@ -156,9 +156,7 @@ impl<'de> Deserialize<'de> for HashedApiSecret {
     }
 }
 
-// The private key for the form, encrypted with a symmetric key that only the client knows. This
-// configuration allows for generating new secret links and revoking old ones without needing to
-// re-encrypt any data or generate a new sharing link.
+// The private key for the form, encrypted with a symmetric key that only the client knows.
 #[derive(Debug)]
 pub struct WrappedPrivateKey(Vec<u8>);
 
