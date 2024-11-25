@@ -19,7 +19,7 @@ CREATE TABLE "keys" (
   "form" integer REFERENCES "forms" ("id"),
   "key_index" integer NOT NULL,
   "key" text NOT NULL,
-  "comment" text NOT NULL,
+  "encrypted_comment" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
 );

@@ -267,6 +267,10 @@ impl Serialize for Submission {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct EncryptedKeyComment(String);
+
 #[derive(Debug, Serialize)]
 pub struct GetKeyResponse {
     pub key: WrappedPrivateKey,
@@ -275,13 +279,13 @@ pub struct GetKeyResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KeyMetadata {
     pub key_index: KeyIndex,
-    pub comment: String,
+    pub comment: EncryptedKeyComment,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct PostKeyRequest {
     pub key: WrappedPrivateKey,
-    pub comment: String,
+    pub comment: EncryptedKeyComment,
 }
 
 #[derive(Debug, Serialize)]

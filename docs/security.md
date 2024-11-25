@@ -62,9 +62,11 @@ When a secret link is generated:
    private key via a libsodium [secret
    box](https://doc.libsodium.org/secret-key_cryptography/secretbox) to
    generate a *wrapped private key*.
-3. The client sends the wrapped private key, along with an optional comment, to
-   the server.
-4. The server returns a unique ID for the wrapped private key called the *key
+3. A user-provided comment for the key is encrypted with the organizer's public
+   key via a libsodium sealed box
+4. The client sends the wrapped private key, along with the encrypted comment,
+   to the server.
+5. The server returns a unique ID for the wrapped private key called the *key
    index*.
 
 When a secret link is used:
@@ -108,17 +110,11 @@ are authenticated and unauthenticated.
 
 ### Authenticated endpoints
 
-
-#### Get the encrypted submissions for a given form
+#### Request the encrypted submissions for a given form
 
 ```
 GET /submissions/:form_id
 ```
-
-This endpoint is authenticated, even though the submissions are already
-encrypted. This prevents unauthenticated access to the ciphertext and also
-protects any unencrypted metadata, which currently just includes the submission
-timestamp.
 
 #### Delete the form and all submissions
 
@@ -126,35 +122,23 @@ timestamp.
 DELETE /forms/:form_id
 ```
 
-This endpoint is authenticated because only the organizer should be able to do
-this.
-
 #### Send a wrapped private key to the server
 
 ```
 POST /keys/:form_id
 ```
 
-This endpoint is authenticated to prevent bad actors from re-authorizing keys
-which have been leaked and revoked.
-
-#### List a form's wrapped private keys and their comments
+#### List a form's wrapped private keys and their encrypted comments
 
 ```
 GET /keys/:form_id
 ```
-
-This endpoint is authenticated because key comments may include personally
-identifiable information.
 
 #### Revoke a wrapped private key
 
 ```
 DELETE /keys/:form_id/:key_index
 ```
-
-This endpoint is authenticated because only the organizer should be able to do
-this.
 
 ### Unauthenticated endpoints
 

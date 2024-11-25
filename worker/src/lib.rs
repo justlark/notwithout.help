@@ -261,7 +261,7 @@ pub async fn add_key(
 
     let key_index = state
         .store
-        .add_key(form_id, body.key, &body.comment)
+        .add_key(form_id, body.key, body.comment)
         .await
         .map_err(handle_error)?;
 

@@ -5,8 +5,8 @@ use serde::Deserialize;
 use worker::{d1::D1Database, query, D1Result};
 
 use crate::models::{
-    EncryptedSubmissionBody, FormId, FormTemplate, KeyIndex, KeyMetadata, Submission, SubmissionId,
-    WrappedPrivateKey,
+    EncryptedKeyComment, EncryptedSubmissionBody, FormId, FormTemplate, KeyIndex, KeyMetadata,
+    Submission, SubmissionId, WrappedPrivateKey,
 };
 
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
@@ -227,7 +227,7 @@ impl Store {
         &self,
         form_id: FormId,
         key: WrappedPrivateKey,
-        comment: &str,
+        comment: EncryptedKeyComment,
     ) -> anyhow::Result<Option<KeyIndex>> {
         let stmt = query!(
             &self.db,
