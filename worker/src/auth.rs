@@ -9,7 +9,7 @@ use futures::future::{BoxFuture, FutureExt};
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
-    models::{ApiToken, FormId},
+    models::{ApiSecret, FormId},
     AppState,
 };
 
@@ -29,12 +29,13 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
                 .to_str()
                 .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?;
 
-            let api_token = auth_header_value
+            let api_secret = auth_header_value
                 .strip_prefix(BEARER_PREFIX)
-                .map(ApiToken::from)
-                .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())?;
+                .map(ApiSecret::from_base64)
+                .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())?
+                .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?;
 
-            req.extensions_mut().insert(api_token);
+            req.extensions_mut().insert(api_secret);
 
             Ok(req)
         }
@@ -44,7 +45,7 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
 
 pub async fn authorize(
     form_id: FormId,
-    api_token: ApiToken,
+    api_secret: ApiSecret,
     state: Arc<AppState>,
 ) -> Result<(), ErrorResponse> {
     let form = state
@@ -54,7 +55,11 @@ pub async fn authorize(
         .map_err(|_| StatusCode::UNAUTHORIZED)?
         .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    if form.api_token == api_token {
+    let hashed_api_secret = api_secret
+        .to_hashed()
+        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    if form.hashed_api_secret == hashed_api_secret {
         Ok(())
     } else {
         Err(StatusCode::UNAUTHORIZED.into())

@@ -1,7 +1,11 @@
 use std::fmt;
 
+use anyhow::anyhow;
+use base64::prelude::*;
 use chrono::{DateTime, Utc};
+use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
+use sha2::{digest::Digest, Sha256};
 use worker::wasm_bindgen::JsValue;
 
 use crate::secrets::Secret;
@@ -53,25 +57,114 @@ string_newtype!(EncryptedSubmissionBody);
 // The organizers' public encryption key used by clients to encrypt their submissions.
 string_newtype!(PublicEncryptionKey);
 
-// This token is provided by the organizer's client and is needed in order to delete the form and
-// its submissions. In practice, to avoid the need to embed two separate secrets in the secret URL,
-// this is implemented as a hash of the private key. It's important that we use a **hash** of the
-// private key, because this worker must never see the private key.
-pub type ApiToken = Secret;
+impl PublicEncryptionKey {
+    fn key(&self) -> anyhow::Result<crypto_box::PublicKey> {
+        Ok(crypto_box::PublicKey::from_slice(
+            &BASE64_STANDARD.decode(&self.0)?,
+        )?)
+    }
+}
 
-// The form template, which is serialized to JSON and stored in the database.
+// TODO: Document
+string_newtype!(ApiChallenge);
+
+// TODO: Document
+#[derive(Debug, Clone)]
+pub struct ApiSecret(Secret);
+
+impl ApiSecret {
+    const LEN_BYTES: usize = 32;
+
+    pub fn generate() -> Self {
+        Self(Secret::generate(Self::LEN_BYTES))
+    }
+
+    pub fn from_base64(encoded: &str) -> anyhow::Result<Self> {
+        Ok(Self(Secret::from(BASE64_STANDARD.decode(encoded)?)))
+    }
+
+    pub fn to_challenge(&self, public_key: &PublicEncryptionKey) -> anyhow::Result<ApiChallenge> {
+        let key = public_key.key()?;
+        let mut rng = rand::thread_rng();
+
+        let ciphertext = key
+            .seal(&mut rng, self.0.expose_secret())
+            .map_err(|_| anyhow!("Failed generating the API challenge from the API secret."))?;
+
+        let encoded = BASE64_STANDARD.encode(&ciphertext);
+
+        Ok(ApiChallenge(encoded))
+    }
+
+    pub fn to_hashed(&self) -> anyhow::Result<HashedApiSecret> {
+        let digest = Sha256::digest(self.0.expose_secret());
+        let mut arr = [0u8; HashedApiSecret::LEN_BYTES];
+        arr.copy_from_slice(&digest);
+        Ok(HashedApiSecret(arr))
+    }
+}
+
+// TODO: Document
+#[derive(Debug, PartialEq, Eq)]
+pub struct HashedApiSecret([u8; Self::LEN_BYTES]);
+
+impl HashedApiSecret {
+    pub const LEN_BYTES: usize = 32;
+}
+
+impl Serialize for HashedApiSecret {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        hex::encode(self.0).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for HashedApiSecret {
+    fn deserialize<D>(deserializer: D) -> Result<HashedApiSecret, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let bytes = hex::decode(&s).map_err(serde::de::Error::custom)?;
+        if bytes.len() != Self::LEN_BYTES {
+            return Err(serde::de::Error::custom(format!(
+                "expected {} bytes but got {} bytes",
+                Self::LEN_BYTES,
+                bytes.len()
+            )));
+        }
+
+        let mut arr = [0u8; Self::LEN_BYTES];
+        arr.copy_from_slice(&bytes);
+
+        Ok(HashedApiSecret(arr))
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
+    pub hashed_api_secret: HashedApiSecret,
+    pub api_challenge: ApiChallenge,
     pub public_key: PublicEncryptionKey,
-    pub api_token: ApiToken,
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
 }
 
-// The form template response object sent to clients which **DOES NOT** include the API token.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FormRequest {
+    pub public_key: PublicEncryptionKey,
+    pub org_name: String,
+    pub description: String,
+    pub contact_methods: Vec<String>,
+}
+
 #[derive(Debug, Serialize)]
 pub struct FormResponse {
+    pub api_challenge: ApiChallenge,
     pub public_key: PublicEncryptionKey,
     pub org_name: String,
     pub description: String,
@@ -81,6 +174,7 @@ pub struct FormResponse {
 impl From<FormTemplate> for FormResponse {
     fn from(template: FormTemplate) -> Self {
         Self {
+            api_challenge: template.api_challenge,
             public_key: template.public_key,
             org_name: template.org_name,
             description: template.description,

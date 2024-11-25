@@ -20,7 +20,9 @@ use worker::{self, console_error, d1::D1Database, event, Context, Env, HttpReque
 
 use auth::{auth_layer, authorize};
 use cors::cors_layer;
-use models::{ApiToken, FormId, FormResponse, FormTemplate, PublishFormResponse, Submission};
+use models::{
+    ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, PublishFormResponse, Submission,
+};
 use store::Store;
 
 const D1_BINDING: &str = "DB";
@@ -73,9 +75,21 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
 #[axum::debug_handler]
 pub async fn publish_form(
     State(state): State<Arc<AppState>>,
-    Json(template): Json<FormTemplate>,
+    Json(form): Json<FormRequest>,
 ) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
     let form_id = new_form_id();
+    let api_secret = ApiSecret::generate();
+
+    let template = FormTemplate {
+        hashed_api_secret: api_secret.to_hashed().map_err(handle_error)?,
+        api_challenge: api_secret
+            .to_challenge(&form.public_key)
+            .map_err(handle_error)?,
+        public_key: form.public_key,
+        org_name: form.org_name,
+        description: form.description,
+        contact_methods: form.contact_methods,
+    };
 
     state
         .store
@@ -91,21 +105,23 @@ pub async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<FormResponse>, ErrorResponse> {
-    let template = state.store.get_form(form_id).await.map_err(handle_error)?;
+    let template = state
+        .store
+        .get_form(form_id)
+        .await
+        .map_err(handle_error)?
+        .ok_or(StatusCode::NOT_FOUND)?;
 
-    match template {
-        Some(template) => Ok(Json(template.into())),
-        None => Err(StatusCode::NOT_FOUND.into()),
-    }
+    Ok(Json(template.into()))
 }
 
 #[axum::debug_handler]
 pub async fn delete_form(
     State(state): State<Arc<AppState>>,
-    Extension(api_token): Extension<ApiToken>,
+    Extension(api_secret): Extension<ApiSecret>,
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
-    authorize(form_id.clone(), api_token, Arc::clone(&state)).await?;
+    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
 
     state
         .store
@@ -140,10 +156,10 @@ pub async fn store_form_submission(
 #[axum::debug_handler]
 pub async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
-    Extension(api_token): Extension<ApiToken>,
+    Extension(api_secret): Extension<ApiSecret>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<Submission>>, ErrorResponse> {
-    authorize(form_id.clone(), api_token, Arc::clone(&state)).await?;
+    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
 
     let submissions = state
         .store
