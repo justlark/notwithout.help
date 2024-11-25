@@ -178,7 +178,7 @@ impl Store {
             SELECT keys.key AS key
             FROM keys
             JOIN forms ON keys.form = forms.id
-            WHERE forms.form_id = ? AND keys.index = ?;
+            WHERE forms.form_id = ? AND keys.key_index = ?;
             ",
             form_id,
             index,
