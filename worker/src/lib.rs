@@ -110,11 +110,13 @@ pub async fn publish_form(
         api_secret.dev_expose_secret_in_debug_log(state.env);
     }
 
+    let api_challenge = api_secret
+        .to_challenge(&form.public_key)
+        .map_err(handle_error)?;
+
     let template = FormTemplate {
         hashed_api_secret: api_secret.to_hashed().map_err(handle_error)?,
-        api_challenge: api_secret
-            .to_challenge(&form.public_key)
-            .map_err(handle_error)?,
+        api_challenge: api_challenge.clone(),
         public_key: form.public_key,
         org_name: form.org_name,
         description: form.description,
@@ -127,7 +129,13 @@ pub async fn publish_form(
         .await
         .map_err(handle_error)?;
 
-    Ok((StatusCode::CREATED, Json(PublishFormResponse { form_id })))
+    Ok((
+        StatusCode::CREATED,
+        Json(PublishFormResponse {
+            form_id,
+            api_challenge,
+        }),
+    ))
 }
 
 #[axum::debug_handler]

@@ -75,7 +75,7 @@ impl PublicEncryptionKey {
 }
 
 // TODO: Document
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ApiChallenge(String);
 
@@ -249,6 +249,7 @@ impl From<FormTemplate> for FormResponse {
 #[derive(Debug, Serialize)]
 pub struct PublishFormResponse {
     pub form_id: FormId,
+    pub api_challenge: ApiChallenge,
 }
 
 #[derive(Debug)]
