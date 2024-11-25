@@ -21,7 +21,7 @@ use auth::{auth_layer, authorize};
 use cors::cors_layer;
 use models::{
     ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, GetKeyResponse, KeyIndex,
-    PostKeyResponse, PublishFormResponse, Submission, SubmissionId, WrappedPrivateKey,
+    PostKeyRequest, PostKeyResponse, PublishFormResponse, Submission, SubmissionId,
 };
 use store::Store;
 
@@ -227,15 +227,13 @@ pub async fn add_key(
     State(state): State<Arc<AppState>>,
     Extension(api_secret): Extension<ApiSecret>,
     Path(form_id): Path<FormId>,
-    key: String,
+    Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
     authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
 
-    let key = WrappedPrivateKey::from_base64(&key).map_err(|_| StatusCode::BAD_REQUEST)?;
-
     let key_index = state
         .store
-        .add_key(form_id, key)
+        .add_key(form_id, body.key, &body.comment)
         .await
         .map_err(handle_error)?;
 

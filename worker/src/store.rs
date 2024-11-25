@@ -192,11 +192,12 @@ impl Store {
         &self,
         form_id: FormId,
         key: WrappedPrivateKey,
+        comment: &str,
     ) -> anyhow::Result<Option<KeyIndex>> {
         let stmt = query!(
             &self.db,
             "
-            INSERT INTO keys (form, key_index, key)
+            INSERT INTO keys (form, key_index, key, comment)
             SELECT
                 forms.id,
                 COALESCE(
@@ -209,13 +210,15 @@ impl Store {
                     ),
                     0
                 ),
-                ?2
+                ?2,
+                ?3
             FROM forms
             WHERE forms.form_id = ?1
             RETURNING key_index;
             ",
             form_id,
             key,
+            comment,
         )?;
 
         Ok(stmt.first::<KeyIndex>(Some("key_index")).await?)

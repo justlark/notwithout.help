@@ -282,6 +282,12 @@ pub struct GetKeyResponse {
     pub key: WrappedPrivateKey,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct PostKeyRequest {
+    pub key: WrappedPrivateKey,
+    pub comment: String,
+}
+
 #[derive(Debug, Serialize)]
 pub struct PostKeyResponse {
     pub key_index: KeyIndex,
