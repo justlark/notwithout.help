@@ -23,6 +23,12 @@ impl FormId {
     }
 }
 
+impl Default for FormId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubmissionId(String);
 
@@ -31,6 +37,12 @@ impl SubmissionId {
 
     pub fn new() -> Self {
         Self(random_id(Self::LEN))
+    }
+}
+
+impl Default for SubmissionId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
