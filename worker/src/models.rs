@@ -13,6 +13,7 @@ pub fn random_id(len: usize) -> String {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct FormId(String);
 
 impl FormId {
@@ -30,6 +31,7 @@ impl Default for FormId {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct SubmissionId(String);
 
 impl SubmissionId {
@@ -49,6 +51,7 @@ impl Default for SubmissionId {
 // The submission body as a base64-encoded encrypted JSON object. Because it's encrypted
 // client-side, the shape of the JSON object is opaque to this worker.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct EncryptedSubmissionBody(String);
 
 impl From<String> for EncryptedSubmissionBody {
@@ -59,6 +62,7 @@ impl From<String> for EncryptedSubmissionBody {
 
 // The organizers' public encryption key used by clients to encrypt their submissions.
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct PublicEncryptionKey(String);
 
 impl PublicEncryptionKey {
@@ -71,6 +75,7 @@ impl PublicEncryptionKey {
 
 // TODO: Document
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct ApiChallenge(String);
 
 // TODO: Document
@@ -149,6 +154,44 @@ impl<'de> Deserialize<'de> for HashedApiSecret {
     }
 }
 
+// TODO: Document
+#[derive(Debug)]
+pub struct WrappedPrivateKey(Vec<u8>);
+
+impl WrappedPrivateKey {
+    pub fn from_base64(encoded: &str) -> anyhow::Result<Self> {
+        Ok(Self(BASE64_STANDARD.decode(encoded)?))
+    }
+}
+
+impl Serialize for WrappedPrivateKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        BASE64_STANDARD.encode(&self.0).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for WrappedPrivateKey {
+    fn deserialize<D>(deserializer: D) -> Result<WrappedPrivateKey, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        let bytes = BASE64_STANDARD
+            .decode(s)
+            .map_err(serde::de::Error::custom)?;
+
+        Ok(WrappedPrivateKey(bytes))
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct KeyIndex(u32);
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
     pub hashed_api_secret: HashedApiSecret,
@@ -217,4 +260,14 @@ impl Serialize for Submission {
 
         inner.serialize(serializer)
     }
+}
+
+#[derive(Debug, Serialize)]
+pub struct GetKeyResponse {
+    pub key: WrappedPrivateKey,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PostKeyResponse {
+    pub key_index: KeyIndex,
 }

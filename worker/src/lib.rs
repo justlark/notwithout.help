@@ -20,8 +20,8 @@ use worker::{self, console_error, d1::D1Database, event, Context, Env, HttpReque
 use auth::{auth_layer, authorize};
 use cors::cors_layer;
 use models::{
-    ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, PublishFormResponse, Submission,
-    SubmissionId,
+    ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, GetKeyResponse, KeyIndex,
+    PostKeyResponse, PublishFormResponse, Submission, SubmissionId, WrappedPrivateKey,
 };
 use store::Store;
 
@@ -50,15 +50,20 @@ fn router(db: D1Database) -> Router {
         // 3. The organizer leaks the private key (the secret link), not realizing that someone
         //    else may have access to the ciphertext, which they can now decrypt.
         //
-        // We also authenticate the endpoint for deleting the form and its submissions, because
-        // only the organizer should be able to do this.
+        // We authenticate the endpoints for deleting forms/submissions and keys because only the
+        // organizer should be able to do this.
+        //
+        // Authenticating the endpoint for adding keys prevents bad actors from re-adding keys
+        // which have been leaked and revoked.
         .route("/submissions/:form_id", get(list_form_submissions))
         .route("/forms/:form_id", delete(delete_form))
+        .route("/keys/:form_id", post(add_key))
         .route_layer(auth_layer())
         // UNAUTHENTICATED ENDPOINTS
         .route("/forms", post(publish_form))
         .route("/forms/:form_id", get(get_form))
         .route("/submissions/:form_id", post(store_form_submission))
+        .route("/keys/:form_id/:key_index", get(get_key))
         .layer(cors_layer())
         .with_state(Arc::new(AppState {
             store: Store::new(db),
@@ -171,5 +176,47 @@ pub async fn list_form_submissions(
         Err(StatusCode::NOT_FOUND.into())
     } else {
         Ok(Json(submissions))
+    }
+}
+
+#[axum::debug_handler]
+pub async fn get_key(
+    State(state): State<Arc<AppState>>,
+    Path((form_id, key_index)): Path<(FormId, KeyIndex)>,
+) -> Result<Json<GetKeyResponse>, ErrorResponse> {
+    let key = state
+        .store
+        .get_key(form_id, key_index)
+        .await
+        .map_err(handle_error)?;
+
+    if let Some(key) = key {
+        Ok(Json(GetKeyResponse { key }))
+    } else {
+        Err(StatusCode::NOT_FOUND.into())
+    }
+}
+
+#[axum::debug_handler]
+pub async fn add_key(
+    State(state): State<Arc<AppState>>,
+    Extension(api_secret): Extension<ApiSecret>,
+    Path(form_id): Path<FormId>,
+    key: String,
+) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
+    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
+
+    let key = WrappedPrivateKey::from_base64(&key).map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    let key_index = state
+        .store
+        .add_key(form_id, key)
+        .await
+        .map_err(handle_error)?;
+
+    if let Some(key_index) = key_index {
+        Ok((StatusCode::CREATED, Json(PostKeyResponse { key_index })))
+    } else {
+        Err(StatusCode::NOT_FOUND.into())
     }
 }

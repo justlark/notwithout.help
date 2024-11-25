@@ -4,7 +4,10 @@ use chrono::NaiveDateTime;
 use serde::Deserialize;
 use worker::{d1::D1Database, query, D1Result};
 
-use crate::models::{EncryptedSubmissionBody, FormId, FormTemplate, Submission, SubmissionId};
+use crate::models::{
+    EncryptedSubmissionBody, FormId, FormTemplate, KeyIndex, Submission, SubmissionId,
+    WrappedPrivateKey,
+};
 
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
@@ -161,5 +164,60 @@ impl Store {
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(())
+    }
+
+    #[worker::send]
+    pub async fn add_key(
+        &self,
+        form_id: FormId,
+        key: WrappedPrivateKey,
+    ) -> anyhow::Result<Option<KeyIndex>> {
+        let stmt = query!(
+            &self.db,
+            "
+            INSERT INTO keys (form, key_index, key)
+            SELECT
+                forms.id,
+                COALESCE(
+                    (
+                        SELECT MAX(keys.key_index) + 1
+                        FROM keys
+                        JOIN forms ON keys.form = forms.id
+                        WHERE forms.form_id = ?1
+                        GROUP BY forms.id
+                    ),
+                    0
+                ),
+                ?2
+            FROM forms
+            WHERE forms.form_id = ?1
+            RETURNING key_index;
+            ",
+            form_id,
+            key,
+        )?;
+
+        Ok(stmt.first::<KeyIndex>(Some("key_index")).await?)
+    }
+
+    #[worker::send]
+    pub async fn get_key(
+        &self,
+        form_id: FormId,
+        index: KeyIndex,
+    ) -> anyhow::Result<Option<WrappedPrivateKey>> {
+        let stmt = query!(
+            &self.db,
+            "
+            SELECT keys.key AS key
+            FROM keys
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ? AND keys.index = ?;
+            ",
+            form_id,
+            index,
+        )?;
+
+        Ok(stmt.first::<WrappedPrivateKey>(Some("key")).await?)
     }
 }

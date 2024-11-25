@@ -13,3 +13,12 @@ CREATE TABLE "submissions" (
   "encrypted_body" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE "keys" (
+  "id" integer PRIMARY KEY,
+  "form" integer REFERENCES "forms" ("id"),
+  "key_index" integer NOT NULL,
+  "key" text NOT NULL,
+  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE ("form", "key_index")
+);
