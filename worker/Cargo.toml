@@ -25,7 +25,6 @@ tower-service = "0.3.2"
 console_error_panic_hook = { version = "0.1.1" }
 tower-http = { version = "0.6.2", features = ["cors", "auth"] }
 serde = { version = "1.0.215", features = ["derive"] }
-secrecy = { version = "0.10.3", features = ["serde"] }
 futures = "0.3.31"
 getrandom = { version = "0.2.15", features = ["js"] }
 rand = "0.8.5"
@@ -34,8 +33,6 @@ chrono = "0.4.38"
 anyhow = "1.0.93"
 base64 = "0.22.1"
 crypto_box = { version = "0.9.1", features = ["seal"] }
-hex = "0.4.3"
-argon2 = { version = "0.5.3", features = ["std"] }
 
 # The Cloudflare Workers runtime appears to be broken for Rust 1.82. This is a
 # workaround.
