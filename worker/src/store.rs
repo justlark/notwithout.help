@@ -33,6 +33,62 @@ impl Store {
 
 impl Store {
     #[worker::send]
+    pub async fn get_form_template(&self, form_id: FormId) -> anyhow::Result<Option<FormTemplate>> {
+        let stmt = query!(
+            &self.db,
+            "
+            SELECT template
+            FROM forms
+            WHERE form_id = ?1;
+            ",
+            form_id,
+        )?;
+
+        Ok(stmt
+            .first::<String>(Some("template"))
+            .await?
+            .map(|raw| serde_json::from_str(&raw))
+            .transpose()?)
+    }
+
+    #[worker::send]
+    pub async fn put_form_template(
+        &self,
+        form_id: FormId,
+        template: FormTemplate,
+    ) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            INSERT INTO forms (form_id, template)
+            VALUES (?1, ?2);
+            ",
+            form_id,
+            serde_json::to_string(&template)?,
+        )?;
+
+        stmt.run().await?.meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
+    pub async fn delete_form(&self, form_id: FormId) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            DELETE FROM forms
+            WHERE forms.form_id = ?1;
+            ",
+            form_id,
+        )?;
+
+        stmt.run().await?.meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
     pub async fn list_submissions(&self, form_id: FormId) -> anyhow::Result<Vec<Submission>> {
         let stmt = query!(
             &self.db,
@@ -96,62 +152,6 @@ impl Store {
         } else {
             Ok(false)
         }
-    }
-
-    #[worker::send]
-    pub async fn get_form_template(&self, form_id: FormId) -> anyhow::Result<Option<FormTemplate>> {
-        let stmt = query!(
-            &self.db,
-            "
-            SELECT template
-            FROM forms
-            WHERE form_id = ?1;
-            ",
-            form_id,
-        )?;
-
-        Ok(stmt
-            .first::<String>(Some("template"))
-            .await?
-            .map(|raw| serde_json::from_str(&raw))
-            .transpose()?)
-    }
-
-    #[worker::send]
-    pub async fn put_form_template(
-        &self,
-        form_id: FormId,
-        template: FormTemplate,
-    ) -> anyhow::Result<()> {
-        let stmt = query!(
-            &self.db,
-            "
-            INSERT INTO forms (form_id, template)
-            VALUES (?1, ?2);
-            ",
-            form_id,
-            serde_json::to_string(&template)?,
-        )?;
-
-        stmt.run().await?.meta()?;
-
-        Ok(())
-    }
-
-    #[worker::send]
-    pub async fn delete_form(&self, form_id: FormId) -> anyhow::Result<()> {
-        let stmt = query!(
-            &self.db,
-            "
-            DELETE FROM forms
-            WHERE forms.form_id = ?1;
-            ",
-            form_id,
-        )?;
-
-        stmt.run().await?.meta()?;
-
-        Ok(())
     }
 
     #[worker::send]
