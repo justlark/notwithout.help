@@ -1,4 +1,4 @@
-# Security Architecture
+# Security Whitepaper
 
 **Author**: Lark (they/it)\
 **Contact**: <lark@lark.gay>\
