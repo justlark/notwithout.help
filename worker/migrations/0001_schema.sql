@@ -8,7 +8,7 @@ CREATE TABLE "forms" (
 
 CREATE TABLE "submissions" (
   "id" integer PRIMARY KEY,
-  "form" integer REFERENCES "forms" ("id"),
+  "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
   "submission_id" text NOT NULL UNIQUE,
   "encrypted_body" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -16,7 +16,7 @@ CREATE TABLE "submissions" (
 
 CREATE TABLE "client_keys" (
   "id" integer PRIMARY KEY,
-  "form" integer REFERENCES "forms" ("id"),
+  "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
   "key_index" integer NOT NULL,
   "public_wrapping_key" text NOT NULL,
   "wrapped_private_key" text,
@@ -27,7 +27,7 @@ CREATE TABLE "client_keys" (
 
 CREATE TABLE "server_keys" (
   "id" integer PRIMARY KEY,
-  "form" integer REFERENCES "forms" ("id"),
+  "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
   "key_index" integer NOT NULL,
   "public_key" text NOT NULL,
   "private_key" text NOT NULL,

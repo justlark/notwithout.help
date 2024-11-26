@@ -1,19 +1,42 @@
-use std::sync::Arc;
+use std::str::FromStr;
 
 use axum::{
     body::Body,
     http::{header::AUTHORIZATION, Request, Response, StatusCode},
-    response::{ErrorResponse, IntoResponse},
+    response::IntoResponse,
 };
 use futures::future::{BoxFuture, FutureExt};
+use serde::Deserialize;
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
-use crate::{
-    models::{ApiSecret, FormId},
-    AppState,
-};
+use crate::models::{ClientKeyId, ServerKeyId};
 
 const BEARER_PREFIX: &str = "Bearer ";
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ApiProof(String);
+
+#[derive(Debug, Clone)]
+pub struct ApiTokenParts {
+    pub client_key_id: ClientKeyId,
+    pub server_key_id: ServerKeyId,
+    pub proof: ApiProof,
+}
+
+impl FromStr for ApiTokenParts {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.split('.').collect::<Vec<_>>().as_slice() {
+            [client_key_id, server_key_id, proof] => Ok(Self {
+                client_key_id: client_key_id.parse()?,
+                server_key_id: server_key_id.parse()?,
+                proof: ApiProof(proof.to_string()),
+            }),
+            _ => Err(anyhow::anyhow!("API token is malformed.")),
+        }
+    }
+}
 
 pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
     impl Fn(Request<Body>) -> BoxFuture<'a, Result<Request<Body>, Response<Body>>> + Clone,
@@ -29,39 +52,16 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
                 .to_str()
                 .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?;
 
-            let api_secret = auth_header_value
+            let token_parts = auth_header_value
                 .strip_prefix(BEARER_PREFIX)
-                .map(ApiSecret::from_base64)
+                .map(ApiTokenParts::from_str)
                 .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())?
                 .map_err(|_| StatusCode::UNAUTHORIZED.into_response())?;
 
-            req.extensions_mut().insert(api_secret);
+            req.extensions_mut().insert(token_parts);
 
             Ok(req)
         }
         .boxed()
     })
-}
-
-pub async fn authorize(
-    form_id: FormId,
-    api_secret: ApiSecret,
-    state: Arc<AppState>,
-) -> Result<(), ErrorResponse> {
-    let form = state
-        .store
-        .get_form(form_id)
-        .await
-        .map_err(|_| StatusCode::UNAUTHORIZED)?
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
-    let hashed_api_secret = api_secret
-        .to_hashed()
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
-
-    if form.hashed_api_secret == hashed_api_secret {
-        Ok(())
-    } else {
-        Err(StatusCode::UNAUTHORIZED.into())
-    }
 }

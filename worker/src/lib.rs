@@ -1,7 +1,13 @@
+#![deny(unsafe_code)]
+#![warn(missing_debug_implementations)]
+#![allow(dead_code)] // TODO: Remove
+#![allow(unused_variables)] // TODO: Remove
+
+mod api;
 mod auth;
 mod cors;
+mod keys;
 mod models;
-mod secrets;
 mod store;
 
 use std::sync::Arc;
@@ -14,15 +20,17 @@ use axum::{
     routing::{delete, get, post},
     Router,
 };
+use models::ClientKeyId;
 use tower_service::Service;
 use worker::{self, console_error, event, Context, Env, HttpRequest};
 
-use auth::{auth_layer, authorize};
-use cors::cors_layer;
-use models::{
-    ApiSecret, FormId, FormRequest, FormResponse, FormTemplate, GetKeyResponse, KeyIndex,
-    KeyMetadata, PostKeyRequest, PostKeyResponse, PublishFormResponse, Submission, SubmissionId,
+use api::{
+    GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse, PostKeyRequest,
+    PostKeyResponse, PublishFormRequest, PublishFormResponse,
 };
+use auth::{auth_layer, ApiTokenParts};
+use cors::cors_layer;
+use keys::FormId;
 use store::Store;
 
 const D1_BINDING: &str = "DB";
@@ -59,6 +67,7 @@ fn router(state: AppState) -> Router {
         // AUTHENTICATED ENDPOINTS
         .route("/submissions/:form_id", get(list_form_submissions))
         .route("/forms/:form_id", delete(delete_form))
+        .route("/keys/:form_id/:key_index", get(get_key))
         .route("/keys/:form_id", post(add_key))
         .route("/keys/:form_id", get(list_keys))
         .route("/keys/:form_id/:key_index", delete(delete_key))
@@ -67,7 +76,6 @@ fn router(state: AppState) -> Router {
         .route("/forms", post(publish_form))
         .route("/forms/:form_id", get(get_form))
         .route("/submissions/:form_id", post(store_form_submission))
-        .route("/keys/:form_id/:key_index", get(get_key))
         .layer(cors_layer())
         .with_state(Arc::new(state))
 }
@@ -87,73 +95,17 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
 #[axum::debug_handler]
 pub async fn publish_form(
     State(state): State<Arc<AppState>>,
-    Json(form): Json<FormRequest>,
+    Json(form): Json<PublishFormRequest>,
 ) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
-    let form_id = FormId::new();
-    let api_secret = ApiSecret::generate();
-
-    if state.env == WorkerEnv::Dev {
-        api_secret.dev_expose_secret_in_debug_log(state.env);
-    }
-
-    let api_challenge = api_secret
-        .to_challenge(&form.public_key)
-        .map_err(handle_error)?;
-
-    let template = FormTemplate {
-        hashed_api_secret: api_secret.to_hashed().map_err(handle_error)?,
-        api_challenge: api_challenge.clone(),
-        public_key: form.public_key,
-        org_name: form.org_name,
-        description: form.description,
-        contact_methods: form.contact_methods,
-    };
-
-    state
-        .store
-        .put_form(form_id.clone(), template)
-        .await
-        .map_err(handle_error)?;
-
-    Ok((
-        StatusCode::CREATED,
-        Json(PublishFormResponse {
-            form_id,
-            api_challenge,
-        }),
-    ))
+    todo!()
 }
 
 #[axum::debug_handler]
 pub async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
-) -> Result<Json<FormResponse>, ErrorResponse> {
-    let template = state
-        .store
-        .get_form(form_id)
-        .await
-        .map_err(handle_error)?
-        .ok_or(StatusCode::NOT_FOUND)?;
-
-    Ok(Json(template.into()))
-}
-
-#[axum::debug_handler]
-pub async fn delete_form(
-    State(state): State<Arc<AppState>>,
-    Extension(api_secret): Extension<ApiSecret>,
-    Path(form_id): Path<FormId>,
-) -> Result<NoContent, ErrorResponse> {
-    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
-
-    state
-        .store
-        .delete_form_and_submissons(form_id)
-        .await
-        .map_err(handle_error)?;
-
-    Ok(NoContent)
+) -> Result<Json<GetFormResponse>, ErrorResponse> {
+    todo!()
 }
 
 #[axum::debug_handler]
@@ -162,112 +114,60 @@ pub async fn store_form_submission(
     Path(form_id): Path<FormId>,
     body: String,
 ) -> Result<StatusCode, ErrorResponse> {
-    let submission_id = SubmissionId::new();
+    todo!()
+}
 
-    let created = state
-        .store
-        .put_submission(form_id, submission_id, body.into())
-        .await
-        .map_err(handle_error)?;
-
-    if created {
-        Ok(StatusCode::CREATED)
-    } else {
-        Err(StatusCode::NOT_FOUND.into())
-    }
+#[axum::debug_handler]
+pub async fn delete_form(
+    State(state): State<Arc<AppState>>,
+    Extension(token): Extension<ApiTokenParts>,
+    Path(form_id): Path<FormId>,
+) -> Result<NoContent, ErrorResponse> {
+    todo!()
 }
 
 #[axum::debug_handler]
 pub async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
-    Extension(api_secret): Extension<ApiSecret>,
+    Extension(token): Extension<ApiTokenParts>,
     Path(form_id): Path<FormId>,
-) -> Result<Json<Vec<Submission>>, ErrorResponse> {
-    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
-
-    let submissions = state
-        .store
-        .list_submissions(form_id)
-        .await
-        .map_err(handle_error)?;
-
-    if submissions.is_empty() {
-        Err(StatusCode::NOT_FOUND.into())
-    } else {
-        Ok(Json(submissions))
-    }
+) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
+    todo!()
 }
 
 #[axum::debug_handler]
 pub async fn get_key(
     State(state): State<Arc<AppState>>,
-    Path((form_id, key_index)): Path<(FormId, KeyIndex)>,
+    Extension(token): Extension<ApiTokenParts>,
+    Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<Json<GetKeyResponse>, ErrorResponse> {
-    let key = state
-        .store
-        .get_key(form_id, key_index)
-        .await
-        .map_err(handle_error)?;
-
-    if let Some(key) = key {
-        Ok(Json(GetKeyResponse { key }))
-    } else {
-        Err(StatusCode::NOT_FOUND.into())
-    }
+    todo!()
 }
 
 #[axum::debug_handler]
 pub async fn list_keys(
     State(state): State<Arc<AppState>>,
-    Extension(api_secret): Extension<ApiSecret>,
+    Extension(token): Extension<ApiTokenParts>,
     Path(form_id): Path<FormId>,
-) -> Result<Json<Vec<KeyMetadata>>, ErrorResponse> {
-    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
-
-    let keys = state.store.list_keys(form_id).await.map_err(handle_error)?;
-
-    if keys.is_empty() {
-        Err(StatusCode::NOT_FOUND.into())
-    } else {
-        Ok(Json(keys))
-    }
+) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
+    todo!()
 }
 
 #[axum::debug_handler]
 pub async fn add_key(
     State(state): State<Arc<AppState>>,
-    Extension(api_secret): Extension<ApiSecret>,
+    Extension(token): Extension<ApiTokenParts>,
     Path(form_id): Path<FormId>,
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
-    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
-
-    let key_index = state
-        .store
-        .add_key(form_id, body.key, body.comment)
-        .await
-        .map_err(handle_error)?;
-
-    if let Some(key_index) = key_index {
-        Ok((StatusCode::CREATED, Json(PostKeyResponse { key_index })))
-    } else {
-        Err(StatusCode::NOT_FOUND.into())
-    }
+    todo!()
 }
 
 #[axum::debug_handler]
 pub async fn delete_key(
     State(state): State<Arc<AppState>>,
-    Extension(api_secret): Extension<ApiSecret>,
-    Path((form_id, key_index)): Path<(FormId, KeyIndex)>,
+    Extension(token): Extension<ApiTokenParts>,
+    Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
-    authorize(form_id.clone(), api_secret, Arc::clone(&state)).await?;
-
-    state
-        .store
-        .delete_key(form_id, key_index)
-        .await
-        .map_err(handle_error)?;
-
-    Ok(NoContent)
+    todo!()
 }

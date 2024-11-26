@@ -1,7 +1,9 @@
+use std::str::FromStr;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::keys::{PrivateServerKey, PublicServerKey};
+use crate::keys::{PrivateServerKey, PublicServerKey, PublicWrappingKey};
 
 // The submission body as a base64-encoded encrypted JSON object. Because it's encrypted
 // client-side, the shape of the JSON object is opaque to this worker.
@@ -21,11 +23,27 @@ pub struct WrappedPrivateClientKey(String);
 #[serde(transparent)]
 pub struct ClientKeyId(u32);
 
+impl FromStr for ClientKeyId {
+    type Err = <u32 as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(u32::from_str(s)?))
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ServerKeyId(u32);
 
-#[derive(Debug)]
+impl FromStr for ServerKeyId {
+    type Err = <u32 as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self(u32::from_str(s)?))
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
     pub org_name: String,
     pub description: String,
@@ -40,8 +58,17 @@ pub struct Submission {
 
 #[derive(Debug)]
 pub struct ServerKeyPair {
-    pub index: ServerKeyId,
+    pub id: ServerKeyId,
     pub public_key: PublicServerKey,
     pub private_key: PrivateServerKey,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug)]
+pub struct ClientKeyPair {
+    pub id: ClientKeyId,
+    pub public_wrapping_key: PublicWrappingKey,
+    pub wrapped_private_key: WrappedPrivateClientKey,
+    pub encrypted_comment: EncryptedKeyComment,
     pub created_at: DateTime<Utc>,
 }

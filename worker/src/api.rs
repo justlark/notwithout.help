@@ -10,7 +10,7 @@ use crate::{
 
 #[derive(Debug, Serialize)]
 pub struct GetFormResponse {
-    pub pub_server_key: PublicServerKey,
+    pub public_server_key: PublicServerKey,
     pub server_key_id: ServerKeyId,
     pub org_name: String,
     pub description: String,
@@ -19,8 +19,8 @@ pub struct GetFormResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct PublishFormRequest {
-    pub pub_client_key: PublicClientKey,
-    pub pub_wrapping_key: PublicWrappingKey,
+    pub public_client_key: PublicClientKey,
+    pub public_wrapping_key: PublicWrappingKey,
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
@@ -29,7 +29,7 @@ pub struct PublishFormRequest {
 #[derive(Debug, Serialize)]
 pub struct PublishFormResponse {
     pub form_id: FormId,
-    pub pub_server_key: PublicServerKey,
+    pub public_server_key: PublicServerKey,
     pub server_key_id: ServerKeyId,
     pub client_key_id: ClientKeyId,
 }
@@ -60,13 +60,13 @@ pub struct GetKeyResponse {
 pub struct ListKeysResponse {
     pub client_key_id: ClientKeyId,
     pub wrapped_client_key: WrappedPrivateClientKey,
-    pub comment: EncryptedKeyComment,
+    pub encrypted_comment: EncryptedKeyComment,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct PostKeyRequest {
     pub wrapped_client_key: WrappedPrivateClientKey,
-    pub comment: EncryptedKeyComment,
+    pub encrypted_comment: EncryptedKeyComment,
 }
 
 #[derive(Debug, Serialize)]
