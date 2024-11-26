@@ -50,11 +50,12 @@ parameters so it's not leaked to the CDN.
 The `form_id` is also stored in the URL fragment so the CDN does not know which
 **Form** a user is filling out.
 
-## Access management
+## Creating a form
 
 After creating a **Form**, the **Organizer** is given the **Sharing Link** and
-a **Secret Link**. Organizers can create additional secret links as well.
-Secret links can have comments attached to them and can be revoked at any time.
+a **Secret Link**. Organizers can create additional **Secret Links** as well.
+**Secret Links** can have comments attached to them and can be revoked at any
+time.
 
 When a **Form** is created:
 
@@ -65,8 +66,7 @@ When a **Form** is created:
 3. The server generates a random key pair for the **Form** called the
    **Server's Private Key** and the **Server's Public Key**.
 4. The server returns the **Server's Public Key**, a unique **Form ID**, and a
-   **Key ID** for the initial **Secret Link** to the client (more about **Key
-   IDs** below).
+   **Key ID** for the initial **Secret Link** to the client.
 5. The client uses the **Public Wrapping Key** to encrypt the **Organizer's
    Private Key** via a **Sealed Box** to generate a **Wrapped Organizer's
    Private Key**.
@@ -78,6 +78,8 @@ When a **Form** is created:
    alongside its corresponding **Public Wrapping Key** and **Key ID**.
 8. The **Form ID**, **Key ID**, and **Private Wrapping Key** form the initial
    **Secret Link**.
+
+## Generating a new secret link
 
 When a new **Secret Link** is generated:
 
@@ -100,7 +102,17 @@ When a new **Secret Link** is generated:
 8. The **Form ID**, new **Key ID**, and new **Private Wrapping Key** form the
    new **Secret Link**.
 
-When a **Secret Link** is used to get the **Organizer's Private Key**:
+A **Secret Link** can be revoked by the **Organizer** via an authenticated
+endpoint. This deletes the **Wrapped Organizer's Private Key** from the
+database.
+
+Note that once a **Secret Link** has been used to reveal the **Organizer's
+Private Key**, while revoking it will deny **API Access**, it will not deny the
+ability to decrypt **Submissions** if the ciphertext is leaked.
+
+## Decrypting submissions
+
+When a **Secret Link** is used to decrypt **Submissions**:
 
 1. The client uses the **Form ID** to request the **Server's Public Key** from
    the server.
@@ -110,14 +122,10 @@ When a **Secret Link** is used to get the **Organizer's Private Key**:
    Key**.
 3. The client uses the **Private Wrapping Key** to decrypt the **Wrapped
    Organizer's Private Key** and reveal the **Organizer's Private Key**.
-
-A **Secret Link** can be revoked by the **Organizer** via an authenticated
-endpoint. This deletes the **Wrapped Organizer's Private Key** from the
-database.
-
-Note that once a **Secret Link** has been used to reveal the **Organizer's
-Private Key**, while revoking it will deny **API Access**, it will not deny the
-ability to decrypt **Submissions** if the ciphertext is leaked.
+4. The client calls another authenticated API endpoint to get the list of
+   encrypted **Submissions**.
+5. The client decrypts the **Submissions** using the **Organizer's Private
+   Key**.
 
 ## Authentication
 
