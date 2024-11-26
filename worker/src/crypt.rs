@@ -14,7 +14,7 @@ use typenum::Unsigned;
 // they're used. The names of identifiers in this file generally match the terms defined in that
 // document.
 //
-// https://github.com/justlark/notwithout.help/blob/main/docs/security.md
+// https://github.com/justlark/notwithout.help/blob/main/docs/security-whitepaper.md
 //
 
 #[derive(Debug, Clone)]
