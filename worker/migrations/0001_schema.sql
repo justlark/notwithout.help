@@ -14,12 +14,22 @@ CREATE TABLE "submissions" (
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "keys" (
+CREATE TABLE "client_keys" (
   "id" integer PRIMARY KEY,
   "form" integer REFERENCES "forms" ("id"),
   "key_index" integer NOT NULL,
-  "key" text NOT NULL,
+  "public_wrapping_key" text NOT NULL,
+  "wrapped_private_key" text,
   "encrypted_comment" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
-);
+)
+CREATE TABLE "server_keys" (
+  "id" integer PRIMARY KEY,
+  "form" integer REFERENCES "forms" ("id"),
+  "key_index" integer NOT NULL,
+  "public_key" text NOT NULL,
+  "private_key" text NOT NULL,
+  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE ("form", "key_index")
+)
