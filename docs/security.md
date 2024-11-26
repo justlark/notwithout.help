@@ -38,10 +38,11 @@ https://notwithout.help/view/#/<form_id>/<key_id>/<key>
 ```
 
 - `form_id`: The **Form ID**, a unique identifier for the **Form**.
-- `key_id`: A **Key ID**, a unique identifier for a **Wrapped Private Key**.
-- `key`: A **Symmetric Wrapping Key**, used to decrypt a **Wrapped Private
-  Key** to reveal the **Organizer's Private Key** (see [Access
-  management](#access-management)).
+- `key_id`: The **Key ID**, a unique identifier for a **Wrapped Organizer's
+  Private Key** (see [Access management](#access-management)).
+- `key`: The **Private Wrapping Key**, used to authenticate with the API and
+  decrypt a **Wrapped Organizer's Private Key** to reveal the **Organizer's
+  Private Key** (see [Access management](#access-management)).
 
 The `key` is stored in the URL fragment rather than the path or query
 parameters so it's not leaked to the CDN.
@@ -53,66 +54,88 @@ The `form_id` is also stored in the URL fragment so the CDN does not know which
 
 After creating a **Form**, the **Organizer** is given the **Sharing Link** and
 a **Secret Link**. Organizers can create additional secret links as well.
-Secret links can have comments attached to them and can be disabled at any
-time.
+Secret links can have comments attached to them and can be revoked at any time.
 
-When a **Secret Link** is generated:
+When a **Form** is created:
 
-1. The client generates a random symmetric encryption key called the
-   **Symmetric Wrapping Key**.
-2. The client uses the **Symmetric Wrapping Key** to encrypt the **Organizer's
-   Private Key** via a libsodium [**Secret
-   Box**](https://doc.libsodium.org/secret-key_cryptography/secretbox) to
-   generate a **Wrapped Private Key**.
-3. A user-provided comment for the key is encrypted with the **Organizer's
+1. The client generates a random key pair called the **Private Wrapping Key**
+   and the **Public Wrapping Key**.
+2. The client sends the **Public Wrapping Key** (along with the **Organizer's
+   Public Key**) to the server to create a new **Form**.
+3. The server generates a random key pair for the **Form** called the
+   **Server's Private Key** and the **Server's Public Key**.
+4. The server returns the **Server's Public Key**, a unique **Form ID**, and a
+   **Key ID** for the initial **Secret Link** to the client (more about **Key
+   IDs** below).
+5. The client uses the **Public Wrapping Key** to encrypt the **Organizer's
+   Private Key** via a **Sealed Box** to generate a **Wrapped Organizer's
+   Private Key**.
+6. The client uses the **Form ID**, **Key ID**, and **Private Wrapping Key** to
+   call an authenticated API endpoint (as described in
+   [Authentication](#authentication)) to send the **Wrapped Organizer's Private
+   Key** to the server.
+7. The server stores the **Wrapped Organizer's Private Key** in the database
+   alongside its corresponding **Public Wrapping Key** and **Key ID**.
+8. The **Form ID**, **Key ID**, and **Private Wrapping Key** form the initial
+   **Secret Link**.
+
+When a new **Secret Link** is generated:
+
+1. The client uses the **Form ID** to request the **Server's Public Key** from
+   the server.
+2. The client generates a new random **Private Wrapping Key** and **Public
+   Wrapping Key** pair.
+3. The client uses the new **Public Wrapping Key** to encrypt the **Organizer's
+   Private Key** via a **Sealed Box** to generate a new **Wrapped Organizer's
+   Private Key**.
+4. A user-provided comment for the key is encrypted with the **Organizer's
    Public Key** via a **Sealed Box**.
-4. The client sends the **Wrapped Private Key**, along with the encrypted
-   comment, to the server.
-5. The server returns a unique ID for the **Wrapped Private Key** called the
-   **Key ID**.
+5. The client sends the new **Wrapped Organizer's Private Key**, the new
+   **Public Wrapping Key**, and the encrypted comment to the server via an
+   authenticated endpoint.
+6. The server generates a new **Key ID** for the **Wrapped Organizer's Private
+   Key**. It stores the **Wrapped Organizer's Private Key**, **Public Wrapping
+   Key**, encrypted comment, and **Key ID** in the database.
+7. The server returns the new **Key ID** to the client.
+8. The **Form ID**, new **Key ID**, and new **Private Wrapping Key** form the
+   new **Secret Link**.
 
-When a **Secret Link** is used:
+When a **Secret Link** is used to get the **Organizer's Private Key**:
 
-1. The client uses the **Form ID** and the **Key ID** to request the
-   corresponding **Wrapped Private Key** from the server.
-2. The client uses the **Symmetric Wrapping Key** to decrypt the **Wrapped
-   Private Key** and reveal the **Organizer's Private Key**.
-3. The **Organizer's Private Key** is used to authenticate with the API (see
-   [Authentication](#authentication)) and decrypt the **Submissions**.
+1. The client uses the **Form ID** to request the **Server's Public Key** from
+   the server.
+2. The client uses the **Form ID**, **Key ID**, and **Private Wrapping Key** to
+   call an authenticated API endpoint (as described in
+   [Authentication](#authentication)) to get the **Wrapped Organizer's Private
+   Key**.
+3. The client uses the **Private Wrapping Key** to decrypt the **Wrapped
+   Organizer's Private Key** and reveal the **Organizer's Private Key**.
 
-**Secret Links** can be disabled by deleting their associated **Wrapped Private
-Keys** from the database. However, note that once an adversary has a valid
-**Secret Link** and has requested the associated **Wrapped Secret Key** from
-the server, disabling the **Secret Link** does not prevent them from extracting
-the **Organizer's Private Key** from the **Wrapped Secret Key**. They will
-still have API access and will still be able to decrypt **Submissions**.
+A **Secret Link** can be revoked by the **Organizer** via an authenticated
+endpoint. This deletes the **Wrapped Organizer's Private Key** from the
+database.
+
+Note that once a **Secret Link** has been used to reveal the **Organizer's
+Private Key**, while revoking it will deny **API Access**, it will not deny the
+ability to decrypt **Submissions** if the ciphertext is leaked.
 
 ## Authentication
 
 Some API endpoints require authentication. See the [API](#api) section for
 details.
 
-When a **Form** is created:
-
-1. The server generates a random 32-byte secret called the **API Secret**.
-2. The **API Secret** is encrypted with the **Organizer's Public Key** via a
-   **Sealed Box** to form the **API Challenge**. It is then stored in the
-   database.
-3. The **API Secret** is hashed using the Argon2id password hashing algorithm
-   and stored in the database. Because the **API Secret** is randomly
-   generated, a static salt is used rather than a separate salt per secret.
-4. At this point, the **API Secret** is dropped and zeroized.
-
 When a client makes an authenticated API request:
 
-1. The client uses the **Form ID** to request the **API Challenge** from the
-   server.
-2. The client uses the **Organizer's Private Key** to decrypt the **API
-   Challenge** and reveal the **API Secret**.
-3. The **API Secret** is included in requests as a bearer token.
-4. The **API Secret** is hashed and compared to the hash stored in the database
-   using a constant-time algorithm.
-5. If the hashed secrets match, the user is authenticated.
+1. The client uses the **Form ID** to request the **Server's Public Key** from
+   the server.
+2. The client uses the **Private Wrapping Key** and the **Server's Public Key**
+   to encrypt a random byte string via a **Box** to generate the **API Proof**.
+3. The **API Proof** is concatenated with the **Key ID** and included in API
+   requests as a bearer token.
+4. The server uses the **Server's Private Key** associated with the **Form ID**
+   and the **Public Wrapping Key** associated with the **Key ID** to validate
+   the **API Proof**.
+5. If the **API Proof** is validated, the server authorizes the request.
 
 ## API
 
@@ -128,27 +151,34 @@ GET /submissions/:form_id
 ```
 
 Delete the **Form** from the database, along with all its associated
-**Submissions**, and **Wrapped Private Keys**.
+**Submissions**, and **Wrapped Organizer's Private Keys**.
 
 ```
 DELETE /forms/:form_id
 ```
 
-Associate a **Wrapped Private Key** and its associated encrypted comment with a
-**Form**.
+Get a **Wrapped Organizer's Private Key** by its **Key ID**.
+
+```
+GET /keys/:form_id/:key_id
+```
+
+Send a **Wrapped Organizer's Private Key** and its associated encrypted comment
+to the server, associated with a **Form**.
 
 ```
 POST /keys/:form_id
 ```
 
-List the **Wrapped Private Keys** associated with a **Form**, along with their
-respective encrypted comments.
+List the **Wrapped Organizer's Private Keys** associated with a **Form**, along
+with their respective encrypted comments.
 
 ```
 GET /keys/:form_id
 ```
 
-Revoke a **Wrapped Private Key**.
+Revoke a secret link by deleting its associated **Wrapped Organizer's Private
+Key**.
 
 ```
 DELETE /keys/:form_id/:key_id
@@ -172,10 +202,4 @@ Send an encrypted **Submission**.
 
 ```
 POST /submissions/:form_id
-```
-
-Get a **Wrapped Private Key** by its **Key ID**.
-
-```
-GET /keys/:form_id/:key_id
 ```
