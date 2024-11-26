@@ -23,7 +23,8 @@ CREATE TABLE "client_keys" (
   "encrypted_comment" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
-)
+);
+
 CREATE TABLE "server_keys" (
   "id" integer PRIMARY KEY,
   "form" integer REFERENCES "forms" ("id"),
@@ -32,4 +33,4 @@ CREATE TABLE "server_keys" (
   "private_key" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
-)
+);
