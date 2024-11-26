@@ -1,8 +1,11 @@
-# Security
+# Security Architecture
 
-**Author**: Lark <lark@lark.gay>
+**Author**: Lark (they/it)\
+**Contact**: <lark@lark.gay>\
+**GitHub**: <https://github.com/justlark/notwithout.help>
 
-This document is an informal overview of how this app mitigates security risks.
+This document is an informal overview of how [Not Without
+Help](https://notwithout.help) mitigates security risks.
 
 ## Disclaimer
 
@@ -11,9 +14,9 @@ are at risk, do not depend on this software to protect you.
 
 ## Overview
 
-This app allows users, called **Organizers** to create encrypted web forms,
-collecting **Submissions** from others. **Submissions** are encrypted
-client-side such that they cannot be read by the server.
+Not Without Help is an app that allows users, called **Organizers** to create
+encrypted web forms, collecting **Submissions** from others. **Submissions**
+are encrypted client-side such that they cannot be read by the server.
 
 When an **Organizer** creates a **Form**, they are given two links: a **Sharing
 Link** that can be followed to fill out the **Form**, and a **Secret Link**
