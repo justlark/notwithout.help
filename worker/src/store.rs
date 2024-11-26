@@ -5,10 +5,11 @@ use serde::Deserialize;
 use worker::{d1::D1Database, query};
 
 use crate::{
-    keys::{FormId, PublicWrappingKey, SubmissionId},
+    crypt::{PrivateServerKey, PublicServerKey, PublicWrappingKey},
     models::{
-        ClientKeyId, ClientKeyPair, EncryptedKeyComment, EncryptedSubmissionBody, FormTemplate,
-        Submission, WrappedPrivateClientKey,
+        ClientKeyId, ClientKeyPair, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
+        FormTemplate, ServerKeyId, ServerKeyPair, Submission, SubmissionId,
+        WrappedPrivateClientKey,
     },
 };
 
@@ -185,21 +186,17 @@ impl Store {
 
         let row = stmt.first::<Row>(None).await?;
 
-        Ok(row
-            .map(|row| -> anyhow::Result<_> {
-                Ok(ClientKeyPair {
-                    id: key_id,
-                    public_wrapping_key: row.public_wrapping_key,
-                    wrapped_private_key: row.wrapped_private_key,
-                    encrypted_comment: row.encrypted_comment,
-                    created_at: NaiveDateTime::parse_from_str(
-                        &row.created_at,
-                        SQLITE_DATETIME_FORMAT,
-                    )?
+        row.map(|row| -> anyhow::Result<_> {
+            Ok(ClientKeyPair {
+                id: key_id,
+                public_wrapping_key: row.public_wrapping_key,
+                wrapped_private_key: row.wrapped_private_key,
+                encrypted_comment: row.encrypted_comment,
+                created_at: NaiveDateTime::parse_from_str(&row.created_at, SQLITE_DATETIME_FORMAT)?
                     .and_utc(),
-                })
             })
-            .transpose()?)
+        })
+        .transpose()
     }
 
     #[worker::send]
@@ -232,8 +229,7 @@ impl Store {
 
         let rows = stmt.all().await?.results::<Row>()?;
 
-        Ok(rows
-            .into_iter()
+        rows.into_iter()
             .map(|row| {
                 Ok(ClientKeyPair {
                     id: row.key_index,
@@ -247,7 +243,7 @@ impl Store {
                     .and_utc(),
                 })
             })
-            .collect::<anyhow::Result<Vec<_>>>()?)
+            .collect::<anyhow::Result<Vec<_>>>()
     }
 
     #[worker::send]
@@ -320,5 +316,47 @@ impl Store {
         stmt.run().await?.meta()?;
 
         Ok(())
+    }
+
+    #[worker::send]
+    pub async fn get_server_keys(
+        &self,
+        form_id: FormId,
+        key_id: ServerKeyId,
+    ) -> anyhow::Result<Option<ServerKeyPair>> {
+        let stmt = query!(
+            &self.db,
+            "
+            SELECT
+                server_keys.public_key,
+                server_keys.private_key,
+                server_keys.created_at
+            FROM server_keys
+            JOIN forms ON server_keys.form = forms.id
+            WHERE forms.form_id = ?1 AND server_keys.key_index = ?2;
+            ",
+            form_id,
+            key_id,
+        )?;
+
+        #[derive(Debug, Deserialize)]
+        struct Row {
+            public_key: PublicServerKey,
+            private_key: PrivateServerKey,
+            created_at: String,
+        }
+
+        let row = stmt.first::<Row>(None).await?;
+
+        row.map(|row| -> anyhow::Result<_> {
+            Ok(ServerKeyPair {
+                id: key_id,
+                public_key: row.public_key,
+                private_key: row.private_key,
+                created_at: NaiveDateTime::parse_from_str(&row.created_at, SQLITE_DATETIME_FORMAT)?
+                    .and_utc(),
+            })
+        })
+        .transpose()
     }
 }

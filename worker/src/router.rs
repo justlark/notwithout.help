@@ -14,10 +14,9 @@ use crate::{
         GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse, PostKeyRequest,
         PostKeyResponse, PublishFormRequest, PublishFormResponse,
     },
-    auth::{auth_layer, ApiTokenParts},
+    auth::{auth_layer, ApiToken},
     cors::cors_layer,
-    keys::FormId,
-    models::ClientKeyId,
+    models::{ClientKeyId, FormId},
     store::Store,
 };
 
@@ -94,7 +93,7 @@ async fn store_form_submission(
 #[axum::debug_handler]
 async fn delete_form(
     State(state): State<Arc<AppState>>,
-    Extension(token): Extension<ApiTokenParts>,
+    Extension(token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
     todo!()
@@ -103,7 +102,7 @@ async fn delete_form(
 #[axum::debug_handler]
 async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
-    Extension(token): Extension<ApiTokenParts>,
+    Extension(token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
     todo!()
@@ -112,7 +111,7 @@ async fn list_form_submissions(
 #[axum::debug_handler]
 async fn get_key(
     State(state): State<Arc<AppState>>,
-    Extension(token): Extension<ApiTokenParts>,
+    Extension(token): Extension<ApiToken>,
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<Json<GetKeyResponse>, ErrorResponse> {
     todo!()
@@ -121,7 +120,7 @@ async fn get_key(
 #[axum::debug_handler]
 async fn list_keys(
     State(state): State<Arc<AppState>>,
-    Extension(token): Extension<ApiTokenParts>,
+    Extension(token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
     todo!()
@@ -130,7 +129,7 @@ async fn list_keys(
 #[axum::debug_handler]
 async fn add_key(
     State(state): State<Arc<AppState>>,
-    Extension(token): Extension<ApiTokenParts>,
+    Extension(token): Extension<ApiToken>,
     Path(form_id): Path<FormId>,
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
@@ -140,7 +139,7 @@ async fn add_key(
 #[axum::debug_handler]
 async fn delete_key(
     State(state): State<Arc<AppState>>,
-    Extension(token): Extension<ApiTokenParts>,
+    Extension(token): Extension<ApiToken>,
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
     todo!()

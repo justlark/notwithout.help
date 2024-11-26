@@ -6,7 +6,7 @@
 mod api;
 mod auth;
 mod cors;
-mod keys;
+mod crypt;
 mod models;
 mod router;
 mod store;

@@ -1,9 +1,56 @@
 use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
+use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 
-use crate::keys::{PrivateServerKey, PublicServerKey, PublicWrappingKey};
+use crate::crypt::{PrivateServerKey, PublicServerKey, PublicWrappingKey};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+struct RandomId(String);
+
+impl RandomId {
+    fn new(len: usize) -> Self {
+        Self(Alphanumeric.sample_string(&mut rand::thread_rng(), len))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct FormId(RandomId);
+
+impl FormId {
+    const LEN: usize = 8;
+
+    pub fn new() -> Self {
+        Self(RandomId::new(Self::LEN))
+    }
+}
+
+impl Default for FormId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SubmissionId(RandomId);
+
+impl SubmissionId {
+    const LEN: usize = 8;
+
+    pub fn new() -> Self {
+        Self(RandomId::new(Self::LEN))
+    }
+}
+
+impl Default for SubmissionId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 // The submission body as a base64-encoded encrypted JSON object. Because it's encrypted
 // client-side, the shape of the JSON object is opaque to this worker.

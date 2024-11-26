@@ -765,6 +765,7 @@ dependencies = [
  "serde_json",
  "tower-http",
  "tower-service",
+ "typenum",
  "worker",
  "worker-macros",
 ]

@@ -32,7 +32,8 @@ serde_json = "1.0.133"
 chrono = "0.4.38"
 anyhow = "1.0.93"
 base64 = "0.22.1"
-crypto_box = { version = "0.9.1", features = ["seal"] }
+crypto_box = { version = "0.9.1", features = ["std", "seal", "salsa20"] }
+typenum = "1.17.0"
 
 # The Cloudflare Workers runtime appears to be broken for Rust 1.82. This is a
 # workaround.
