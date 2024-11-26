@@ -39,10 +39,10 @@ https://notwithout.help/view/#/<form_id>/<key_id>/<key>
 
 - `form_id`: The **Form ID**, a unique identifier for the **Form**.
 - `key_id`: The **Client Key ID**, a unique identifier for a **Wrapped Private
-  Client Key** (see [Access management](#access-management)).
+  Client Key** (see below).
 - `key`: The **Private Wrapping Key**, used to authenticate with the API and
   decrypt a **Wrapped Private Client Key** to reveal the **Private Client Key**
-  (see [Access management](#access-management)).
+  (see below).
 
 The `key` is stored in the URL fragment rather than the path or query
 parameters so it's not leaked to the CDN.
