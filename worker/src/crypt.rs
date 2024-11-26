@@ -9,6 +9,14 @@ use crypto_box::{
 use serde::{Deserialize, Serialize};
 use typenum::Unsigned;
 
+//
+// See the security architecture document for information on the purpose of these keys and how
+// they're used. The names of identifiers in this file generally match the terms defined in that
+// document.
+//
+// https://github.com/justlark/notwithout.help/blob/main/docs/security.md
+//
+
 #[derive(Debug, Clone)]
 pub struct PublicKey(crypto_box::PublicKey);
 

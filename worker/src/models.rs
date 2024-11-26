@@ -6,10 +6,19 @@ use serde::{Deserialize, Serialize};
 
 use crate::crypt::{PrivateServerKey, PublicServerKey, PublicWrappingKey};
 
+//
+// See the security architecture document for information on the purpose of these values and how
+// they're used. The names of identifiers in this file generally match the terms defined in that
+// document.
+//
+// https://github.com/justlark/notwithout.help/blob/main/docs/security.md
+//
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 struct RandomId(String);
 
+// While this is a CSPRNG, we don't rely on the randomness of these IDs for security.
 impl RandomId {
     fn new(len: usize) -> Self {
         Self(Alphanumeric.sample_string(&mut rand::thread_rng(), len))
@@ -34,6 +43,8 @@ impl Default for FormId {
     }
 }
 
+// As of time of writing, the submission ID isn't used anywhere. It exists only for
+// future-proofing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct SubmissionId(RandomId);
@@ -52,8 +63,6 @@ impl Default for SubmissionId {
     }
 }
 
-// The submission body as a base64-encoded encrypted JSON object. Because it's encrypted
-// client-side, the shape of the JSON object is opaque to this worker.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct EncryptedSubmissionBody(String);
@@ -65,6 +74,15 @@ pub struct EncryptedKeyComment(String);
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct WrappedPrivateClientKey(String);
+
+//
+// The Client Key ID and the Server Key ID are each implemented as auto-incrementing integers. They
+// increment independently for each form, meaning that:
+//
+// - No two keys associated with the same form will ever have the same ID.
+// - IDs are not recycled when keys are revoked/rotated.
+// - Keys associated with different forms may have the same ID.
+//
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(transparent)]

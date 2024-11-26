@@ -13,6 +13,8 @@ use crate::{
     },
 };
 
+// SQLite natively understands datetime strings with this format; it uses the format when
+// automatically generating timestamps with `DEFAULT CURRENT_TIMESTAMP`.
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 pub struct Store {

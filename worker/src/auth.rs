@@ -33,6 +33,10 @@ impl FromStr for ApiProof {
     }
 }
 
+// The API bearer token has the following format:
+//
+//   <client_key_id>.<server_key_id>.<proof>
+//
 #[derive(Debug, Clone)]
 pub struct ApiToken {
     client_key_id: ClientKeyId,
@@ -80,6 +84,8 @@ impl FromStr for ApiToken {
     }
 }
 
+// Extract the bearer token from the Authorization header and insert it into the request
+// extensions.
 pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
     impl Fn(Request<Body>) -> BoxFuture<'a, Result<Request<Body>, Response<Body>>> + Clone,
 > {
