@@ -134,7 +134,9 @@ When a client makes an authenticated API request:
 1. The client uses the **Form ID** to request the **Public Server Key**, and
    **Server Key ID** from the server.
 2. The client uses the **Private Wrapping Key** and the **Public Server Key**
-   to encrypt a random byte string via a **Box** to generate the **API Proof**.
+   to encrypt a random byte string via a libsodium
+   [**Box**](https://doc.libsodium.org/public-key_cryptography/authenticated_encryption)
+   to generate the **API Proof**.
 3. The **API Proof** is concatenated with the **Server Key ID** and **Client
    Key ID** and included in API requests as a bearer token.
 4. The server uses the **Private Server Key** associated with the **Server Key
