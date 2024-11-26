@@ -1,5 +1,7 @@
 # Security
 
+**Author**: Lark <lark@lark.gay>
+
 This document is an informal overview of how this app mitigates security risks.
 
 ## Disclaimer
