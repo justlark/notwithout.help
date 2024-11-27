@@ -14,7 +14,7 @@ are at risk, do not depend on this software to protect you.
 
 ## Overview
 
-Not Without Help is an app that allows users, called **Organizers** to create
+Not Without Help is an app that allows users, called **Organizers**, to create
 encrypted web forms, collecting **Submissions** from others. **Submissions**
 are encrypted client-side such that they cannot be read by the server.
 
