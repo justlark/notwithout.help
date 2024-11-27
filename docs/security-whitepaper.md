@@ -92,48 +92,51 @@ To create a new **Form**:
 
 To generate a new **Secret Link**:
 
-1. The client retrieves and decrypts the **Private Client Key** as described in
-   the [Retrieving the private client key](#retrieving-the-private-client-key)
-   section.
-2. The client generates a new random (**Private Wrapping Key**, **Public
-   Wrapping Key**) pair.
-3. The client uses the new **Public Wrapping Key** to encrypt the **Private
-   Client Key** via a **Sealed Box** to generate a new **Wrapped Private Client
+1. The client retrieves and decrypts the **Private Primary Key** as described
+   in the [Retrieving the private primary
+   key](#retrieving-the-private-primary-key) section.
+2. The client generates a new random **Secret Link Key**.
+3. The client derives a new **Secret Wrapping Key** from the **Secret Link
    Key**.
-4. A user-provided comment for the key is encrypted with the **Public Client
-   Key** via a **Sealed Box** the only the **Private Client Key** can decrypt.
-5. The client sends the new **Wrapped Private Client Key**, the new **Public
-   Wrapping Key**, and the encrypted comment to the server via an authenticated
+4. The client derives a new **Private Signing Key** and **Public Signing Key**
+   from the **Secret Link Key**.
+5. The client uses the new **Secret Wrapping Key** to encrypt the **Private
+   Primary Key** and generate a new **Wrapped Private Primary Key**.
+6. A user-provided comment for the key is encrypted with the **Secret Wrapping
+   Key**.
+7. The client sends the new **Wrapped Private Primary Key**, **Public Signing
+   Key**, and the encrypted comment to the server via an authenticated
    endpoint.
-6. The server generates a new **Client Key ID** for the **Wrapped Private
-   Client Key**. It stores the **Wrapped Private Client Key**, **Public
-   Wrapping Key**, encrypted comment, and **Client Key ID** in the database.
-7. The server returns the new **Client Key ID** to the client.
-8. The **Form ID**, new **Client Key ID**, and new **Private Wrapping Key**
-   form the new **Secret Link**.
+8. The server generates a new **Client Key ID**. It stores the **Wrapped
+   Private Primary Key**, **Secret Wrapping Key**, and encrypted comment in the
+   database by the **Client Key ID**.
+9. The server returns the new **Client Key ID** to the client.
+10. The **Form ID**, new **Client Key ID**, and new **Secret Link Key** form
+    the new **Secret Link**.
 
 A **Secret Link** can be revoked by the **Organizer** via an authenticated
-endpoint. This deletes the **Wrapped Private Client Key** from the database.
+endpoint. This deletes the **Wrapped Private Primary Key** and **Public Signing
+Key** from the database.
 
-Note that once a **Secret Link** has been used to reveal the **Private Client
+Note that once a **Secret Link** has been used to reveal the **Private Primary
 Key**, while revoking it will deny API access, it will not deny the ability to
 decrypt **Submissions** if the ciphertext is leaked.
 
-## Retrieving the private client key
+## Retrieving the private primary key
 
-A **Secret Link** can be used to retrieve and decrypt the **Private Client
+A **Secret Link** can be used to retrieve and decrypt the **Private Primary
 Key**.
 
-1. The client uses the **Form ID**, **Client Key ID**, and **Private Wrapping
-   Key** encoded in the **Secret Link** to call an authenticated API endpoint
-   (as described in the [Authentication](#authentication) section) to get the
-   **Wrapped Private Client Key**.
-2. The client uses the **Private Wrapping Key** to decrypt the **Wrapped
-   Private Client Key** and reveal the **Private Client Key**.
+1. The client uses the **API Access Token** to call an authenticated API
+   endpoint (as described in the [Authentication](#authentication) section) to
+   get the **Wrapped Private Primary Key**.
+2. The client uses the **Secret Wrapping Key** derived from the **Secret Link**
+   to decrypt the **Wrapped Private Primary Key** and reveal the **Private
+   Primary Key**.
 
 From here, the client can call a different authenticated API endpoint to get
 the list of encrypted **Submissions**, which can be decrypted using the
-**Private Client Key**.
+**Private Primary Key**.
 
 ## Authentication
 
@@ -161,10 +164,10 @@ claims:
 The server returns the **API Challenge** to the client, which decodes (but does
 not verify) it to get the `nonce`.
 
-The client signs the nonce with the **Private Client Signing Key** and
-generates an **API Challenge Response** from that signature, the **API
-Challenge**, the **Form ID**, and the **Client Key ID**. The **API Challenge
-Response** is a JSON object with this format:
+The client signs the nonce with the **Private Signing Key** and generates an
+**API Challenge Response** from that signature, the **API Challenge**, the
+**Form ID**, and the **Client Key ID**. The **API Challenge Response** is a
+JSON object with this format:
 
 ```json
 {
@@ -183,8 +186,8 @@ The server verifies:
   one it issued.
 - The `exp` claim to ensure the **API Challenge** has not expired.
 - The `jti` claim to ensure the **API Challenge** can only be used once.
-- The signature of the signed nonce using the **Public Client Signing Key**
-  associated with the **Form ID** and **Client Key ID**.
+- The signature of the signed nonce using the **Public Signing Key** associated
+  with the **Form ID** and **Client Key ID**.
 
 The server then deletes the `jti` from the key-value store.
 
