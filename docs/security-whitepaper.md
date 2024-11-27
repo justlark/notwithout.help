@@ -64,29 +64,29 @@ any time.
 
 To create a new **Form**:
 
-1. The client generates two random key pairs: The **Private Client Key**, the
-   **Public Client Key**, the **Private Wrapping Key** and the **Public
-   Wrapping Key**.
-2. The client sends the **Public Client Key** and the **Public Wrapping Key**
-   to the server to create a new **Form**.
-3. The server generates a random key pair for the **Form** called the **Private
-   Server Key** and **Public Server Key**, along with a unique **Server Key
-   ID**. The purpose of the **Server Key ID** is explained in the [Key
-   rotation](#key-rotation) section.
-4. The server returns the **Public Server Key**, **Server Key ID**, a unique
-   **Form ID**, and a **Client Key ID** for the initial **Secret Link** to the
-   client.
-5. The client uses the **Public Wrapping Key** to encrypt the **Private Client
-   Key** via a **Sealed Box** to generate a **Wrapped Private Client Key** that
-   only the **Private Wrapping Key** can decrypt.
-6. The client uses the **Form ID**, **Client Key ID**, **Server Key ID**,
-   **Private Wrapping Key**, and **Public Server Key** to call an authenticated
-   API endpoint (as described in the [Authentication](#authentication) section)
-   to send the **Wrapped Private Client Key** to the server.
-7. The server stores the **Wrapped Private Client Key** in the database
-   alongside its corresponding **Public Wrapping Key** and **Client Key ID**.
-8. The **Form ID**, **Client Key ID**, and **Private Wrapping Key** form the
-   initial **Secret Link**.
+1. The client generates a random **Private Primary Key** and **Public Primary
+   Key**. This will be used by clients to to encrypt **Submissions**.
+2. The client generates a random **Secret Link Key** which will form part of
+   the **Secret Link**.
+3. The client derives a symmetric **Secret Wrapping Key** from the **Secret
+   Link Key**.
+4. The client derives a **Private Signing Key** and **Public Signing Key** from
+   the **Secret Link Key**.
+5. The client sends the **Public Primary Key** and **Public Signing Key** to
+   the server to create a new **Form**.
+6. The server returns a unique **Form ID** and a **Client Key ID** that
+   identifies the **Secret Link** in the context of a **Form**.
+7. The client uses the **Secret Wrapping Key** to encrypt the **Private Primary
+   Key** and generate a **Wrapped Private Primary Key**.
+8. The client uses the **Form ID**, **Client Key ID**, and **Secret Signing
+   Key** to authenticate with the server, as described in the
+   [Authentication](#authentication) section.
+9. The client calls an authenticated API endpoint to send the **Wrapped Private
+   Primary Key** to the server.
+10. The server stores the **Wrapped Private Primary Key** in the database
+    alongside its corresponding **Public Signing Key** and **Client Key ID**.
+11. The **Form ID**, **Client Key ID**, and **Secret Link Key** form the
+    initial **Secret Link**.
 
 ## Generating a new secret link
 
