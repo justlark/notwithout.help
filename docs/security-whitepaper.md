@@ -249,36 +249,37 @@ GET /submissions/:form_id
 ```
 
 Delete the **Form** from the database, along with all its associated
-**Submissions**, **Wrapped Private Client Keys**, and **Private Server Keys**.
+**Submissions**, **Wrapped Private Primary Keys**, and **Public Signing Keys**.
 
 ```
 DELETE /forms/:form_id
 ```
 
-Get a **Wrapped Private Client Key** by its **Client Key ID**.
+Get a **Wrapped Private Primary Key** by its **Client Key ID**.
 
 ```
-GET /keys/:form_id/:key_id
+GET /keys/:form_id/:client_key_id
 ```
 
-Send a **Wrapped Private Client Key** and its associated encrypted comment to
+Send a **Wrapped Private Primary Key** and its associated encrypted comment to
 the server, associated with a **Form**.
 
 ```
 POST /keys/:form_id
 ```
 
-List the **Wrapped Private Client Keys** associated with a **Form**, along with
-their respective encrypted comments.
+List the **Wrapped Private Primary Keys** associated with a **Form**, along
+with their respective encrypted comments.
 
 ```
 GET /keys/:form_id
 ```
 
-Revoke a secret link by deleting its associated **Wrapped Private Client Key**.
+Revoke a secret link by deleting its associated **Wrapped Private Primary Key**
+and **Public Signing Key**.
 
 ```
-DELETE /keys/:form_id/:key_id
+DELETE /keys/:form_id/:client_key_id
 ```
 
 ### Unauthenticated endpoints
@@ -304,13 +305,13 @@ POST /submissions/:form_id
 Request an **API Challenge**.
 
 ```
-GET /challenges/:form_id/:key_id
+GET /challenges/:form_id/:client_key_id
 ```
 
 Exchange an **API Challenge Response** for an **API Access Token**.
 
 ```
-POST /tokens/:form_id/:key_id
+POST /tokens/:form_id/:client_key_id
 ```
 
 ## Glossary
