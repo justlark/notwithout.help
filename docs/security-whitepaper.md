@@ -213,6 +213,7 @@ validates to authorize the request. The server validates:
 - The `iss` matches the server's origin.
 - The `aud` matches the server's origin.
 - The **Form ID** in the `sub` matches the resource being requested.
+- The **Client Key ID** in the `sub` has not been revoked.
 - The `exp` claim to ensure the **API Access Token** has not expired.
 
 ## Key rotation
