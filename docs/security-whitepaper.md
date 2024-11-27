@@ -62,25 +62,27 @@ a **Secret Link**. **Organizers** can create additional **Secret Links** as
 well. **Secret Links** can have comments attached to them and can be revoked at
 any time.
 
-When a **Form** is created:
+To create a new **Form**:
 
-1. The client generates a random key pair called the **Private Wrapping Key**
-   and the **Public Wrapping Key**.
-2. The client sends the **Public Wrapping Key** (along with the **Public Client
-   Key**) to the server to create a new **Form**.
+1. The client generates two random key pairs: The **Private Client Key**, the
+   **Public Client Key**, the **Private Wrapping Key** and the **Public
+   Wrapping Key**.
+2. The client sends the **Public Client Key** and the **Public Wrapping Key**
+   to the server to create a new **Form**.
 3. The server generates a random key pair for the **Form** called the **Private
    Server Key** and **Public Server Key**, along with a unique **Server Key
-   ID**. The purpose of the **Server Key ID** is explained in [Key
-   rotation](#key-rotation).
+   ID**. The purpose of the **Server Key ID** is explained in the [Key
+   rotation](#key-rotation) section.
 4. The server returns the **Public Server Key**, **Server Key ID**, a unique
    **Form ID**, and a **Client Key ID** for the initial **Secret Link** to the
    client.
 5. The client uses the **Public Wrapping Key** to encrypt the **Private Client
-   Key** via a **Sealed Box** to generate a **Wrapped Private Client Key**.
-6. The client uses the **Form ID**, **Client Key ID**, **Private Wrapping
-   Key**, **Public Server Key**, and **Server Key ID** to call an authenticated
-   API endpoint (as described in [Authentication](#authentication)) to send the
-   **Wrapped Private Client Key** to the server.
+   Key** via a **Sealed Box** to generate a **Wrapped Private Client Key** that
+   only the **Private Wrapping Key** can decrypt.
+6. The client uses the **Form ID**, **Client Key ID**, **Server Key ID**,
+   **Private Wrapping Key**, and **Public Server Key** to call an authenticated
+   API endpoint (as described in the [Authentication](#authentication) section)
+   to send the **Wrapped Private Client Key** to the server.
 7. The server stores the **Wrapped Private Client Key** in the database
    alongside its corresponding **Public Wrapping Key** and **Client Key ID**.
 8. The **Form ID**, **Client Key ID**, and **Private Wrapping Key** form the
@@ -88,62 +90,66 @@ When a **Form** is created:
 
 ## Generating a new secret link
 
-When a new **Secret Link** is generated:
+To generate a new **Secret Link**:
 
-
-1. The client generates a new random **Private Wrapping Key** and **Public
-   Wrapping Key** pair.
-2. The client uses the new **Public Wrapping Key** to encrypt the **Private
+1. The client retrieves and decrypts the **Private Client Key** as described in
+   the [Retrieving the private client key](#retrieving-the-private-client-key)
+   section.
+2. The client generates a new random (**Private Wrapping Key**, **Public
+   Wrapping Key**) pair.
+3. The client uses the new **Public Wrapping Key** to encrypt the **Private
    Client Key** via a **Sealed Box** to generate a new **Wrapped Private Client
    Key**.
-3. A user-provided comment for the key is encrypted with the **Public Client
-   Key** via a **Sealed Box**.
-4. The client sends the new **Wrapped Private Client Key**, the new **Public
+4. A user-provided comment for the key is encrypted with the **Public Client
+   Key** via a **Sealed Box** the only the **Private Client Key** can decrypt.
+5. The client sends the new **Wrapped Private Client Key**, the new **Public
    Wrapping Key**, and the encrypted comment to the server via an authenticated
    endpoint.
-5. The server generates a new **Client Key ID** for the **Wrapped Private
+6. The server generates a new **Client Key ID** for the **Wrapped Private
    Client Key**. It stores the **Wrapped Private Client Key**, **Public
    Wrapping Key**, encrypted comment, and **Client Key ID** in the database.
-6. The server returns the new **Client Key ID** to the client.
-7. The **Form ID**, new **Client Key ID**, and new **Private Wrapping Key**
+7. The server returns the new **Client Key ID** to the client.
+8. The **Form ID**, new **Client Key ID**, and new **Private Wrapping Key**
    form the new **Secret Link**.
 
 A **Secret Link** can be revoked by the **Organizer** via an authenticated
 endpoint. This deletes the **Wrapped Private Client Key** from the database.
 
 Note that once a **Secret Link** has been used to reveal the **Private Client
-Key**, while revoking it will deny **API Access**, it will not deny the ability
-to decrypt **Submissions** if the ciphertext is leaked.
+Key**, while revoking it will deny API access, it will not deny the ability to
+decrypt **Submissions** if the ciphertext is leaked.
 
-## Decrypting submissions
+## Retrieving the private client key
 
-When a **Secret Link** is used to decrypt **Submissions**:
+A **Secret Link** can be used to retrieve and decrypt the **Private Client
+Key**.
 
 1. The client uses the **Form ID**, **Client Key ID**, and **Private Wrapping
-   Key** to call an authenticated API endpoint (as described in
-   [Authentication](#authentication)) to get the **Wrapped Private Client
-   Key**.
+   Key** encoded in the **Secret Link** to call an authenticated API endpoint
+   (as described in the [Authentication](#authentication) section) to get the
+   **Wrapped Private Client Key**.
 2. The client uses the **Private Wrapping Key** to decrypt the **Wrapped
    Private Client Key** and reveal the **Private Client Key**.
-3. The client calls another authenticated API endpoint to get the list of
-   encrypted **Submissions**.
-4. The client decrypts the **Submissions** using the **Private Client Key**.
+
+From here, the client can call a different authenticated API endpoint to get
+the list of encrypted **Submissions**, which can be decrypted using the
+**Private Client Key**.
 
 ## Authentication
 
 Some API endpoints require authentication. See the [API](#api) section for
 details.
 
-When a client makes an authenticated API request:
+To make an authenticated API request:
 
-1. The client uses the **Form ID** to request the **Public Server Key**, and
+1. The client uses the **Form ID** to request the **Public Server Key** and
    **Server Key ID** from the server.
 2. The client uses the **Private Wrapping Key** and the **Public Server Key**
    to encrypt a random byte string via a libsodium
    [**Box**](https://doc.libsodium.org/public-key_cryptography/authenticated_encryption)
    to generate the **API Proof**.
 3. The **API Proof** is concatenated with the **Server Key ID** and **Client
-   Key ID** and included in API requests as a bearer token.
+   Key ID** and included in the API request as a bearer token.
 4. The server uses the **Private Server Key** associated with the **Server Key
    ID** and the **Public Wrapping Key** associated with the **Client Key ID**
    to validate the **API Proof**.
@@ -178,14 +184,14 @@ by the server.
 
 ### Authenticated endpoints
 
-Request the encrypted **Submissions** for a **Form**.
+Request the ciphertext of the encrypted **Submissions** for a **Form**.
 
 ```
 GET /submissions/:form_id
 ```
 
 Delete the **Form** from the database, along with all its associated
-**Submissions**, and **Wrapped Private Client Keys**.
+**Submissions**, **Wrapped Private Client Keys**, and **Private Server Keys**.
 
 ```
 DELETE /forms/:form_id
@@ -267,6 +273,10 @@ POST /submissions/:form_id
   Client Key**.
 - **Server Key ID**: A unique non-secret identifier for a **Private Server
   Key**.
+- **Current Server Key Pair**: The current **Private Server Key** and **Public
+  Server Key** in the key rotation.
+- **Previous Server Key Pair**: The previous **Private Server Key** and
+  **Public Server Key** in the key rotation.
 - **Box**: An asymmetric encryption mechanism provided by
   [libsodium](https://doc.libsodium.org/public-key_cryptography/authenticated_encryption).
 - **Sealed Box**: An asymmetric encryption mechanism provided by
