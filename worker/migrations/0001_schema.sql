@@ -15,22 +15,13 @@ CREATE TABLE "submissions" (
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "client_keys" (
+CREATE TABLE "keys" (
   "id" integer PRIMARY KEY,
   "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
   "key_index" integer NOT NULL,
   "public_signing_key" text NOT NULL,
   "wrapped_private_primary_key" text,
   "encrypted_comment" text NOT NULL,
-  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE ("form", "key_index")
-);
-
-CREATE TABLE "server_keys" (
-  "id" integer PRIMARY KEY,
-  "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
-  "key_index" integer NOT NULL,
-  "key" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
 );
