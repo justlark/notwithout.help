@@ -3,6 +3,7 @@ CREATE TABLE "forms" (
   "id" integer PRIMARY KEY,
   "form_id" text NOT NULL UNIQUE,
   "template" text NOT NULL,
+  "public_primary_key" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -18,8 +19,8 @@ CREATE TABLE "client_keys" (
   "id" integer PRIMARY KEY,
   "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
   "key_index" integer NOT NULL,
-  "public_wrapping_key" text NOT NULL,
-  "wrapped_private_key" text,
+  "public_signing_key" text NOT NULL,
+  "wrapped_private_primary_key" text,
   "encrypted_comment" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
@@ -29,8 +30,7 @@ CREATE TABLE "server_keys" (
   "id" integer PRIMARY KEY,
   "form" integer REFERENCES "forms" ("id") ON DELETE CASCADE,
   "key_index" integer NOT NULL,
-  "public_key" text NOT NULL,
-  "private_key" text NOT NULL,
+  "key" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
 );
