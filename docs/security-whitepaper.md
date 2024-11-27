@@ -153,6 +153,10 @@ claims:
 
 - `kid` (header claim): The concatenation of the **Form ID** and the **Server
   Key ID**.
+- `iss` (registered claim): The server's origin.
+- `aud` (registered claim): The server's origin.
+- `sub` (registered claim): The concatenation of the **Form ID** and the
+  **Client Key ID**.
 - `iat` (registered claim): The current timestamp.
 - `exp` (registered claim): A short expiration timestamp (e.g. 1 minute from
   `iat`).
@@ -183,6 +187,8 @@ The server verifies:
 - The signature of the **API Challenge** using the **Secret Server Key**
   associated with the `kid` to ensure the nonce the client signed is the same
   one it issued.
+- The `iss` matches the server's origin.
+- The `aud` matches the server's origin.
 - The `exp` claim to ensure the **API Challenge** has not expired.
 - The `jti` claim to ensure the **API Challenge** can only be used once.
 - The signature of the signed nonce using the **Public Signing Key** associated
@@ -311,7 +317,7 @@ GET /challenges/:form_id/:client_key_id
 Exchange an **API Challenge Response** for an **API Access Token**.
 
 ```
-POST /tokens/:form_id/:client_key_id
+POST /tokens
 ```
 
 ## Glossary
