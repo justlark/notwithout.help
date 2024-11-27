@@ -267,8 +267,8 @@ the server, associated with a **Form**.
 POST /keys/:form_id
 ```
 
-List the **Wrapped Private Primary Keys** associated with a **Form**, along
-with their respective encrypted comments.
+List the **Client Key IDs** associated with a **Form**, along with their
+respective encrypted comments.
 
 ```
 GET /keys/:form_id
