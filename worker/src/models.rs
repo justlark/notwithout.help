@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use chrono::{DateTime, Utc};
 use rand::distributions::{Alphanumeric, DistString};
@@ -49,6 +49,12 @@ impl From<String> for FormId {
     }
 }
 
+impl fmt::Display for FormId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0 .0)
+    }
+}
+
 // As of time of writing, the submission ID isn't used anywhere. It exists only for
 // future-proofing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +96,12 @@ impl FromStr for ClientKeyId {
     }
 }
 
+impl fmt::Display for ClientKeyId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct ServerKeyId(RandomId);
@@ -111,6 +123,30 @@ impl Default for ServerKeyId {
 impl From<String> for ServerKeyId {
     fn from(s: String) -> Self {
         Self(RandomId(s))
+    }
+}
+
+impl fmt::Display for ServerKeyId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0 .0)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct ChallengeId(RandomId);
+
+impl ChallengeId {
+    const LEN: usize = 16;
+
+    pub fn new() -> Self {
+        Self(RandomId::new(Self::LEN))
+    }
+}
+
+impl Default for ChallengeId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -144,4 +180,14 @@ pub struct ClientKeys {
     pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
     pub encrypted_comment: EncryptedKeyComment,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(transparent)]
+pub struct SignedApiChallenge(String);
+
+impl From<String> for SignedApiChallenge {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
 }

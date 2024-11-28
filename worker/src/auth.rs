@@ -1,3 +1,5 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use anyhow::bail;
 use axum::{
     body::Body,
@@ -6,16 +8,16 @@ use axum::{
 };
 use futures::future::{BoxFuture, FutureExt};
 use jsonwebtoken as jwt;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
-    models::FormId,
+    keys::ApiChallengeNonce,
+    models::{ChallengeId, ClientKeyId, FormId, ServerKeyId, SignedApiChallenge},
     store::{Store, UnauthenticatedStore},
 };
 
 const BEARER_PREFIX: &str = "Bearer ";
-const SUB_CLAIM_SEPARATOR: char = '/';
 
 const JWT_ALGORITHM: jwt::Algorithm = jwt::Algorithm::HS256;
 
@@ -26,12 +28,53 @@ const EXPECTED_AUD: [&str; 2] = [
 const EXPECTED_ISS: [&str; 2] = EXPECTED_AUD;
 
 #[derive(Debug, Clone)]
-pub struct ApiAccessToken(String);
-
-#[derive(Debug, Deserialize)]
-struct ApiAccessTokenClaims {
-    pub sub: String,
+pub struct ApiTokenJwtSub {
+    pub form_id: FormId,
+    pub client_key_id: ClientKeyId,
 }
+
+impl ApiTokenJwtSub {
+    const SEPARATOR: char = '/';
+}
+
+impl Serialize for ApiTokenJwtSub {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        format!("{}{}{}", self.form_id, Self::SEPARATOR, self.client_key_id).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for ApiTokenJwtSub {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let parts = s.splitn(2, Self::SEPARATOR).collect::<Vec<_>>();
+
+        let (form_id, client_key_id) = match parts.as_slice() {
+            [form_id, client_key_id] => (
+                form_id.to_string().into(),
+                client_key_id.parse().map_err(serde::de::Error::custom)?,
+            ),
+            _ => {
+                return Err(serde::de::Error::custom(
+                    "JWT `sub` claim is not in the expected format.",
+                ))
+            }
+        };
+
+        Ok(Self {
+            form_id,
+            client_key_id,
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ApiAccessToken(String);
 
 impl ApiAccessToken {
     pub async fn validate(
@@ -59,29 +102,21 @@ impl ApiAccessToken {
         validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
         validation.algorithms = vec![JWT_ALGORITHM];
 
-        let token_claims = jwt::decode::<ApiAccessTokenClaims>(
-            &self.0,
-            &ephemeral_server_key.decoding_key(),
-            &validation,
-        )?
-        .claims;
+        #[derive(Debug, Deserialize)]
+        struct Claims {
+            pub sub: ApiTokenJwtSub,
+        }
 
-        let (sub_form_id, sub_client_key_id) = match token_claims
-            .sub
-            .splitn(2, SUB_CLAIM_SEPARATOR)
-            .collect::<Vec<_>>()
-            .as_slice()
-        {
-            [form_id, client_key_id] => (form_id.to_string().into(), client_key_id.parse()?),
-            _ => bail!("Access token `sub` claim is not in the expected format."),
-        };
+        let token_claims =
+            jwt::decode::<Claims>(&self.0, &ephemeral_server_key.decoding_key(), &validation)?
+                .claims;
 
-        if sub_form_id != form_id {
+        if token_claims.sub.form_id != form_id {
             bail!("Form ID in access token `sub` does not match the form being accessed.");
         }
 
         let client_keys = store
-            .get_client_keys(sub_form_id, sub_client_key_id)
+            .get_client_keys(token_claims.sub.form_id, token_claims.sub.client_key_id)
             .await?;
 
         if client_keys.is_none() {
@@ -89,6 +124,53 @@ impl ApiAccessToken {
         }
 
         Ok(store)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ApiChallenge {
+    pub server_key_id: ServerKeyId,
+    pub form_id: FormId,
+    pub client_id: ClientKeyId,
+    pub challenge_id: ChallengeId,
+    pub nonce: ApiChallengeNonce,
+    pub origin: String,
+    pub exp: Duration,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ApiChallengeClaims {
+    sub: ApiTokenJwtSub,
+    aud: String,
+    iss: String,
+    iat: u64,
+    exp: u64,
+    jti: ChallengeId,
+    nonce: ApiChallengeNonce,
+}
+
+impl ApiChallenge {
+    pub fn encode(&self, key: &jwt::EncodingKey) -> anyhow::Result<SignedApiChallenge> {
+        let mut header = jwt::Header::new(JWT_ALGORITHM);
+        header.kid = Some(self.server_key_id.to_string());
+
+        let current_time = SystemTime::now();
+        let secs_since_epoch = current_time.duration_since(UNIX_EPOCH)?.as_secs();
+
+        let claims = ApiChallengeClaims {
+            sub: ApiTokenJwtSub {
+                form_id: self.form_id.clone(),
+                client_key_id: self.client_id,
+            },
+            aud: self.origin.clone(),
+            iss: self.origin.clone(),
+            iat: secs_since_epoch,
+            exp: secs_since_epoch + self.exp.as_secs(),
+            jti: self.challenge_id.clone(),
+            nonce: self.nonce.clone(),
+        };
+
+        Ok(jwt::encode(&header, &claims, key)?.into())
     }
 }
 

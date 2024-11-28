@@ -15,43 +15,6 @@ use serde::{Deserialize, Serialize};
 //
 
 #[derive(Debug, Clone)]
-pub struct ApiChallengeNonce(Vec<u8>);
-
-impl ApiChallengeNonce {
-    pub const LEN: usize = 16;
-
-    pub fn generate() -> Self {
-        let mut rng = rand::thread_rng();
-        let mut buf = vec![0u8; Self::LEN];
-        rng.fill_bytes(&mut buf);
-        Self(buf)
-    }
-}
-
-impl Serialize for ApiChallengeNonce {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        BASE64_STANDARD.encode(&self.0).serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for ApiChallengeNonce {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        let decoded = BASE64_STANDARD
-            .decode(s)
-            .context("API challenge nonce is not a valid base64-encoded string.")
-            .map_err(serde::de::Error::custom)?;
-        Ok(Self(decoded))
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct EphemeralServerKey(SecretSlice<u8>);
 
 impl EphemeralServerKey {
@@ -95,6 +58,43 @@ impl<'de> Deserialize<'de> for EphemeralServerKey {
             .context("Ephemeral server key is not a valid base64-encoded string.")
             .map_err(serde::de::Error::custom)?;
         Ok(Self(SecretSlice::from(decoded)))
+    }
+}
+
+impl<'de> Deserialize<'de> for ApiChallengeNonce {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let decoded = BASE64_STANDARD
+            .decode(s)
+            .context("API challenge nonce is not a valid base64-encoded string.")
+            .map_err(serde::de::Error::custom)?;
+        Ok(Self(decoded))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ApiChallengeNonce(Vec<u8>);
+
+impl ApiChallengeNonce {
+    pub const LEN: usize = 16;
+
+    pub fn generate() -> Self {
+        let mut rng = rand::thread_rng();
+        let mut buf = vec![0u8; Self::LEN];
+        rng.fill_bytes(&mut buf);
+        Self(buf)
+    }
+}
+
+impl Serialize for ApiChallengeNonce {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        BASE64_STANDARD.encode(&self.0).serialize(serializer)
     }
 }
 

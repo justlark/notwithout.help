@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    keys::{PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
+    keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, Submission},
 };
 
@@ -64,4 +64,10 @@ pub struct PostKeyRequest {
 #[derive(Debug, Serialize)]
 pub struct PostKeyResponse {
     pub client_key_id: ClientKeyId,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApiAccessTokenRequest {
+    pub signature: ClientNonceSignature,
+    pub challenge: String,
 }
