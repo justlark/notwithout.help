@@ -7,6 +7,8 @@
 This document is an informal overview of how [Not Without
 Help](https://notwithout.help) mitigates security risks.
 
+⚠️ This document is in an early draft stage. ⚠️
+
 ## Disclaimer
 
 **This system has not been audited for security.** If your safety or freedom
