@@ -128,7 +128,7 @@ impl<'de> Deserialize<'de> for ClientNonceSignature {
 pub struct PublicSigningKey(ed25519::VerifyingKey);
 
 impl PublicSigningKey {
-    fn verify(
+    pub fn verify(
         &self,
         nonce: &ApiChallengeNonce,
         signature: &ClientNonceSignature,

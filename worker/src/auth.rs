@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use axum::{
     body::Body,
     http::{header::AUTHORIZATION, Request, Response, StatusCode},
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
-    keys::ApiChallengeNonce,
+    keys::{ApiChallengeNonce, ClientNonceSignature},
     models::{ChallengeId, ClientKeyId, FormId, ServerKeyId},
     store::{Store, UnauthenticatedStore},
 };
@@ -131,7 +131,7 @@ impl SignedApiAccessToken {
 pub struct ApiChallenge {
     pub server_key_id: ServerKeyId,
     pub form_id: FormId,
-    pub client_id: ClientKeyId,
+    pub client_key_id: ClientKeyId,
     pub challenge_id: ChallengeId,
     pub nonce: ApiChallengeNonce,
     pub origin: String,
@@ -160,7 +160,7 @@ impl ApiChallenge {
         let claims = ApiChallengeClaims {
             sub: ApiTokenJwtSub {
                 form_id: self.form_id.clone(),
-                client_key_id: self.client_id,
+                client_key_id: self.client_key_id,
             },
             aud: self.origin.clone(),
             iss: self.origin.clone(),
@@ -179,15 +179,17 @@ impl ApiChallenge {
 pub struct SignedApiChallenge(String);
 
 impl SignedApiChallenge {
-    pub async fn validate(&self, store: &Store) -> anyhow::Result<ApiChallengeNonce> {
+    async fn validate(&self, store: &Store) -> anyhow::Result<ApiChallenge> {
         let header = jwt::decode_header(&self.0)?;
 
-        let server_key_id = header
+        let server_key_id: ServerKeyId = header
             .kid
             .ok_or_else(|| anyhow::anyhow!("Challenge token is missing the `kid` claim."))?
             .into();
 
-        let ephemeral_server_key = store.get_ephemeral_server_key(server_key_id).await?;
+        let ephemeral_server_key = store
+            .get_ephemeral_server_key(server_key_id.clone())
+            .await?;
 
         let mut validation = jwt::Validation::new(JWT_ALGORITHM);
         validation.required_spec_claims = ["exp", "aud", "iss", "jti"]
@@ -209,9 +211,44 @@ impl SignedApiChallenge {
             bail!("This challenge token has already been used.");
         }
 
-        store.delete_challenge_id(claims.jti).await?;
+        store.delete_challenge_id(claims.jti.clone()).await?;
 
-        Ok(claims.nonce)
+        Ok(ApiChallenge {
+            server_key_id,
+            form_id: claims.sub.form_id,
+            client_key_id: claims.sub.client_key_id,
+            challenge_id: claims.jti,
+            nonce: claims.nonce,
+            origin: claims.iss,
+            exp: Duration::from_secs(claims.exp - claims.iat),
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct ApiChallengeResponse {
+    pub signature: ClientNonceSignature,
+    pub challenge: SignedApiChallenge,
+}
+
+impl ApiChallengeResponse {
+    pub async fn validate(&self, store: &Store) -> anyhow::Result<()> {
+        let challenge = self.challenge.validate(store).await?;
+
+        let client_keys = store
+            .get_client_keys(challenge.form_id, challenge.client_key_id)
+            .await?;
+
+        let public_signing_key = client_keys
+            .as_ref()
+            .map(|keys| &keys.public_signing_key)
+            .ok_or_else(|| {
+                anyhow!("Public signing key for this challenge does not exist or has been revoked.")
+            })?;
+
+        public_signing_key.verify(&challenge.nonce, &self.signature)?;
+
+        Ok(())
     }
 }
 
