@@ -73,6 +73,15 @@ impl<'de> Deserialize<'de> for ApiTokenJwtSub {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct ApiAccessTokenClaims {
+    sub: ApiTokenJwtSub,
+    aud: String,
+    iss: String,
+    iat: u64,
+    exp: u64,
+}
+
 #[derive(Debug, Clone)]
 pub struct SignedApiAccessToken(String);
 
@@ -102,14 +111,12 @@ impl SignedApiAccessToken {
         validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
         validation.algorithms = vec![JWT_ALGORITHM];
 
-        #[derive(Debug, Deserialize)]
-        struct Claims {
-            pub sub: ApiTokenJwtSub,
-        }
-
-        let token_claims =
-            jwt::decode::<Claims>(&self.0, &ephemeral_server_key.decoding_key(), &validation)?
-                .claims;
+        let token_claims = jwt::decode::<ApiAccessTokenClaims>(
+            &self.0,
+            &ephemeral_server_key.decoding_key(),
+            &validation,
+        )?
+        .claims;
 
         if token_claims.sub.form_id != form_id {
             bail!("Form ID in access token `sub` does not match the form being accessed.");
@@ -179,7 +186,7 @@ impl ApiChallenge {
 pub struct SignedApiChallenge(String);
 
 impl SignedApiChallenge {
-    async fn validate(&self, store: &Store) -> anyhow::Result<ApiChallenge> {
+    async fn validate(&self, store: &Store) -> anyhow::Result<ValidatedApiChallenge> {
         let header = jwt::decode_header(&self.0)?;
 
         let server_key_id: ServerKeyId = header
@@ -213,7 +220,7 @@ impl SignedApiChallenge {
 
         store.delete_challenge_id(claims.jti.clone()).await?;
 
-        Ok(ApiChallenge {
+        Ok(ValidatedApiChallenge(ApiChallenge {
             server_key_id,
             form_id: claims.sub.form_id,
             client_key_id: claims.sub.client_key_id,
@@ -221,7 +228,35 @@ impl SignedApiChallenge {
             nonce: claims.nonce,
             origin: claims.iss,
             exp: Duration::from_secs(claims.exp - claims.iat),
-        })
+        }))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ValidatedApiChallenge(ApiChallenge);
+
+impl ValidatedApiChallenge {
+    pub fn into_access_token(self, key: &jwt::EncodingKey) -> anyhow::Result<SignedApiAccessToken> {
+        let challenge = self.0;
+
+        let mut header = jwt::Header::new(JWT_ALGORITHM);
+        header.kid = Some(challenge.server_key_id.to_string());
+
+        let current_time = SystemTime::now();
+        let secs_since_epoch = current_time.duration_since(UNIX_EPOCH)?.as_secs();
+
+        let claims = ApiAccessTokenClaims {
+            sub: ApiTokenJwtSub {
+                form_id: challenge.form_id.clone(),
+                client_key_id: challenge.client_key_id,
+            },
+            aud: challenge.origin.clone(),
+            iss: challenge.origin.clone(),
+            iat: secs_since_epoch,
+            exp: secs_since_epoch + challenge.exp.as_secs(),
+        };
+
+        Ok(SignedApiAccessToken(jwt::encode(&header, &claims, key)?))
     }
 }
 
@@ -232,11 +267,11 @@ pub struct ApiChallengeResponse {
 }
 
 impl ApiChallengeResponse {
-    pub async fn validate(&self, store: &Store) -> anyhow::Result<()> {
-        let challenge = self.challenge.validate(store).await?;
+    pub async fn validate(&self, store: &Store) -> anyhow::Result<ValidatedApiChallenge> {
+        let challenge = self.challenge.validate(store).await?.0;
 
         let client_keys = store
-            .get_client_keys(challenge.form_id, challenge.client_key_id)
+            .get_client_keys(challenge.form_id.clone(), challenge.client_key_id)
             .await?;
 
         let public_signing_key = client_keys
@@ -248,7 +283,7 @@ impl ApiChallengeResponse {
 
         public_signing_key.verify(&challenge.nonce, &self.signature)?;
 
-        Ok(())
+        Ok(ValidatedApiChallenge(challenge))
     }
 }
 
