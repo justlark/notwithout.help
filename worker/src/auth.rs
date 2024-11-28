@@ -179,11 +179,7 @@ impl ApiChallenge {
 pub struct SignedApiChallenge(String);
 
 impl SignedApiChallenge {
-    pub async fn validate(
-        &self,
-        store: &Store,
-        nonce: ApiChallengeNonce,
-    ) -> anyhow::Result<ApiChallengeNonce> {
+    pub async fn validate(&self, store: &Store) -> anyhow::Result<ApiChallengeNonce> {
         let header = jwt::decode_header(&self.0)?;
 
         let server_key_id = header
@@ -208,6 +204,12 @@ impl SignedApiChallenge {
             &validation,
         )?
         .claims;
+
+        if !store.has_challenge_id(claims.jti.clone()).await? {
+            bail!("This challenge token has already been used.");
+        }
+
+        store.delete_challenge_id(claims.jti).await?;
 
         Ok(claims.nonce)
     }

@@ -7,7 +7,7 @@ use worker::{d1::D1Database, kv::KvStore, query};
 use crate::{
     keys::{EphemeralServerKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
-        ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
+        ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
         FormTemplate, ServerKeyId, Submission, SubmissionId,
     },
 };
@@ -347,6 +347,21 @@ impl Store {
 
     #[worker::send]
     pub async fn delete_ephemeral_server_key(&self, key_id: ServerKeyId) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    #[worker::send]
+    pub async fn has_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<bool> {
+        todo!()
+    }
+
+    #[worker::send]
+    pub async fn store_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    #[worker::send]
+    pub async fn delete_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
         todo!()
     }
 }
