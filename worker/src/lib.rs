@@ -18,13 +18,14 @@ use tower_service::Service;
 use worker::{self, event, Context, Env, HttpRequest};
 
 const D1_BINDING: &str = "DB";
+const KV_BINDING: &str = "KV";
 
 #[event(fetch)]
 async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Response<Body>> {
     console_error_panic_hook::set_once();
 
     let state = AppState {
-        store: UnauthenticatedStore::new(env.d1(D1_BINDING)?),
+        store: UnauthenticatedStore::new(env.d1(D1_BINDING)?, env.kv(KV_BINDING)?),
         env: WorkerEnv::get(&env),
     };
 

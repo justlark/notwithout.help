@@ -2,7 +2,7 @@ use std::fmt;
 
 use chrono::NaiveDateTime;
 use serde::Deserialize;
-use worker::{d1::D1Database, query};
+use worker::{d1::D1Database, kv::KvStore, query};
 
 use crate::{
     keys::{EphemeralServerKey, PublicSigningKey, WrappedPrivatePrimaryKey},
@@ -20,8 +20,8 @@ const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 pub struct UnauthenticatedStore(Store);
 
 impl UnauthenticatedStore {
-    pub fn new(db: D1Database) -> Self {
-        Self(Store { db })
+    pub fn new(db: D1Database, kv: KvStore) -> Self {
+        Self(Store { db, kv })
     }
 
     // If we want to access the store without authenticating, we need to be explicit about it.
@@ -32,6 +32,7 @@ impl UnauthenticatedStore {
 
 pub struct Store {
     db: D1Database,
+    kv: KvStore,
 }
 
 impl fmt::Debug for Store {
