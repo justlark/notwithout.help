@@ -27,6 +27,13 @@ const EXPECTED_AUD: [&str; 2] = [
 ];
 const EXPECTED_ISS: [&str; 2] = EXPECTED_AUD;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ApiTokenType {
+    Access,
+    Challenge,
+}
+
 #[derive(Debug, Clone)]
 pub struct ApiTokenJwtSub {
     pub form_id: FormId,
@@ -75,6 +82,8 @@ impl<'de> Deserialize<'de> for ApiTokenJwtSub {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ApiAccessTokenClaims {
+    #[serde(rename = "type")]
+    token_type: ApiTokenType,
     sub: ApiTokenJwtSub,
     aud: String,
     iss: String,
@@ -118,6 +127,10 @@ impl SignedApiAccessToken {
         )?
         .claims;
 
+        if token_claims.token_type != ApiTokenType::Access {
+            bail!("Attempted to use a challenge token as an access token.");
+        }
+
         if token_claims.sub.form_id != form_id {
             bail!("Form ID in access token `sub` does not match the form being accessed.");
         }
@@ -147,6 +160,8 @@ pub struct ApiChallenge {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ApiChallengeClaims {
+    #[serde(rename = "type")]
+    token_type: ApiTokenType,
     sub: ApiTokenJwtSub,
     aud: String,
     iss: String,
@@ -165,6 +180,7 @@ impl ApiChallenge {
         let secs_since_epoch = current_time.duration_since(UNIX_EPOCH)?.as_secs();
 
         let claims = ApiChallengeClaims {
+            token_type: ApiTokenType::Challenge,
             sub: ApiTokenJwtSub {
                 form_id: self.form_id.clone(),
                 client_key_id: self.client_key_id,
@@ -214,6 +230,10 @@ impl SignedApiChallenge {
         )?
         .claims;
 
+        if claims.token_type != ApiTokenType::Challenge {
+            bail!("Attempted to use an access token as a challenge token.");
+        }
+
         if !store.has_challenge_id(claims.jti.clone()).await? {
             bail!("This challenge token has already been used.");
         }
@@ -246,6 +266,7 @@ impl ValidatedApiChallenge {
         let secs_since_epoch = current_time.duration_since(UNIX_EPOCH)?.as_secs();
 
         let claims = ApiAccessTokenClaims {
+            token_type: ApiTokenType::Access,
             sub: ApiTokenJwtSub {
                 form_id: challenge.form_id.clone(),
                 client_key_id: challenge.client_key_id,
