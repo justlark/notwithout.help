@@ -15,6 +15,8 @@ use crate::{
 };
 
 const BEARER_PREFIX: &str = "Bearer ";
+const SUB_CLAIM_SEPARATOR: char = '/';
+
 const JWT_ALGORITHM: jwt::Algorithm = jwt::Algorithm::HS256;
 
 const EXPECTED_AUD: [&str; 2] = [
@@ -66,7 +68,7 @@ impl ApiAccessToken {
 
         let (sub_form_id, sub_client_key_id) = match token_claims
             .sub
-            .splitn(2, '/')
+            .splitn(2, SUB_CLAIM_SEPARATOR)
             .collect::<Vec<_>>()
             .as_slice()
         {

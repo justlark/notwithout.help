@@ -52,9 +52,6 @@ impl<'de> Deserialize<'de> for ApiChallengeNonce {
 }
 
 #[derive(Debug, Clone)]
-pub struct PublicServerKey(Vec<u8>);
-
-#[derive(Debug, Clone)]
 pub struct EphemeralServerKey(SecretSlice<u8>);
 
 impl EphemeralServerKey {
@@ -164,9 +161,10 @@ impl<'de> Deserialize<'de> for PublicSigningKey {
             .map_err(serde::de::Error::custom)?;
 
         if decoded.len() != ed25519::PUBLIC_KEY_LENGTH {
-            return Err(serde::de::Error::custom(
-                "Public signing key is not 32 bytes long.",
-            ));
+            return Err(serde::de::Error::custom(format!(
+                "Public signing key is not {} bytes long.",
+                ed25519::PUBLIC_KEY_LENGTH,
+            )));
         }
 
         let mut bytes = [0u8; ed25519::PUBLIC_KEY_LENGTH];
