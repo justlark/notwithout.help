@@ -1,17 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    crypt::{PublicClientKey, PublicServerKey, PublicWrappingKey},
-    models::{
-        ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, ServerKeyId, Submission,
-        WrappedPrivateClientKey,
-    },
+    keys::{PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
+    models::{ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, Submission},
 };
 
 #[derive(Debug, Serialize)]
 pub struct GetFormResponse {
-    pub public_server_key: PublicServerKey,
-    pub server_key_id: ServerKeyId,
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
@@ -19,8 +14,8 @@ pub struct GetFormResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct PublishFormRequest {
-    pub public_client_key: PublicClientKey,
-    pub public_wrapping_key: PublicWrappingKey,
+    pub public_primary_key: PublicPrimaryKey,
+    pub public_signing_key: PublicSigningKey,
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
@@ -29,8 +24,6 @@ pub struct PublishFormRequest {
 #[derive(Debug, Serialize)]
 pub struct PublishFormResponse {
     pub form_id: FormId,
-    pub public_server_key: PublicServerKey,
-    pub server_key_id: ServerKeyId,
     pub client_key_id: ClientKeyId,
 }
 
@@ -53,19 +46,18 @@ impl From<Submission> for ListSubmissionsResponse {
 
 #[derive(Debug, Serialize)]
 pub struct GetKeyResponse {
-    pub wrapped_client_key: WrappedPrivateClientKey,
+    pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ListKeysResponse {
     pub client_key_id: ClientKeyId,
-    pub wrapped_client_key: WrappedPrivateClientKey,
     pub encrypted_comment: EncryptedKeyComment,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct PostKeyRequest {
-    pub wrapped_client_key: WrappedPrivateClientKey,
+    pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
     pub encrypted_comment: EncryptedKeyComment,
 }
 
