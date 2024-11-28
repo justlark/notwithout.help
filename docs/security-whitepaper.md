@@ -142,6 +142,8 @@ the list of encrypted **Submissions**, which can be decrypted using the
 Some API endpoints require authentication. See the [API](#api) section for
 details.
 
+![Authentication flow diagram](./auth-flow-diagram.png)
+
 The client uses the **Form ID** and **Client Key ID** from the **Secret Link**
 to request an **API Challenge** from the server via an unauthenticated API
 endpoint.
@@ -200,9 +202,9 @@ The server verifies:
 
 The server then deletes the `jti` from the key-value store.
 
-The server exchanges the **API Challenge Response* for an **API Access Token**.
-The **API Access Token** is a JWT signed with the **Ephemeral Server Key** via
-`HS256`. The **API Access Token** has the following claims:
+The server exchanges the **API Challenge Response** for an **API Access
+Token**. The **API Access Token** is a JWT signed with the **Ephemeral Server
+Key** via `HS256`. The **API Access Token** has the following claims:
 
 - `kid` (header claim): The **Server Key ID** of the **Ephemeral Server Key**
   used to sign the JWT.
