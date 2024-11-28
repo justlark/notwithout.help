@@ -3,7 +3,7 @@
 **Author**: Lark (they/it)\
 **Contact**: <lark@lark.gay>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 27 Nov 2024
+**Last Updated**: 28 Nov 2024
 
 This document is an informal overview of how [Not Without
 Help](https://notwithout.help) mitigates security risks.
