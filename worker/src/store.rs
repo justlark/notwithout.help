@@ -5,11 +5,10 @@ use serde::Deserialize;
 use worker::{d1::D1Database, query};
 
 use crate::{
-    crypt::{PrivateServerKey, PublicServerKey, PublicWrappingKey},
+    keys::{EphemeralServerKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
-        ClientKeyId, ClientKeyPair, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
-        FormTemplate, ServerKeyId, ServerKeyPair, Submission, SubmissionId,
-        WrappedPrivateClientKey,
+        ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
+        FormTemplate, ServerKeyId, Submission, SubmissionId,
     },
 };
 
@@ -161,18 +160,18 @@ impl Store {
         &self,
         form_id: FormId,
         key_id: ClientKeyId,
-    ) -> anyhow::Result<Option<ClientKeyPair>> {
+    ) -> anyhow::Result<Option<ClientKeys>> {
         let stmt = query!(
             &self.db,
             "
             SELECT
-                client_keys.public_wrapping_key,
-                client_keys.wrapped_private_key,
-                client_keys.encrypted_comment,
-                client_keys.created_at
-            FROM client_keys
-            JOIN forms ON client_keys.form = forms.id
-            WHERE forms.form_id = ?1 AND client_keys.key_index = ?2;
+                keys.public_wrapping_key,
+                keys.wrapped_private_key,
+                keys.encrypted_comment,
+                keys.created_at
+            FROM keys
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ?1 AND keys.key_index = ?2;
             ",
             form_id,
             key_id,
@@ -180,8 +179,8 @@ impl Store {
 
         #[derive(Debug, Deserialize)]
         struct Row {
-            public_wrapping_key: PublicWrappingKey,
-            wrapped_private_key: WrappedPrivateClientKey,
+            public_signing_key: PublicSigningKey,
+            wrapped_private_primary_key: WrappedPrivatePrimaryKey,
             encrypted_comment: EncryptedKeyComment,
             created_at: String,
         }
@@ -189,10 +188,10 @@ impl Store {
         let row = stmt.first::<Row>(None).await?;
 
         row.map(|row| -> anyhow::Result<_> {
-            Ok(ClientKeyPair {
+            Ok(ClientKeys {
                 id: key_id,
-                public_wrapping_key: row.public_wrapping_key,
-                wrapped_private_key: row.wrapped_private_key,
+                public_signing_key: row.public_signing_key,
+                wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
                 created_at: NaiveDateTime::parse_from_str(&row.created_at, SQLITE_DATETIME_FORMAT)?
                     .and_utc(),
@@ -202,20 +201,20 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn list_client_keys(&self, form_id: FormId) -> anyhow::Result<Vec<ClientKeyPair>> {
+    pub async fn list_client_keys(&self, form_id: FormId) -> anyhow::Result<Vec<ClientKeys>> {
         let stmt = query!(
             &self.db,
             "
             SELECT
-                client_keys.key_index,
-                client_keys.public_wrapping_key,
-                client_keys.wrapped_private_key,
-                client_keys.encrypted_comment,
-                client_keys.created_at
-            FROM client_keys
-            JOIN forms ON client_keys.form = forms.id
+                keys.key_index,
+                keys.public_signing_key,
+                keys.wrapped_private_primary_key,
+                keys.encrypted_comment,
+                keys.created_at
+            FROM keys
+            JOIN forms ON keys.form = forms.id
             WHERE forms.form_id = ?1
-            ORDER BY client_keys.key_index ASC;
+            ORDER BY keys.key_index ASC;
             ",
             form_id,
         )?;
@@ -223,8 +222,8 @@ impl Store {
         #[derive(Debug, Deserialize)]
         struct Row {
             key_index: ClientKeyId,
-            public_wrapping_key: PublicWrappingKey,
-            wrapped_private_key: WrappedPrivateClientKey,
+            public_signing_key: PublicSigningKey,
+            wrapped_private_primary_key: WrappedPrivatePrimaryKey,
             encrypted_comment: EncryptedKeyComment,
             created_at: String,
         }
@@ -233,10 +232,10 @@ impl Store {
 
         rows.into_iter()
             .map(|row| {
-                Ok(ClientKeyPair {
+                Ok(ClientKeys {
                     id: row.key_index,
-                    public_wrapping_key: row.public_wrapping_key,
-                    wrapped_private_key: row.wrapped_private_key,
+                    public_signing_key: row.public_signing_key,
+                    wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
                     created_at: NaiveDateTime::parse_from_str(
                         &row.created_at,
@@ -249,30 +248,30 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn add_client_key(
+    pub async fn store_client_keys(
         &self,
         form_id: FormId,
-        public_wrapping_key: PublicWrappingKey,
-        wrapped_private_key: WrappedPrivateClientKey,
+        public_signing_key: PublicSigningKey,
+        wrapped_private_primary_key: WrappedPrivatePrimaryKey,
         encrypted_comment: EncryptedKeyComment,
     ) -> anyhow::Result<Option<ClientKeyId>> {
         let stmt = query!(
             &self.db,
             "
-            INSERT INTO client_keys (
+            INSERT INTO keys (
                 form,
                 key_index,
-                public_wrapping_key,
-                wrapped_private_key,
+                public_signing_key,
+                wrapped_private_primary_key,
                 encrypted_comment
             )
             SELECT
                 forms.id,
                 COALESCE(
                     (
-                        SELECT MAX(client_keys.key_index) + 1
-                        FROM client_keys
-                        JOIN forms ON client_keys.form = forms.id
+                        SELECT MAX(keys.key_index) + 1
+                        FROM keys
+                        JOIN forms ON keys.form = forms.id
                         WHERE forms.form_id = ?1
                         GROUP BY forms.id
                     ),
@@ -283,11 +282,11 @@ impl Store {
                 ?4
             FROM forms
             WHERE forms.form_id = ?1
-            RETURNING client_keys.key_index;
+            RETURNING keys.key_index;
             ",
             form_id,
-            public_wrapping_key,
-            wrapped_private_key,
+            public_signing_key,
+            wrapped_private_primary_key,
             encrypted_comment,
         )?;
 
@@ -303,12 +302,12 @@ impl Store {
         let stmt = query!(
             &self.db,
             "
-            DELETE FROM client_keys
-            WHERE client_keys.id IN (
-                SELECT client_keys.id
-                FROM client_keys
-                JOIN forms ON client_keys.form = forms.id
-                WHERE forms.form_id = ?1 AND client_keys.key_index = ?2
+            DELETE FROM keys
+            WHERE keys.id IN (
+                SELECT keys.id
+                FROM keys
+                JOIN forms ON keys.form = forms.id
+                WHERE forms.form_id = ?1 AND keys.key_index = ?2
             );
             ",
             form_id,
@@ -321,44 +320,24 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn get_server_keys(
+    pub async fn store_ephemeral_server_key(
         &self,
-        form_id: FormId,
         key_id: ServerKeyId,
-    ) -> anyhow::Result<Option<ServerKeyPair>> {
-        let stmt = query!(
-            &self.db,
-            "
-            SELECT
-                server_keys.public_key,
-                server_keys.private_key,
-                server_keys.created_at
-            FROM server_keys
-            JOIN forms ON server_keys.form = forms.id
-            WHERE forms.form_id = ?1 AND server_keys.key_index = ?2;
-            ",
-            form_id,
-            key_id,
-        )?;
+        key: EphemeralServerKey,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
 
-        #[derive(Debug, Deserialize)]
-        struct Row {
-            public_key: PublicServerKey,
-            private_key: PrivateServerKey,
-            created_at: String,
-        }
+    #[worker::send]
+    pub async fn get_ephemeral_server_key(
+        &self,
+        key_id: ServerKeyId,
+    ) -> anyhow::Result<EphemeralServerKey> {
+        todo!()
+    }
 
-        let row = stmt.first::<Row>(None).await?;
-
-        row.map(|row| -> anyhow::Result<_> {
-            Ok(ServerKeyPair {
-                id: key_id,
-                public_key: row.public_key,
-                private_key: row.private_key,
-                created_at: NaiveDateTime::parse_from_str(&row.created_at, SQLITE_DATETIME_FORMAT)?
-                    .and_utc(),
-            })
-        })
-        .transpose()
+    #[worker::send]
+    pub async fn delete_ephemeral_server_key(&self, key_id: ServerKeyId) -> anyhow::Result<()> {
+        todo!()
     }
 }

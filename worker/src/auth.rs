@@ -11,7 +11,6 @@ use futures::future::{BoxFuture, FutureExt};
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
-    crypt::CryptBox,
     models::{ClientKeyId, FormId, ServerKeyId},
     store::Store,
 };

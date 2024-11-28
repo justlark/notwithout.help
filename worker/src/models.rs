@@ -126,7 +126,7 @@ pub struct Submission {
 }
 
 #[derive(Debug)]
-pub struct ClientKeyPair {
+pub struct ClientKeys {
     pub id: ClientKeyId,
     pub public_signing_key: PublicSigningKey,
     pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,

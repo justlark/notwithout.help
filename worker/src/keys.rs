@@ -123,7 +123,7 @@ impl<'de> Deserialize<'de> for ClientNonceSignature {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct PublicSigningKey(ed25519::VerifyingKey);
 
 impl PublicSigningKey {
@@ -136,6 +136,41 @@ impl PublicSigningKey {
             .verify(&nonce.0, &ed25519::Signature::from_slice(&signature.0)?);
 
         Ok(())
+    }
+}
+
+impl Serialize for PublicSigningKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        BASE64_STANDARD.encode(&self.0).serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for PublicSigningKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let decoded = BASE64_STANDARD
+            .decode(s)
+            .context("Public signing key is not a valid base64-encoded string.")
+            .map_err(serde::de::Error::custom)?;
+
+        if decoded.len() != ed25519::PUBLIC_KEY_LENGTH {
+            return Err(serde::de::Error::custom(
+                "Public signing key is not 32 bytes long.",
+            ));
+        }
+
+        let mut bytes = [0u8; ed25519::PUBLIC_KEY_LENGTH];
+        bytes.copy_from_slice(&decoded);
+
+        Ok(Self(
+            ed25519::VerifyingKey::from_bytes(&bytes).map_err(serde::de::Error::custom)?,
+        ))
     }
 }
 
