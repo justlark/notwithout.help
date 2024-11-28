@@ -181,13 +181,3 @@ pub struct ClientKeys {
     pub encrypted_comment: EncryptedKeyComment,
     pub created_at: DateTime<Utc>,
 }
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(transparent)]
-pub struct SignedApiChallenge(String);
-
-impl From<String> for SignedApiChallenge {
-    fn from(s: String) -> Self {
-        Self(s)
-    }
-}

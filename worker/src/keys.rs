@@ -75,7 +75,7 @@ impl<'de> Deserialize<'de> for ApiChallengeNonce {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApiChallengeNonce(Vec<u8>);
 
 impl ApiChallengeNonce {

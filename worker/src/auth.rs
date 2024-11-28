@@ -13,7 +13,7 @@ use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
     keys::ApiChallengeNonce,
-    models::{ChallengeId, ClientKeyId, FormId, ServerKeyId, SignedApiChallenge},
+    models::{ChallengeId, ClientKeyId, FormId, ServerKeyId},
     store::{Store, UnauthenticatedStore},
 };
 
@@ -74,9 +74,9 @@ impl<'de> Deserialize<'de> for ApiTokenJwtSub {
 }
 
 #[derive(Debug, Clone)]
-pub struct ApiAccessToken(String);
+pub struct SignedApiAccessToken(String);
 
-impl ApiAccessToken {
+impl SignedApiAccessToken {
     pub async fn validate(
         self,
         store: &UnauthenticatedStore,
@@ -170,7 +170,46 @@ impl ApiChallenge {
             nonce: self.nonce.clone(),
         };
 
-        Ok(jwt::encode(&header, &claims, key)?.into())
+        Ok(SignedApiChallenge(jwt::encode(&header, &claims, key)?))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SignedApiChallenge(String);
+
+impl SignedApiChallenge {
+    pub async fn validate(
+        &self,
+        store: &Store,
+        nonce: ApiChallengeNonce,
+    ) -> anyhow::Result<ApiChallengeNonce> {
+        let header = jwt::decode_header(&self.0)?;
+
+        let server_key_id = header
+            .kid
+            .ok_or_else(|| anyhow::anyhow!("Challenge token is missing the `kid` claim."))?
+            .into();
+
+        let ephemeral_server_key = store.get_ephemeral_server_key(server_key_id).await?;
+
+        let mut validation = jwt::Validation::new(JWT_ALGORITHM);
+        validation.required_spec_claims = ["exp", "aud", "iss", "jti"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        validation.aud = Some(EXPECTED_AUD.into_iter().map(String::from).collect());
+        validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
+        validation.algorithms = vec![JWT_ALGORITHM];
+
+        let claims = jwt::decode::<ApiChallengeClaims>(
+            &self.0,
+            &ephemeral_server_key.decoding_key(),
+            &validation,
+        )?
+        .claims;
+
+        Ok(claims.nonce)
     }
 }
 
@@ -192,7 +231,7 @@ pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
 
             let token = auth_header_value
                 .strip_prefix(BEARER_PREFIX)
-                .map(|token| ApiAccessToken(token.to_string()))
+                .map(|token| SignedApiAccessToken(token.to_string()))
                 .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())?;
 
             req.extensions_mut().insert(token);
