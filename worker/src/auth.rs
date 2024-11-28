@@ -9,7 +9,10 @@ use jsonwebtoken as jwt;
 use serde::Deserialize;
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
-use crate::{models::FormId, store::Store};
+use crate::{
+    models::FormId,
+    store::{Store, UnauthenticatedStore},
+};
 
 const BEARER_PREFIX: &str = "Bearer ";
 const JWT_ALGORITHM: jwt::Algorithm = jwt::Algorithm::HS256;
@@ -29,7 +32,13 @@ struct ApiAccessTokenClaims {
 }
 
 impl ApiAccessToken {
-    pub async fn verify(self, store: &Store, form_id: FormId) -> anyhow::Result<()> {
+    pub async fn validate(
+        self,
+        store: &UnauthenticatedStore,
+        form_id: FormId,
+    ) -> anyhow::Result<&Store> {
+        let store = store.without_authenticating();
+
         let header = jwt::decode_header(&self.0)?;
 
         let server_key_id = header
@@ -77,7 +86,7 @@ impl ApiAccessToken {
             bail!("Client key in access token `sub` does not exist or has been revoked.");
         }
 
-        Ok(())
+        Ok(store)
     }
 }
 

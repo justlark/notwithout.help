@@ -16,6 +16,20 @@ use crate::{
 // automatically generating timestamps with `DEFAULT CURRENT_TIMESTAMP`.
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
+#[derive(Debug)]
+pub struct UnauthenticatedStore(Store);
+
+impl UnauthenticatedStore {
+    pub fn new(db: D1Database) -> Self {
+        Self(Store { db })
+    }
+
+    // If we want to access the store without authenticating, we need to be explicit about it.
+    pub fn without_authenticating(&self) -> &Store {
+        &self.0
+    }
+}
+
 pub struct Store {
     db: D1Database,
 }
@@ -23,12 +37,6 @@ pub struct Store {
 impl fmt::Debug for Store {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Store").finish_non_exhaustive()
-    }
-}
-
-impl Store {
-    pub fn new(db: D1Database) -> Self {
-        Self { db }
     }
 }
 

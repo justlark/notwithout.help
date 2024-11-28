@@ -17,12 +17,17 @@ use crate::{
     auth::{auth_layer, ApiAccessToken},
     cors::cors_layer,
     models::{ClientKeyId, FormId},
-    store::Store,
+    store::UnauthenticatedStore,
 };
 
-fn handle_err(err: anyhow::Error) -> ErrorResponse {
+fn internal_err(err: anyhow::Error) -> ErrorResponse {
     console_error!("Error: {:?}", err);
     StatusCode::INTERNAL_SERVER_ERROR.into()
+}
+
+fn auth_err(err: anyhow::Error) -> ErrorResponse {
+    console_error!("Error: {:?}", err);
+    StatusCode::UNAUTHORIZED.into()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,7 +48,7 @@ impl WorkerEnv {
 
 #[derive(Debug)]
 pub struct AppState {
-    pub store: Store,
+    pub store: UnauthenticatedStore,
     pub env: WorkerEnv,
 }
 
@@ -96,6 +101,11 @@ async fn delete_form(
     Extension(token): Extension<ApiAccessToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id)
+        .await
+        .map_err(auth_err)?;
+
     todo!()
 }
 
@@ -105,6 +115,11 @@ async fn list_form_submissions(
     Extension(token): Extension<ApiAccessToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id)
+        .await
+        .map_err(auth_err)?;
+
     todo!()
 }
 
@@ -114,6 +129,11 @@ async fn get_key(
     Extension(token): Extension<ApiAccessToken>,
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<Json<GetKeyResponse>, ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id)
+        .await
+        .map_err(auth_err)?;
+
     todo!()
 }
 
@@ -123,6 +143,11 @@ async fn list_keys(
     Extension(token): Extension<ApiAccessToken>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id)
+        .await
+        .map_err(auth_err)?;
+
     todo!()
 }
 
@@ -133,6 +158,11 @@ async fn add_key(
     Path(form_id): Path<FormId>,
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id)
+        .await
+        .map_err(auth_err)?;
+
     todo!()
 }
 
@@ -142,5 +172,10 @@ async fn delete_key(
     Extension(token): Extension<ApiAccessToken>,
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id)
+        .await
+        .map_err(auth_err)?;
+
     todo!()
 }
