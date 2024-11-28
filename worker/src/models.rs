@@ -14,7 +14,7 @@ use crate::keys::{PublicSigningKey, WrappedPrivatePrimaryKey};
 // https://github.com/justlark/notwithout.help/blob/main/docs/security-whitepaper.md
 //
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 struct RandomId(String);
 
@@ -25,7 +25,7 @@ impl RandomId {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct FormId(RandomId);
 
@@ -40,6 +40,12 @@ impl FormId {
 impl Default for FormId {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<String> for FormId {
+    fn from(s: String) -> Self {
+        Self(RandomId(s))
     }
 }
 
@@ -99,6 +105,12 @@ impl ServerKeyId {
 impl Default for ServerKeyId {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<String> for ServerKeyId {
+    fn from(s: String) -> Self {
+        Self(RandomId(s))
     }
 }
 

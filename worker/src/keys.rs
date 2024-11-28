@@ -1,7 +1,7 @@
 use anyhow::Context;
 use base64::prelude::*;
 use ed25519_dalek::{self as ed25519, Verifier};
-use jsonwebtoken::EncodingKey;
+use jsonwebtoken as jwt;
 use rand::RngCore;
 use secrecy::{ExposeSecret, SecretSlice};
 use serde::{Deserialize, Serialize};
@@ -67,8 +67,12 @@ impl EphemeralServerKey {
         Self(SecretSlice::from(buf))
     }
 
-    pub fn encoding_key(&self) -> EncodingKey {
-        EncodingKey::from_secret(self.0.expose_secret())
+    pub fn encoding_key(&self) -> jwt::EncodingKey {
+        jwt::EncodingKey::from_secret(self.0.expose_secret())
+    }
+
+    pub fn decoding_key(&self) -> jwt::DecodingKey {
+        jwt::DecodingKey::from_secret(self.0.expose_secret())
     }
 }
 
@@ -133,7 +137,7 @@ impl PublicSigningKey {
         signature: &ClientNonceSignature,
     ) -> Result<(), ed25519::SignatureError> {
         self.0
-            .verify(&nonce.0, &ed25519::Signature::from_slice(&signature.0)?);
+            .verify(&nonce.0, &ed25519::Signature::from_slice(&signature.0)?)?;
 
         Ok(())
     }
@@ -144,7 +148,7 @@ impl Serialize for PublicSigningKey {
     where
         S: serde::Serializer,
     {
-        BASE64_STANDARD.encode(&self.0).serialize(serializer)
+        BASE64_STANDARD.encode(self.0).serialize(serializer)
     }
 }
 
