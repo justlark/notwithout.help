@@ -247,9 +247,10 @@ validates to authorize the request. The server validates:
 - The **Secret Wrapping Key** is derived from the **Secret Link Key** using
   [libsodium](https://doc.libsodium.org/key_derivation) via
   `crypto_kdf_derive_from_key`.
-- The **Private Signing Key** is derived from the **Secret Link Key** using
+- The **Private Signing Key** and **Public Signing Key** are derived from the
+  **Secret Link Key** using
   [libsodium](https://doc.libsodium.org/key_derivation) via
-  `crypto_kdf_derive_from_key`.
+  `crypto_kdf_derive_from_key` and `crypto_sign_seed_keypair`.
 - The **Public Signing Key** is derived from the **Private Signing Key** using
   [noble-ed25519](https://www.npmjs.com/package/@noble/ed25519) via
   `getPublicKey`.
