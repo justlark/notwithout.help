@@ -29,15 +29,15 @@ const EXPECTED_ISS: [&str; 2] = EXPECTED_AUD;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum ApiTokenType {
+enum ApiTokenType {
     Access,
     Challenge,
 }
 
 #[derive(Debug, Clone)]
-pub struct ApiTokenJwtSub {
-    pub form_id: FormId,
-    pub client_key_id: ClientKeyId,
+struct ApiTokenJwtSub {
+    form_id: FormId,
+    client_key_id: ClientKeyId,
 }
 
 impl ApiTokenJwtSub {
