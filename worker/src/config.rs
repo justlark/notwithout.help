@@ -1,13 +1,11 @@
 use std::time::Duration;
 
-pub fn origins() -> Vec<String> {
-    [
-        "https://api.notwithout.help",
-        "https://api-dev.notwithout.help",
-    ]
-    .iter()
-    .map(|s| s.to_string())
-    .collect()
+pub fn current_origin() -> String {
+    String::from("https://api.notwithout.help")
+}
+
+pub fn allowed_origins() -> Vec<String> {
+    vec![current_origin()]
 }
 
 pub fn access_token_exp() -> Duration {

@@ -15,9 +15,14 @@ use crate::{
         GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse, PostKeyRequest,
         PostKeyResponse, PublishFormRequest, PublishFormResponse,
     },
-    auth::{auth_layer, SignedApiAccessToken},
+    auth::{auth_layer, ApiChallenge, SignedApiAccessToken},
+    config,
     cors::cors_layer,
-    models::{ClientKeyId, EncryptedKeyComment, FormId, FormTemplate, SubmissionId},
+    keys::{ApiChallengeNonce, EphemeralServerKey},
+    models::{
+        ChallengeId, ClientKeyId, EncryptedKeyComment, FormId, FormTemplate, ServerKeyId,
+        SubmissionId,
+    },
     store::UnauthenticatedStore,
 };
 
@@ -67,6 +72,10 @@ pub fn new(state: AppState) -> Router {
         .route("/forms/:form_id", get(get_form))
         .route("/forms", post(publish_form))
         .route("/submissions/:form_id", post(store_form_submission))
+        .route(
+            "/challenges/:form_id/:client_key_id",
+            get(request_challenge),
+        )
         .layer(cors_layer())
         .with_state(Arc::new(state))
 }
@@ -150,6 +159,44 @@ async fn store_form_submission(
     } else {
         Ok(StatusCode::NOT_FOUND)
     }
+}
+
+#[axum::debug_handler]
+async fn request_challenge(
+    State(state): State<Arc<AppState>>,
+    Path((form_id, client_key_id)): Path<(FormId, ClientKeyId)>,
+) -> Result<String, ErrorResponse> {
+    let store = state.store.without_authenticating();
+
+    let server_key_id = ServerKeyId::new();
+    let ephemeral_server_key = EphemeralServerKey::generate();
+
+    store
+        .store_ephemeral_server_key(server_key_id.clone(), ephemeral_server_key.clone())
+        .await
+        .map_err(internal_err)?;
+
+    let challenge_id = ChallengeId::new();
+
+    store
+        .store_challenge_id(challenge_id.clone())
+        .await
+        .map_err(internal_err)?;
+
+    let challenge = ApiChallenge {
+        server_key_id,
+        form_id,
+        client_key_id,
+        challenge_id,
+        nonce: ApiChallengeNonce::generate(),
+        origin: config::current_origin(),
+        exp: config::challenge_token_exp(),
+    };
+
+    Ok(challenge
+        .encode(&ephemeral_server_key.encoding_key())
+        .map_err(internal_err)?
+        .to_string())
 }
 
 #[axum::debug_handler]

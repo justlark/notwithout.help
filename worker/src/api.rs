@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    auth::SignedApiChallenge,
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, FormTemplate, Submission,
@@ -83,3 +84,5 @@ pub struct ApiAccessTokenRequest {
     pub signature: ClientNonceSignature,
     pub challenge: String,
 }
+
+pub type GetApiChallengeResponse = SignedApiChallenge;

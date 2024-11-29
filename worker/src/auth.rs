@@ -1,4 +1,7 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    fmt,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use anyhow::{anyhow, bail};
 use axum::{
@@ -43,8 +46,18 @@ fn new_jwt_validation() -> jwt::Validation {
         .iter()
         .map(|claim| claim.to_string())
         .collect();
-    validation.aud = Some(config::origins().into_iter().map(String::from).collect());
-    validation.iss = Some(config::origins().into_iter().map(String::from).collect());
+    validation.aud = Some(
+        config::allowed_origins()
+            .into_iter()
+            .map(String::from)
+            .collect(),
+    );
+    validation.iss = Some(
+        config::allowed_origins()
+            .into_iter()
+            .map(String::from)
+            .collect(),
+    );
     validation.algorithms = vec![JWT_ALGORITHM];
 
     validation
@@ -259,6 +272,12 @@ impl SignedApiChallenge {
             origin: claims.iss,
             exp: Duration::from_secs(claims.exp - claims.iat),
         }))
+    }
+}
+
+impl fmt::Display for SignedApiChallenge {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
