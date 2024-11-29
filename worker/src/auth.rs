@@ -17,6 +17,13 @@ use crate::{
     store::{Store, UnauthenticatedStore},
 };
 
+//
+// See the security architecture document for an overview of how the auth flow works. The names of
+// identifiers in this file generally match the terms defined in that document.
+//
+// https://github.com/justlark/notwithout.help/blob/main/docs/security-whitepaper.md
+//
+
 const BEARER_PREFIX: &str = "Bearer ";
 
 const JWT_ALGORITHM: jwt::Algorithm = jwt::Algorithm::HS256;
@@ -26,6 +33,27 @@ const EXPECTED_AUD: [&str; 2] = [
     "https://api-dev.notwithout.help",
 ];
 const EXPECTED_ISS: [&str; 2] = EXPECTED_AUD;
+
+fn unix_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Current system time is before the unix epoch!")
+        .as_secs()
+}
+
+fn new_validation() -> jwt::Validation {
+    let mut validation = jwt::Validation::new(JWT_ALGORITHM);
+
+    validation.required_spec_claims = ["exp", "sub", "aud", "iss"]
+        .iter()
+        .map(|claim| claim.to_string())
+        .collect();
+    validation.aud = Some(EXPECTED_AUD.into_iter().map(String::from).collect());
+    validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
+    validation.algorithms = vec![JWT_ALGORITHM];
+
+    validation
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -111,19 +139,10 @@ impl SignedApiAccessToken {
 
         let ephemeral_server_key = store.get_ephemeral_server_key(server_key_id).await?;
 
-        let mut validation = jwt::Validation::new(JWT_ALGORITHM);
-        validation.required_spec_claims = ["exp", "sub", "aud", "iss"]
-            .into_iter()
-            .map(String::from)
-            .collect();
-        validation.aud = Some(EXPECTED_AUD.into_iter().map(String::from).collect());
-        validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
-        validation.algorithms = vec![JWT_ALGORITHM];
-
         let token_claims = jwt::decode::<ApiAccessTokenClaims>(
             &self.0,
             &ephemeral_server_key.decoding_key(),
-            &validation,
+            &new_validation(),
         )?
         .claims;
 
@@ -177,7 +196,7 @@ impl ApiChallenge {
         header.kid = Some(self.server_key_id.to_string());
 
         let current_time = SystemTime::now();
-        let secs_since_epoch = current_time.duration_since(UNIX_EPOCH)?.as_secs();
+        let secs_since_epoch = unix_timestamp();
 
         let claims = ApiChallengeClaims {
             token_type: ApiTokenType::Challenge,
@@ -207,26 +226,17 @@ impl SignedApiChallenge {
 
         let server_key_id: ServerKeyId = header
             .kid
-            .ok_or_else(|| anyhow::anyhow!("Challenge token is missing the `kid` claim."))?
+            .ok_or_else(|| anyhow!("Challenge token is missing the `kid` claim."))?
             .into();
 
         let ephemeral_server_key = store
             .get_ephemeral_server_key(server_key_id.clone())
             .await?;
 
-        let mut validation = jwt::Validation::new(JWT_ALGORITHM);
-        validation.required_spec_claims = ["exp", "aud", "iss", "jti"]
-            .into_iter()
-            .map(String::from)
-            .collect();
-        validation.aud = Some(EXPECTED_AUD.into_iter().map(String::from).collect());
-        validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
-        validation.algorithms = vec![JWT_ALGORITHM];
-
         let claims = jwt::decode::<ApiChallengeClaims>(
             &self.0,
             &ephemeral_server_key.decoding_key(),
-            &validation,
+            &new_validation(),
         )?
         .claims;
 
@@ -263,7 +273,7 @@ impl ValidatedApiChallenge {
         header.kid = Some(challenge.server_key_id.to_string());
 
         let current_time = SystemTime::now();
-        let secs_since_epoch = current_time.duration_since(UNIX_EPOCH)?.as_secs();
+        let secs_since_epoch = unix_timestamp();
 
         let claims = ApiAccessTokenClaims {
             token_type: ApiTokenType::Access,
