@@ -80,6 +80,7 @@ impl From<ClientKeys> for ListKeysResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct PostKeyRequest {
+    pub public_signing_key: PublicSigningKey,
     pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
     pub encrypted_comment: EncryptedKeyComment,
 }

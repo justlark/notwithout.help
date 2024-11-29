@@ -312,11 +312,24 @@ async fn add_key(
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id)
+        .validate(&state.store, form_id.clone())
         .await
         .map_err(auth_err)?;
 
-    todo!()
+    let client_key_id = store
+        .store_client_keys(
+            form_id,
+            body.public_signing_key,
+            Some(body.wrapped_private_primary_key),
+            body.encrypted_comment,
+        )
+        .await
+        .map_err(internal_err)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    let response = PostKeyResponse { client_key_id };
+
+    Ok((StatusCode::CREATED, Json(response)))
 }
 
 #[axum::debug_handler]
@@ -326,9 +339,14 @@ async fn delete_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id)
+        .validate(&state.store, form_id.clone())
         .await
         .map_err(auth_err)?;
 
-    todo!()
+    store
+        .delete_client_key(form_id, key_id)
+        .await
+        .map_err(internal_err)?;
+
+    Ok(NoContent)
 }
