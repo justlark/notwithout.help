@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use tower_http::auth::AsyncRequireAuthorizationLayer;
 
 use crate::{
+    config,
     keys::{ApiChallengeNonce, ClientNonceSignature},
     models::{ChallengeId, ClientKeyId, FormId, ServerKeyId},
     store::{Store, UnauthenticatedStore},
@@ -28,12 +29,6 @@ const BEARER_PREFIX: &str = "Bearer ";
 
 const JWT_ALGORITHM: jwt::Algorithm = jwt::Algorithm::HS256;
 
-const EXPECTED_AUD: [&str; 2] = [
-    "https://api.notwithout.help",
-    "https://api-dev.notwithout.help",
-];
-const EXPECTED_ISS: [&str; 2] = EXPECTED_AUD;
-
 fn unix_timestamp() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -48,8 +43,8 @@ fn new_validation() -> jwt::Validation {
         .iter()
         .map(|claim| claim.to_string())
         .collect();
-    validation.aud = Some(EXPECTED_AUD.into_iter().map(String::from).collect());
-    validation.iss = Some(EXPECTED_ISS.into_iter().map(String::from).collect());
+    validation.aud = Some(config::origins().into_iter().map(String::from).collect());
+    validation.iss = Some(config::origins().into_iter().map(String::from).collect());
     validation.algorithms = vec![JWT_ALGORITHM];
 
     validation
@@ -137,7 +132,12 @@ impl SignedApiAccessToken {
             .ok_or_else(|| anyhow::anyhow!("Access token is missing the `kid` claim."))?
             .into();
 
-        let ephemeral_server_key = store.get_ephemeral_server_key(server_key_id).await?;
+        let ephemeral_server_key = store
+            .get_ephemeral_server_key(server_key_id)
+            .await?
+            .ok_or_else(|| {
+                anyhow::anyhow!("Ephemeral server key for access token `kid` does not exist.")
+            })?;
 
         let token_claims = jwt::decode::<ApiAccessTokenClaims>(
             &self.0,
@@ -231,7 +231,10 @@ impl SignedApiChallenge {
 
         let ephemeral_server_key = store
             .get_ephemeral_server_key(server_key_id.clone())
-            .await?;
+            .await?
+            .ok_or_else(|| {
+                anyhow!("Ephemeral server key for challenge token `kid` does not exist.")
+            })?;
 
         let claims = jwt::decode::<ApiChallengeClaims>(
             &self.0,
@@ -266,7 +269,11 @@ impl SignedApiChallenge {
 pub struct ValidatedApiChallenge(ApiChallenge);
 
 impl ValidatedApiChallenge {
-    pub fn into_access_token(self, key: &jwt::EncodingKey) -> anyhow::Result<SignedApiAccessToken> {
+    pub fn into_access_token(
+        self,
+        key: &jwt::EncodingKey,
+        exp: Duration,
+    ) -> anyhow::Result<SignedApiAccessToken> {
         let challenge = self.0;
 
         let mut header = jwt::Header::new(JWT_ALGORITHM);
@@ -284,7 +291,7 @@ impl ValidatedApiChallenge {
             aud: challenge.origin.clone(),
             iss: challenge.origin.clone(),
             iat: secs_since_epoch,
-            exp: secs_since_epoch + challenge.exp.as_secs(),
+            exp: secs_since_epoch + exp.as_secs(),
         };
 
         Ok(SignedApiAccessToken(jwt::encode(&header, &claims, key)?))

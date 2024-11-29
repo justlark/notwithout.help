@@ -150,6 +150,12 @@ impl Default for ChallengeId {
     }
 }
 
+impl fmt::Display for ChallengeId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0 .0)
+    }
+}
+
 // This is opaque to the server, so no need to decode it.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]

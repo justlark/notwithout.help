@@ -5,6 +5,7 @@
 
 mod api;
 mod auth;
+mod config;
 mod cors;
 mod keys;
 mod models;

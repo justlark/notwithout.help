@@ -5,6 +5,7 @@ use serde::Deserialize;
 use worker::{d1::D1Database, kv::KvStore, query};
 
 use crate::{
+    config,
     keys::{EphemeralServerKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
@@ -15,6 +16,26 @@ use crate::{
 // SQLite natively understands datetime strings with this format; it uses the format when
 // automatically generating timestamps with `DEFAULT CURRENT_TIMESTAMP`.
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+
+fn server_key_ttl() -> u64 {
+    config::access_token_exp().as_secs() * 2
+}
+
+fn challenge_ttl() -> u64 {
+    config::challenge_token_exp().as_secs() * 2
+}
+
+fn server_key_key(server_id: ServerKeyId) -> String {
+    format!("key:{}", server_id)
+}
+
+fn challenge_key(challenge_id: ChallengeId) -> String {
+    format!("challenge:{}", challenge_id)
+}
+
+fn wrap_kv_err(err: worker::kv::KvError) -> anyhow::Error {
+    anyhow::Error::msg(err.to_string())
+}
 
 #[derive(Debug)]
 pub struct UnauthenticatedStore(Store);
@@ -334,34 +355,60 @@ impl Store {
         key_id: ServerKeyId,
         key: EphemeralServerKey,
     ) -> anyhow::Result<()> {
-        todo!()
+        self.kv
+            .put(&server_key_key(key_id), key)
+            .map_err(wrap_kv_err)?
+            .expiration_ttl(server_key_ttl())
+            .execute()
+            .await
+            .map_err(wrap_kv_err)?;
+
+        Ok(())
     }
 
     #[worker::send]
     pub async fn get_ephemeral_server_key(
         &self,
         key_id: ServerKeyId,
-    ) -> anyhow::Result<EphemeralServerKey> {
-        todo!()
-    }
-
-    #[worker::send]
-    pub async fn delete_ephemeral_server_key(&self, key_id: ServerKeyId) -> anyhow::Result<()> {
-        todo!()
+    ) -> anyhow::Result<Option<EphemeralServerKey>> {
+        self.kv
+            .get(&server_key_key(key_id))
+            .json()
+            .await
+            .map_err(wrap_kv_err)
     }
 
     #[worker::send]
     pub async fn has_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<bool> {
-        todo!()
+        Ok(self
+            .kv
+            .get(&challenge_key(challenge_id))
+            .text()
+            .await
+            .map_err(wrap_kv_err)?
+            .is_some())
     }
 
     #[worker::send]
     pub async fn store_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
-        todo!()
+        self.kv
+            .put(&challenge_key(challenge_id), ())
+            .map_err(wrap_kv_err)?
+            .expiration_ttl(challenge_ttl())
+            .execute()
+            .await
+            .map_err(wrap_kv_err)?;
+
+        Ok(())
     }
 
     #[worker::send]
     pub async fn delete_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
-        todo!()
+        self.kv
+            .delete(&challenge_key(challenge_id))
+            .await
+            .map_err(wrap_kv_err)?;
+
+        Ok(())
     }
 }
