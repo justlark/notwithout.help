@@ -36,7 +36,7 @@ fn unix_timestamp() -> u64 {
         .as_secs()
 }
 
-fn new_validation() -> jwt::Validation {
+fn new_jwt_validation() -> jwt::Validation {
     let mut validation = jwt::Validation::new(JWT_ALGORITHM);
 
     validation.required_spec_claims = ["exp", "sub", "aud", "iss"]
@@ -57,6 +57,7 @@ enum ApiTokenType {
     Challenge,
 }
 
+// The JWT `sub` claim has the format `<form_id>/<client_key_id>`.
 #[derive(Debug, Clone)]
 struct ApiTokenJwtSub {
     form_id: FormId,
@@ -84,21 +85,16 @@ impl<'de> Deserialize<'de> for ApiTokenJwtSub {
         let s = String::deserialize(deserializer)?;
         let parts = s.splitn(2, Self::SEPARATOR).collect::<Vec<_>>();
 
-        let (form_id, client_key_id) = match parts.as_slice() {
-            [form_id, client_key_id] => (
-                form_id.to_string().into(),
-                client_key_id.parse().map_err(serde::de::Error::custom)?,
-            ),
+        Ok(match parts.as_slice() {
+            [form_id, client_key_id] => Self {
+                form_id: form_id.to_string().into(),
+                client_key_id: client_key_id.parse().map_err(serde::de::Error::custom)?,
+            },
             _ => {
                 return Err(serde::de::Error::custom(
                     "JWT `sub` claim is not in the expected format.",
                 ))
             }
-        };
-
-        Ok(Self {
-            form_id,
-            client_key_id,
         })
     }
 }
@@ -142,10 +138,12 @@ impl SignedApiAccessToken {
         let token_claims = jwt::decode::<ApiAccessTokenClaims>(
             &self.0,
             &ephemeral_server_key.decoding_key(),
-            &new_validation(),
+            &new_jwt_validation(),
         )?
         .claims;
 
+        // If we don't do this check, there would be nothing stopping a user from authenticating
+        // with a challenge token, since they're also signed by the ephemeral server key.
         if token_claims.token_type != ApiTokenType::Access {
             bail!("Attempted to use a challenge token as an access token.");
         }
@@ -195,7 +193,6 @@ impl ApiChallenge {
         let mut header = jwt::Header::new(JWT_ALGORITHM);
         header.kid = Some(self.server_key_id.to_string());
 
-        let current_time = SystemTime::now();
         let secs_since_epoch = unix_timestamp();
 
         let claims = ApiChallengeClaims {
@@ -239,7 +236,7 @@ impl SignedApiChallenge {
         let claims = jwt::decode::<ApiChallengeClaims>(
             &self.0,
             &ephemeral_server_key.decoding_key(),
-            &new_validation(),
+            &new_jwt_validation(),
         )?
         .claims;
 
@@ -262,39 +259,6 @@ impl SignedApiChallenge {
             origin: claims.iss,
             exp: Duration::from_secs(claims.exp - claims.iat),
         }))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ValidatedApiChallenge(ApiChallenge);
-
-impl ValidatedApiChallenge {
-    pub fn into_access_token(
-        self,
-        key: &jwt::EncodingKey,
-        exp: Duration,
-    ) -> anyhow::Result<SignedApiAccessToken> {
-        let challenge = self.0;
-
-        let mut header = jwt::Header::new(JWT_ALGORITHM);
-        header.kid = Some(challenge.server_key_id.to_string());
-
-        let current_time = SystemTime::now();
-        let secs_since_epoch = unix_timestamp();
-
-        let claims = ApiAccessTokenClaims {
-            token_type: ApiTokenType::Access,
-            sub: ApiTokenJwtSub {
-                form_id: challenge.form_id.clone(),
-                client_key_id: challenge.client_key_id,
-            },
-            aud: challenge.origin.clone(),
-            iss: challenge.origin.clone(),
-            iat: secs_since_epoch,
-            exp: secs_since_epoch + exp.as_secs(),
-        };
-
-        Ok(SignedApiAccessToken(jwt::encode(&header, &claims, key)?))
     }
 }
 
@@ -322,6 +286,40 @@ impl ApiChallengeResponse {
         public_signing_key.verify(&challenge.nonce, &self.signature)?;
 
         Ok(ValidatedApiChallenge(challenge))
+    }
+}
+
+// This wrapper is a defensive measure to ensure we don't accidentally generate an access token
+// from anything but a valid API challenge response.
+#[derive(Debug, Clone)]
+pub struct ValidatedApiChallenge(ApiChallenge);
+
+impl ValidatedApiChallenge {
+    pub fn into_access_token(
+        self,
+        key: &jwt::EncodingKey,
+        exp: Duration,
+    ) -> anyhow::Result<SignedApiAccessToken> {
+        let challenge = self.0;
+
+        let mut header = jwt::Header::new(JWT_ALGORITHM);
+        header.kid = Some(challenge.server_key_id.to_string());
+
+        let secs_since_epoch = unix_timestamp();
+
+        let claims = ApiAccessTokenClaims {
+            token_type: ApiTokenType::Access,
+            sub: ApiTokenJwtSub {
+                form_id: challenge.form_id.clone(),
+                client_key_id: challenge.client_key_id,
+            },
+            aud: challenge.origin.clone(),
+            iss: challenge.origin.clone(),
+            iat: secs_since_epoch,
+            exp: secs_since_epoch + exp.as_secs(),
+        };
+
+        Ok(SignedApiAccessToken(jwt::encode(&header, &claims, key)?))
     }
 }
 
