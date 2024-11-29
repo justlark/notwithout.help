@@ -229,11 +229,11 @@ async fn request_access_token(
 }
 
 #[axum::debug_handler]
-async fn delete_form(
+async fn list_form_submissions(
     State(state): State<Arc<AppState>>,
     Extension(token): Extension<SignedApiAccessToken>,
     Path(form_id): Path<FormId>,
-) -> Result<NoContent, ErrorResponse> {
+) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
     let store = token
         .validate(&state.store, form_id)
         .await
@@ -243,11 +243,11 @@ async fn delete_form(
 }
 
 #[axum::debug_handler]
-async fn list_form_submissions(
+async fn delete_form(
     State(state): State<Arc<AppState>>,
     Extension(token): Extension<SignedApiAccessToken>,
     Path(form_id): Path<FormId>,
-) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
+) -> Result<NoContent, ErrorResponse> {
     let store = token
         .validate(&state.store, form_id)
         .await
