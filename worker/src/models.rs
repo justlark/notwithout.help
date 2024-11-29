@@ -162,7 +162,7 @@ impl fmt::Display for ChallengeId {
 pub struct EncryptedSubmissionBody(String);
 
 // This is opaque to the server, so no need to decode it.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct EncryptedKeyComment(String);
 

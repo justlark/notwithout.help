@@ -6,7 +6,7 @@ use worker::{d1::D1Database, kv::KvStore, query};
 
 use crate::{
     config,
-    keys::{EphemeralServerKey, PublicSigningKey, WrappedPrivatePrimaryKey},
+    keys::{EphemeralServerKey, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
         FormTemplate, ServerKeyId, Submission, SubmissionId,
@@ -87,15 +87,17 @@ impl Store {
         &self,
         form_id: FormId,
         template: FormTemplate,
+        public_primary_key: PublicPrimaryKey,
     ) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
             "
-            INSERT INTO forms (form_id, template)
-            VALUES (?1, ?2);
+            INSERT INTO forms (form_id, template, public_primary_key)
+            VALUES (?1, ?2, ?3);
             ",
             form_id,
             serde_json::to_string(&template)?,
+            public_primary_key,
         )?;
 
         stmt.run().await?.meta()?;
@@ -282,7 +284,7 @@ impl Store {
         &self,
         form_id: FormId,
         public_signing_key: PublicSigningKey,
-        wrapped_private_primary_key: WrappedPrivatePrimaryKey,
+        wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
         encrypted_comment: EncryptedKeyComment,
     ) -> anyhow::Result<Option<ClientKeyId>> {
         let stmt = query!(

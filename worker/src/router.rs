@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anyhow::anyhow;
 use axum::{
     extract::{Extension, Json, Path, State},
     http::StatusCode,
@@ -16,7 +17,7 @@ use crate::{
     },
     auth::{auth_layer, SignedApiAccessToken},
     cors::cors_layer,
-    models::{ClientKeyId, FormId},
+    models::{ClientKeyId, EncryptedKeyComment, FormId, FormTemplate},
     store::UnauthenticatedStore,
 };
 
@@ -75,7 +76,41 @@ async fn publish_form(
     State(state): State<Arc<AppState>>,
     Json(form): Json<PublishFormRequest>,
 ) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
-    todo!()
+    let store = state.store.without_authenticating();
+
+    let template = FormTemplate {
+        org_name: form.org_name,
+        description: form.description,
+        contact_methods: form.contact_methods,
+    };
+
+    let form_id = FormId::new();
+
+    store
+        .put_form_template(form_id.clone(), template, form.public_primary_key)
+        .await
+        .map_err(internal_err)?;
+
+    let client_key_id = store
+        .store_client_keys(
+            form_id.clone(),
+            form.public_signing_key,
+            None,
+            EncryptedKeyComment::default(),
+        )
+        .await
+        .map_err(internal_err)?
+        .ok_or_else(|| {
+            anyhow!("Could not find form associated with form ID, even though we just created it.")
+        })
+        .map_err(internal_err)?;
+
+    let response = PublishFormResponse {
+        form_id,
+        client_key_id,
+    };
+
+    Ok((StatusCode::CREATED, Json(response)))
 }
 
 #[axum::debug_handler]
