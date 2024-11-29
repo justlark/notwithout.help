@@ -177,6 +177,12 @@ impl SignedApiAccessToken {
     }
 }
 
+impl fmt::Display for SignedApiAccessToken {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ApiChallenge {
     pub server_key_id: ServerKeyId,
@@ -314,6 +320,10 @@ impl ApiChallengeResponse {
 pub struct ValidatedApiChallenge(ApiChallenge);
 
 impl ValidatedApiChallenge {
+    pub fn server_key_id(&self) -> ServerKeyId {
+        self.0.server_key_id.clone()
+    }
+
     pub fn into_access_token(
         self,
         key: &jwt::EncodingKey,

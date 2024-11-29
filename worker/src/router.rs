@@ -13,9 +13,9 @@ use worker::{console_error, Env};
 use crate::{
     api::{
         GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse, PostKeyRequest,
-        PostKeyResponse, PublishFormRequest, PublishFormResponse,
+        PostKeyResponse, PostTokenRequest, PublishFormRequest, PublishFormResponse,
     },
-    auth::{auth_layer, ApiChallenge, SignedApiAccessToken},
+    auth::{auth_layer, ApiChallenge, ApiChallengeResponse, SignedApiAccessToken},
     config,
     cors::cors_layer,
     keys::{ApiChallengeNonce, EphemeralServerKey},
@@ -76,6 +76,7 @@ pub fn new(state: AppState) -> Router {
             "/challenges/:form_id/:client_key_id",
             get(request_challenge),
         )
+        .route("/tokens", post(request_access_token))
         .layer(cors_layer())
         .with_state(Arc::new(state))
 }
@@ -197,6 +198,34 @@ async fn request_challenge(
         .encode(&ephemeral_server_key.encoding_key())
         .map_err(internal_err)?
         .to_string())
+}
+
+#[axum::debug_handler]
+async fn request_access_token(
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<PostTokenRequest>,
+) -> Result<String, ErrorResponse> {
+    let store = state.store.without_authenticating();
+
+    let validated_challenge = ApiChallengeResponse::from(body)
+        .validate(store)
+        .await
+        .map_err(auth_err)?;
+
+    let ephemeral_server_key = store
+        .get_ephemeral_server_key(validated_challenge.server_key_id())
+        .await
+        .map_err(internal_err)?
+        .ok_or(StatusCode::UNAUTHORIZED)?;
+
+    let token = validated_challenge
+        .into_access_token(
+            &ephemeral_server_key.encoding_key(),
+            config::access_token_exp(),
+        )
+        .map_err(internal_err)?;
+
+    Ok(token.to_string())
 }
 
 #[axum::debug_handler]

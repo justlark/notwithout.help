@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::SignedApiChallenge,
+    auth::{ApiChallengeResponse, SignedApiChallenge},
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, FormTemplate, Submission,
@@ -79,10 +79,19 @@ pub struct PostKeyResponse {
     pub client_key_id: ClientKeyId,
 }
 
+pub type GetApiChallengeResponse = SignedApiChallenge;
+
 #[derive(Debug, Deserialize)]
-pub struct ApiAccessTokenRequest {
+pub struct PostTokenRequest {
     pub signature: ClientNonceSignature,
-    pub challenge: String,
+    pub challenge: SignedApiChallenge,
 }
 
-pub type GetApiChallengeResponse = SignedApiChallenge;
+impl From<PostTokenRequest> for ApiChallengeResponse {
+    fn from(request: PostTokenRequest) -> Self {
+        Self {
+            signature: request.signature,
+            challenge: request.challenge,
+        }
+    }
+}
