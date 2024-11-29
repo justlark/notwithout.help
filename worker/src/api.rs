@@ -4,7 +4,8 @@ use crate::{
     auth::{ApiChallengeResponse, SignedApiChallenge},
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
-        ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, FormTemplate, Submission,
+        ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
+        FormTemplate, Submission,
     },
 };
 
@@ -66,6 +67,15 @@ pub struct GetKeyResponse {
 pub struct ListKeysResponse {
     pub client_key_id: ClientKeyId,
     pub encrypted_comment: EncryptedKeyComment,
+}
+
+impl From<ClientKeys> for ListKeysResponse {
+    fn from(keys: ClientKeys) -> Self {
+        Self {
+            client_key_id: keys.id,
+            encrypted_comment: keys.encrypted_comment,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]

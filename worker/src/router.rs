@@ -235,11 +235,16 @@ async fn list_form_submissions(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id)
+        .validate(&state.store, form_id.clone())
         .await
         .map_err(auth_err)?;
 
-    todo!()
+    let submissions = store
+        .list_submissions(form_id)
+        .await
+        .map_err(internal_err)?;
+
+    Ok(Json(submissions.into_iter().map(From::from).collect()))
 }
 
 #[axum::debug_handler]
@@ -249,11 +254,13 @@ async fn delete_form(
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id)
+        .validate(&state.store, form_id.clone())
         .await
         .map_err(auth_err)?;
 
-    todo!()
+    store.delete_form(form_id).await.map_err(internal_err)?;
+
+    Ok(NoContent)
 }
 
 #[axum::debug_handler]
@@ -263,11 +270,19 @@ async fn get_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<Json<GetKeyResponse>, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id)
+        .validate(&state.store, form_id.clone())
         .await
         .map_err(auth_err)?;
 
-    todo!()
+    let client_keys = store
+        .get_client_keys(form_id, key_id)
+        .await
+        .map_err(internal_err)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    Ok(Json(GetKeyResponse {
+        wrapped_private_primary_key: client_keys.wrapped_private_primary_key,
+    }))
 }
 
 #[axum::debug_handler]
@@ -277,11 +292,16 @@ async fn list_keys(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id)
+        .validate(&state.store, form_id.clone())
         .await
         .map_err(auth_err)?;
 
-    todo!()
+    let client_keys = store
+        .list_client_keys(form_id)
+        .await
+        .map_err(internal_err)?;
+
+    Ok(Json(client_keys.into_iter().map(From::from).collect()))
 }
 
 #[axum::debug_handler]
