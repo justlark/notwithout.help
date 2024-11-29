@@ -1,5 +1,4 @@
 #![deny(unsafe_code)]
-#![warn(missing_debug_implementations)]
 
 mod api;
 mod auth;
