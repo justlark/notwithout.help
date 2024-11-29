@@ -161,6 +161,12 @@ impl fmt::Display for ChallengeId {
 #[serde(transparent)]
 pub struct EncryptedSubmissionBody(String);
 
+impl From<String> for EncryptedSubmissionBody {
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
+
 // This is opaque to the server, so no need to decode it.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(transparent)]

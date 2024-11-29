@@ -17,7 +17,7 @@ use crate::{
     },
     auth::{auth_layer, SignedApiAccessToken},
     cors::cors_layer,
-    models::{ClientKeyId, EncryptedKeyComment, FormId, FormTemplate},
+    models::{ClientKeyId, EncryptedKeyComment, FormId, FormTemplate, SubmissionId},
     store::UnauthenticatedStore,
 };
 
@@ -118,7 +118,16 @@ async fn get_form(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
 ) -> Result<Json<GetFormResponse>, ErrorResponse> {
-    todo!()
+    let store = state.store.without_authenticating();
+
+    Ok(Json(
+        store
+            .get_form_template(form_id)
+            .await
+            .map_err(internal_err)?
+            .ok_or(StatusCode::NOT_FOUND)?
+            .into(),
+    ))
 }
 
 #[axum::debug_handler]
@@ -127,7 +136,20 @@ async fn store_form_submission(
     Path(form_id): Path<FormId>,
     body: String,
 ) -> Result<StatusCode, ErrorResponse> {
-    todo!()
+    let store = state.store.without_authenticating();
+
+    let submission_id = SubmissionId::new();
+
+    let changed = store
+        .put_submission(form_id, submission_id, body.into())
+        .await
+        .map_err(internal_err)?;
+
+    if changed {
+        Ok(StatusCode::CREATED)
+    } else {
+        Ok(StatusCode::NOT_FOUND)
+    }
 }
 
 #[axum::debug_handler]

@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
-    models::{ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, Submission},
+    models::{
+        ClientKeyId, EncryptedKeyComment, EncryptedSubmissionBody, FormId, FormTemplate, Submission,
+    },
 };
 
 #[derive(Debug, Serialize)]
@@ -10,6 +12,16 @@ pub struct GetFormResponse {
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
+}
+
+impl From<FormTemplate> for GetFormResponse {
+    fn from(template: FormTemplate) -> Self {
+        Self {
+            org_name: template.org_name,
+            description: template.description,
+            contact_methods: template.contact_methods,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
