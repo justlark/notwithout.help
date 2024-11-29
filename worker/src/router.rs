@@ -5,15 +5,16 @@ use axum::{
     extract::{Extension, Json, Path, State},
     http::StatusCode,
     response::{ErrorResponse, NoContent},
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Router,
 };
 use worker::{console_error, Env};
 
 use crate::{
     api::{
-        GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse, PostKeyRequest,
-        PostKeyResponse, PostTokenRequest, PublishFormRequest, PublishFormResponse,
+        GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse,
+        PatchKeyRequest, PostKeyRequest, PostKeyResponse, PostTokenRequest, PublishFormRequest,
+        PublishFormResponse,
     },
     auth::{auth_layer, ApiChallenge, ApiChallengeResponse, SignedApiAccessToken},
     config,
@@ -63,10 +64,11 @@ pub fn new(state: AppState) -> Router {
         // AUTHENTICATED ENDPOINTS
         .route("/submissions/:form_id", get(list_form_submissions))
         .route("/forms/:form_id", delete(delete_form))
-        .route("/keys/:form_id/:key_index", get(get_key))
+        .route("/keys/:form_id/:client_key_id", get(get_key))
         .route("/keys/:form_id", get(list_keys))
         .route("/keys/:form_id", post(add_key))
-        .route("/keys/:form_id/:key_index", delete(delete_key))
+        .route("/keys/:form_id/:client_key_id", patch(update_key))
+        .route("/keys/:form_id/:client_key_id", delete(delete_key))
         .route_layer(auth_layer())
         // UNAUTHENTICATED ENDPOINTS
         .route("/forms/:form_id", get(get_form))
@@ -333,6 +335,31 @@ async fn add_key(
 }
 
 #[axum::debug_handler]
+async fn update_key(
+    State(state): State<Arc<AppState>>,
+    Extension(token): Extension<SignedApiAccessToken>,
+    Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
+    Json(body): Json<PatchKeyRequest>,
+) -> Result<NoContent, ErrorResponse> {
+    let store = token
+        .validate(&state.store, form_id.clone())
+        .await
+        .map_err(auth_err)?;
+
+    store
+        .update_client_keys(
+            form_id,
+            key_id,
+            body.wrapped_private_primary_key,
+            body.encrypted_comment,
+        )
+        .await
+        .map_err(internal_err)?;
+
+    Ok(NoContent)
+}
+
+#[axum::debug_handler]
 async fn delete_key(
     State(state): State<Arc<AppState>>,
     Extension(token): Extension<SignedApiAccessToken>,
@@ -344,7 +371,7 @@ async fn delete_key(
         .map_err(auth_err)?;
 
     store
-        .delete_client_key(form_id, key_id)
+        .delete_client_keys(form_id, key_id)
         .await
         .map_err(internal_err)?;
 

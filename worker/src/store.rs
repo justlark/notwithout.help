@@ -326,7 +326,41 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn delete_client_key(
+    pub async fn update_client_keys(
+        &self,
+        form_id: FormId,
+        key_id: ClientKeyId,
+        wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
+        encrypted_comment: Option<EncryptedKeyComment>,
+    ) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            UPDATE keys
+            SET
+                wrapped_private_primary_key = COALESCE(?3, keys.wrapped_private_primary_key),
+                encrypted_comment = COALESCE(?4, keys.encrypted_comment)
+            WHERE
+                keys.form = (
+                    SELECT forms.id
+                    FROM forms
+                    WHERE forms.form_id = ?1
+                )
+                AND keys.key_index = ?2;
+            ",
+            form_id,
+            key_id,
+            wrapped_private_primary_key,
+            encrypted_comment,
+        )?;
+
+        stmt.run().await?.meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
+    pub async fn delete_client_keys(
         &self,
         form_id: FormId,
         key_id: ClientKeyId,

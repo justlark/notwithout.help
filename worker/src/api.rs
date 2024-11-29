@@ -90,6 +90,12 @@ pub struct PostKeyResponse {
     pub client_key_id: ClientKeyId,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct PatchKeyRequest {
+    pub wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
+    pub encrypted_comment: Option<EncryptedKeyComment>,
+}
+
 pub type GetApiChallengeResponse = SignedApiChallenge;
 
 #[derive(Debug, Deserialize)]

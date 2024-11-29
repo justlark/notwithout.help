@@ -288,11 +288,18 @@ Get a **Wrapped Private Primary Key** by its **Client Key ID**.
 GET /keys/:form_id/:client_key_id
 ```
 
-Send a **Wrapped Private Primary Key** and its associated encrypted comment to
-the server, associated with a **Form**.
+Send a **Wrapped Private Primary Key**, **Public Signing Key**, and encrypted
+comment to the server, associated with a **Form**.
 
 ```
 POST /keys/:form_id
+```
+
+Update the **Wrapped Private Primary Key** and/or encrypted comment associated
+with a **Client Key ID**.
+
+```
+PATCH /keys/:form_id/:client_key_id
 ```
 
 List the **Client Key IDs** associated with a **Form**, along with their
