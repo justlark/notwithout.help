@@ -41,7 +41,7 @@ pub struct PublishFormResponse {
     pub client_key_id: ClientKeyId,
 }
 
-pub type PostSubmissionRequest = EncryptedSubmissionBody;
+pub type PostSubmissionRequest = String;
 
 #[derive(Debug, Serialize)]
 pub struct ListSubmissionsResponse {
@@ -96,7 +96,7 @@ pub struct PatchKeyRequest {
     pub encrypted_comment: Option<EncryptedKeyComment>,
 }
 
-pub type GetApiChallengeResponse = SignedApiChallenge;
+pub type GetApiChallengeResponse = String;
 
 #[derive(Debug, Deserialize)]
 pub struct PostTokenRequest {

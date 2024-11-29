@@ -199,8 +199,7 @@ impl Store {
             SELECT
                 keys.public_wrapping_key,
                 keys.wrapped_private_key,
-                keys.encrypted_comment,
-                keys.created_at
+                keys.encrypted_comment
             FROM keys
             JOIN forms ON keys.form = forms.id
             WHERE forms.form_id = ?1 AND keys.key_index = ?2;
@@ -214,7 +213,6 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: WrappedPrivatePrimaryKey,
             encrypted_comment: EncryptedKeyComment,
-            created_at: String,
         }
 
         let row = stmt.first::<Row>(None).await?;
@@ -225,8 +223,6 @@ impl Store {
                 public_signing_key: row.public_signing_key,
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
-                created_at: NaiveDateTime::parse_from_str(&row.created_at, SQLITE_DATETIME_FORMAT)?
-                    .and_utc(),
             })
         })
         .transpose()
@@ -241,8 +237,7 @@ impl Store {
                 keys.key_index,
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
-                keys.encrypted_comment,
-                keys.created_at
+                keys.encrypted_comment
             FROM keys
             JOIN forms ON keys.form = forms.id
             WHERE forms.form_id = ?1
@@ -257,7 +252,6 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: WrappedPrivatePrimaryKey,
             encrypted_comment: EncryptedKeyComment,
-            created_at: String,
         }
 
         let rows = stmt.all().await?.results::<Row>()?;
@@ -269,11 +263,6 @@ impl Store {
                     public_signing_key: row.public_signing_key,
                     wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
-                    created_at: NaiveDateTime::parse_from_str(
-                        &row.created_at,
-                        SQLITE_DATETIME_FORMAT,
-                    )?
-                    .and_utc(),
                 })
             })
             .collect::<anyhow::Result<Vec<_>>>()

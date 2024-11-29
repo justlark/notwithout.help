@@ -8,13 +8,13 @@ use axum::{
     routing::{delete, get, patch, post},
     Router,
 };
-use worker::{console_error, Env};
+use worker::console_error;
 
 use crate::{
     api::{
-        GetFormResponse, GetKeyResponse, ListKeysResponse, ListSubmissionsResponse,
-        PatchKeyRequest, PostKeyRequest, PostKeyResponse, PostTokenRequest, PublishFormRequest,
-        PublishFormResponse,
+        GetApiChallengeResponse, GetFormResponse, GetKeyResponse, ListKeysResponse,
+        ListSubmissionsResponse, PatchKeyRequest, PostKeyRequest, PostKeyResponse,
+        PostSubmissionRequest, PostTokenRequest, PublishFormRequest, PublishFormResponse,
     },
     auth::{auth_layer, ApiChallenge, ApiChallengeResponse, SignedApiAccessToken},
     config,
@@ -37,26 +37,9 @@ fn auth_err(err: anyhow::Error) -> ErrorResponse {
     StatusCode::UNAUTHORIZED.into()
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum WorkerEnv {
-    Dev,
-    Prod,
-}
-
-impl WorkerEnv {
-    pub fn get(env: &Env) -> Self {
-        match env.var("WORKER_ENV").unwrap().to_string().as_str() {
-            "dev" => Self::Dev,
-            "prod" => Self::Prod,
-            _ => panic!("var WORKER_ENV must be either 'prod' or 'dev'"),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct AppState {
     pub store: UnauthenticatedStore,
-    pub env: WorkerEnv,
 }
 
 pub fn new(state: AppState) -> Router {
@@ -146,7 +129,7 @@ async fn get_form(
 async fn store_form_submission(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
-    body: String,
+    body: PostSubmissionRequest,
 ) -> Result<StatusCode, ErrorResponse> {
     let store = state.store.without_authenticating();
 
@@ -168,7 +151,7 @@ async fn store_form_submission(
 async fn request_challenge(
     State(state): State<Arc<AppState>>,
     Path((form_id, client_key_id)): Path<(FormId, ClientKeyId)>,
-) -> Result<String, ErrorResponse> {
+) -> Result<GetApiChallengeResponse, ErrorResponse> {
     let store = state.store.without_authenticating();
 
     let server_key_id = ServerKeyId::new();
