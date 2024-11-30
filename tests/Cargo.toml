@@ -3,6 +3,17 @@ name = "not-without-tests"
 version = "0.1.0"
 edition = "2021"
 
+  [package.metadata.release]
+  release = false
+
+[lib]
+name = "notwithouttests"
+path = "src/lib.rs"
+
+[[bin]]
+name = "notwithouttests"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0.93"
 base64 = "0.22.1"

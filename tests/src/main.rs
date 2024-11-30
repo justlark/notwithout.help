@@ -1,8 +1,5 @@
 use clap::Parser;
-use cli::Cli;
-
-mod cli;
-mod command;
+use notwithouttests::Cli;
 
 fn main() -> anyhow::Result<()> {
     Cli::parse().dispatch()

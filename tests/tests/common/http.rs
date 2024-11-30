@@ -1,3 +1,5 @@
+use ed25519_dalek as ed25519;
+use notwithouttests::respond_challenge;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use serde_json::json;
@@ -58,4 +60,29 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
         form_id,
         client_key_id,
     })
+}
+
+pub async fn challenge_response() -> anyhow::Result<String> {
+    let FormResponse {
+        form_id,
+        client_key_id,
+    } = create_form().await?;
+
+    let req = client()
+        .get(path(&format!("/challenges/{}/{}", form_id, client_key_id)))
+        .send()
+        .await?;
+
+    expect!(req.status()).to(equal(StatusCode::OK));
+
+    let challenge_token = expect!(req.text().await)
+        .to(be_ok())
+        .map(|v| v.to_string())
+        .into_inner();
+
+    let signing_key = ed25519::SigningKey::generate(&mut rand::thread_rng());
+
+    let challenge_response = respond_challenge(challenge_token, signing_key)?;
+
+    Ok(challenge_response)
 }

@@ -1,7 +1,7 @@
 mod common;
 
 use reqwest::StatusCode;
-use xpct::{be_err, be_ok, be_some, be_true, equal, expect};
+use xpct::{be_ok, be_some, be_true, equal, expect};
 
 use common::http::{self, FormResponse};
 
@@ -37,9 +37,35 @@ async fn get_form_template() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn get_form_template_not_found() -> anyhow::Result<()> {
+async fn get_form_template_form_not_found() -> anyhow::Result<()> {
     let req = http::client()
         .get(http::path("/forms/invalid-form-id"))
+        .send()
+        .await?;
+
+    expect!(req.status()).to(equal(StatusCode::NOT_FOUND));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn post_encrypted_submission() -> anyhow::Result<()> {
+    let FormResponse { form_id, .. } = http::create_form().await?;
+
+    let req = http::client()
+        .post(http::path(&format!("/submissions/{}", form_id)))
+        .send()
+        .await?;
+
+    expect!(req.status()).to(equal(StatusCode::CREATED));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn post_encrypted_submission_form_not_found() -> anyhow::Result<()> {
+    let req = http::client()
+        .post(http::path("/submissions/invalid-form-id"))
         .send()
         .await?;
 
