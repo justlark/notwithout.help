@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
-import type { SurveyId, SurveySecret } from "@/types";
+import type { ClientKeyId, FormId, SecretLinkKey } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_TTL } from "@/vars";
 import Toast from "primevue/toast";
 
-// TODO: Example of an 8-character alphanumeric survey ID.
-const surveyId = ref<SurveyId>("VmrfdKsn");
+// TODO: Example of a Form ID.
+const formId = ref<FormId>("VmrfdKsn");
 
-// TODO: Example of a base64-encoded 256-bit private key.
-const surveySecret = ref<SurveySecret>("R5A2zhBtFwO8gWzBQn2y3ZoaQm5bnIi3Fl2RZmwZH5w=");
+// TODO: Example of a Client Key ID.
+const clientKeyId = ref<ClientKeyId>(0);
+
+// TODO: Example of a base64url-encoded Secret Link Key.
+const secretLinkKey = ref<SecretLinkKey>("6IKYnsjFRUkvZfpcLjlaMEAvo61IUO44y8EIcCbV2rM=");
 
 const origin = computed(() => window.location.origin);
-const shareLink = computed(() => new URL(`${origin.value}/share/#/${surveyId.value}`));
+const shareLink = computed(() => new URL(`${origin.value}/share/#/${formId.value}`));
 const secretLink = computed(
-  () => new URL(`${origin.value}/view/#/${surveyId.value}/${surveySecret.value}`),
+  () =>
+    new URL(`${origin.value}/view/#/${formId.value}/${clientKeyId.value}/${secretLinkKey.value}`),
 );
 
 const toast = useToast();

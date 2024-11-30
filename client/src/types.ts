@@ -1,2 +1,3 @@
-export type SurveyId = string;
-export type SurveySecret = string;
+export type FormId = string;
+export type SecretLinkKey = string;
+export type ClientKeyId = number;
