@@ -15,10 +15,23 @@ How it works:
 - Only the organizers can see the volunteers' responses. Neither the website
   owner nor the hosting provider have access to them.
 
+## Architecture
+
+The site is a Vue.js app hosted on [a
+CDN](https://developers.cloudflare.com/pages). The client app is in this repo
+under [`./client/`](./client).
+
+The backend is a [serverless
+function](https://developers.cloudflare.com/workers/) which uses a [SQLite
+database](https://developers.cloudflare.com/d1/) and a [key-value
+store](https://developers.cloudflare.com/kv/) for storage. The backend is in
+this repo under [`./worker/`](./worker).
+
 ## Deployment
 
-The client app is automatically deployed to Cloudflare Pages on pushes to
-`main`. To deploy the worker, run:
+The client app is automatically deployed to the CDN on pushes to `main`. To
+deploy the worker, [install Rust](https://www.rust-lang.org/tools/install) and
+run:
 
 ```shell
 cd ./worker/
@@ -26,7 +39,7 @@ npm install
 npx wrangler deploy
 ```
 
-You can also build the client app locally like this:
+You can build the client app locally like this:
 
 ```shell
 cd ./client/
@@ -53,7 +66,7 @@ npm install
 npm run dev
 ```
 
-In this [`./tests/`](./tests/) directory you'll find a CLI tool that provides
+In the [`./tests/`](./tests/) directory you'll find a CLI tool that provides
 helpers for performing the cryptographic operations necessary to authenticate
 with the backend worker. This is useful for debugging the worker locally using
 a tool like Postman or Hoppscotch.
@@ -65,6 +78,14 @@ run:
 cd ./tests/
 cargo run -- --help
 ```
+
+## Documentation
+
+You can find documentation on how this app mitigates security risks in the
+[security whitepaper](./docs/security-whitepaper.md). It is recommended that
+you read this document if you're planning on diving into the codebase; it
+provides a lot of good information on how the client talks to the backend
+worker.
 
 ## Copyright
 
@@ -81,4 +102,3 @@ PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>.
-
