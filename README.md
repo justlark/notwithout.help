@@ -15,6 +15,76 @@ How it works:
 - Only the organizers can see the volunteers' responses. Neither the website
   owner nor the hosting provider have access to them.
 
+## Deployment
+
+The client app is automatically deployed to Cloudflare Pages on pushes to
+`main`. To deploy the worker, run:
+
+```shell
+cd ./worker/
+npm install
+npx wrangler deploy
+```
+
+You can also build the client app locally like this:
+
+```shell
+cd ./client/
+npm install
+npm run build
+```
+
+## Development
+
+To run the app locally, you'll need to spin up a local instance of the backend
+worker. It must be running on port `8787`.
+
+```shell
+cd ./worker/
+npm install
+npx wrangler dev
+```
+
+Then you can start the local dev server.
+
+```shell
+cd ./client/
+npm install
+npm run dev
+```
+
+For testing the backend API locally (e.g. in Postman), you'll need an ed25519
+keypair. Here is an example keypair you can use for testing.
+
+Public key (raw):
+
+```
+fEPlSpHKftM+PYs+9himpcnry9hXdZJp7dniLAuypbo=
+```
+
+Private key (raw):
+
+```
+q3Xym5KF1OwPyE1+9ncNkgb1PZ93PyEarAE4wMxKe+A=
+```
+
+Public key (PEM):
+
+```
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAfEPlSpHKftM+PYs+9himpcnry9hXdZJp7dniLAuypbo=
+-----END PUBLIC KEY-----
+
+```
+
+Private key (PEM):
+
+```
+-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIKt18puShdTsD8hNfvZ3DZIG9T2fdz8hGqwBOMDMSnvg
+-----END PRIVATE KEY-----
+```
+
 ## Copyright
 
 Copyright © 2024 Lark
