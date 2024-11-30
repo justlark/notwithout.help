@@ -197,8 +197,8 @@ impl Store {
             &self.db,
             "
             SELECT
-                keys.public_wrapping_key,
-                keys.wrapped_private_key,
+                keys.public_signing_key,
+                keys.wrapped_private_primary_key,
                 keys.encrypted_comment
             FROM keys
             JOIN forms ON keys.form = forms.id
@@ -211,7 +211,7 @@ impl Store {
         #[derive(Debug, Deserialize)]
         struct Row {
             public_signing_key: PublicSigningKey,
-            wrapped_private_primary_key: WrappedPrivatePrimaryKey,
+            wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
         }
 
@@ -250,7 +250,7 @@ impl Store {
         struct Row {
             key_index: ClientKeyId,
             public_signing_key: PublicSigningKey,
-            wrapped_private_primary_key: WrappedPrivatePrimaryKey,
+            wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
         }
 
@@ -381,7 +381,7 @@ impl Store {
         key: EphemeralServerKey,
     ) -> anyhow::Result<()> {
         self.kv
-            .put(&server_key_key(key_id), key)
+            .put(&server_key_key(key_id), key.to_string())
             .map_err(wrap_kv_err)?
             .expiration_ttl(server_key_ttl())
             .execute()
@@ -396,11 +396,14 @@ impl Store {
         &self,
         key_id: ServerKeyId,
     ) -> anyhow::Result<Option<EphemeralServerKey>> {
-        self.kv
+        Ok(self
+            .kv
             .get(&server_key_key(key_id))
-            .json()
+            .text()
             .await
-            .map_err(wrap_kv_err)
+            .map_err(wrap_kv_err)?
+            .map(|s| s.parse())
+            .transpose()?)
     }
 
     #[worker::send]
@@ -417,7 +420,7 @@ impl Store {
     #[worker::send]
     pub async fn store_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
         self.kv
-            .put(&challenge_key(challenge_id), ())
+            .put(&challenge_key(challenge_id), "")
             .map_err(wrap_kv_err)?
             .expiration_ttl(challenge_ttl())
             .execute()

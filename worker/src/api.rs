@@ -60,7 +60,7 @@ impl From<Submission> for ListSubmissionsResponse {
 
 #[derive(Debug, Serialize)]
 pub struct GetKeyResponse {
-    pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
+    pub wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
 }
 
 #[derive(Debug, Serialize)]

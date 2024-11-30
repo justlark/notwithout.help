@@ -1,3 +1,5 @@
+use std::{fmt, str::FromStr};
+
 use anyhow::Context;
 use base64::prelude::*;
 use ed25519_dalek::{self as ed25519, Verifier};
@@ -36,27 +38,17 @@ impl EphemeralServerKey {
     }
 }
 
-impl Serialize for EphemeralServerKey {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        BASE64_STANDARD
-            .encode(self.0.expose_secret())
-            .serialize(serializer)
+impl fmt::Display for EphemeralServerKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&BASE64_STANDARD.encode(self.0.expose_secret()))
     }
 }
 
-impl<'de> Deserialize<'de> for EphemeralServerKey {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        let decoded = BASE64_STANDARD
-            .decode(s)
-            .context("Ephemeral server key is not a valid base64-encoded string.")
-            .map_err(serde::de::Error::custom)?;
+impl FromStr for EphemeralServerKey {
+    type Err = base64::DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let decoded = BASE64_STANDARD.decode(s)?;
         Ok(Self(SecretSlice::from(decoded)))
     }
 }

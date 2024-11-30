@@ -1,7 +1,4 @@
-use std::{
-    fmt,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
+use std::{fmt, time::Duration};
 
 use anyhow::{anyhow, bail};
 use axum::{
@@ -13,6 +10,7 @@ use futures::future::{BoxFuture, FutureExt};
 use jsonwebtoken as jwt;
 use serde::{Deserialize, Serialize};
 use tower_http::auth::AsyncRequireAuthorizationLayer;
+use worker::Date;
 
 use crate::{
     config,
@@ -33,10 +31,8 @@ const BEARER_PREFIX: &str = "Bearer ";
 const JWT_ALGORITHM: jwt::Algorithm = jwt::Algorithm::HS256;
 
 fn unix_timestamp() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Current system time is before the unix epoch!")
-        .as_secs()
+    let datetime = Date::now();
+    Duration::from_millis(datetime.as_millis()).as_secs()
 }
 
 fn new_jwt_validation() -> jwt::Validation {
