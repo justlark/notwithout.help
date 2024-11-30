@@ -53,36 +53,17 @@ npm install
 npm run dev
 ```
 
-For testing the backend API locally (e.g. in Postman), you'll need an ed25519
-keypair. Here is an example keypair you can use for testing.
+In this [`./tests/`](./tests/) directory you'll find a CLI tool that provides
+helpers for performing the cryptographic operations necessary to authenticate
+with the backend worker. This is useful for debugging the worker locally using
+a tool like Postman or Hoppscotch.
 
-Public key (raw):
+To use the tool, [install Rust](https://www.rust-lang.org/tools/install) and
+run:
 
-```
-fEPlSpHKftM+PYs+9himpcnry9hXdZJp7dniLAuypbo=
-```
-
-Private key (raw):
-
-```
-q3Xym5KF1OwPyE1+9ncNkgb1PZ93PyEarAE4wMxKe+A=
-```
-
-Public key (PEM):
-
-```
------BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAfEPlSpHKftM+PYs+9himpcnry9hXdZJp7dniLAuypbo=
------END PUBLIC KEY-----
-
-```
-
-Private key (PEM):
-
-```
------BEGIN PRIVATE KEY-----
-MC4CAQAwBQYDK2VwBCIEIKt18puShdTsD8hNfvZ3DZIG9T2fdz8hGqwBOMDMSnvg
------END PRIVATE KEY-----
+```shell
+cd ./tests/
+cargo run -- --help
 ```
 
 ## Copyright
