@@ -3,6 +3,7 @@ use std::{fmt, str::FromStr};
 use chrono::{DateTime, Utc};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::keys::{PublicSigningKey, WrappedPrivatePrimaryKey};
 
@@ -104,13 +105,11 @@ impl fmt::Display for ClientKeyId {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ServerKeyId(RandomId);
+pub struct ServerKeyId(Uuid);
 
 impl ServerKeyId {
-    const LEN: usize = 16;
-
     pub fn new() -> Self {
-        Self(RandomId::new(Self::LEN))
+        Self(Uuid::new_v4())
     }
 }
 
@@ -120,27 +119,27 @@ impl Default for ServerKeyId {
     }
 }
 
-impl From<String> for ServerKeyId {
-    fn from(s: String) -> Self {
-        Self(RandomId(s))
+impl FromStr for ServerKeyId {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse()
     }
 }
 
 impl fmt::Display for ServerKeyId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0 .0)
+        write!(f, "{}", self.0)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ChallengeId(RandomId);
+pub struct ChallengeId(Uuid);
 
 impl ChallengeId {
-    const LEN: usize = 16;
-
     pub fn new() -> Self {
-        Self(RandomId::new(Self::LEN))
+        Self(Uuid::new_v4())
     }
 }
 
@@ -152,7 +151,7 @@ impl Default for ChallengeId {
 
 impl fmt::Display for ChallengeId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0 .0)
+        write!(f, "{}", self.0)
     }
 }
 

@@ -135,7 +135,7 @@ impl SignedApiAccessToken {
         let server_key_id = header
             .kid
             .ok_or_else(|| anyhow::anyhow!("Access token is missing the `kid` claim."))?
-            .into();
+            .parse()?;
 
         let ephemeral_server_key = store
             .get_ephemeral_server_key(server_key_id)
@@ -239,7 +239,7 @@ impl SignedApiChallenge {
         let server_key_id: ServerKeyId = header
             .kid
             .ok_or_else(|| anyhow!("Challenge token is missing the `kid` claim."))?
-            .into();
+            .parse()?;
 
         let ephemeral_server_key = store
             .get_ephemeral_server_key(server_key_id.clone())
