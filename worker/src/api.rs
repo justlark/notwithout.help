@@ -27,7 +27,7 @@ impl From<FormTemplate> for GetFormResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct PublishFormRequest {
+pub struct PostFormRequest {
     pub public_primary_key: PublicPrimaryKey,
     pub public_signing_key: PublicSigningKey,
     pub org_name: String,
@@ -36,7 +36,7 @@ pub struct PublishFormRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct PublishFormResponse {
+pub struct PostFormResponse {
     pub form_id: FormId,
     pub client_key_id: ClientKeyId,
 }

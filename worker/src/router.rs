@@ -13,8 +13,8 @@ use worker::console_error;
 use crate::{
     api::{
         GetApiChallengeResponse, GetFormResponse, GetKeyResponse, ListKeysResponse,
-        ListSubmissionsResponse, PatchKeyRequest, PostKeyRequest, PostKeyResponse,
-        PostSubmissionRequest, PostTokenRequest, PublishFormRequest, PublishFormResponse,
+        ListSubmissionsResponse, PatchKeyRequest, PostFormRequest, PostFormResponse,
+        PostKeyRequest, PostKeyResponse, PostSubmissionRequest, PostTokenRequest,
     },
     auth::{auth_layer, ApiChallenge, ApiChallengeResponse, SignedApiAccessToken},
     config,
@@ -69,8 +69,8 @@ pub fn new(state: AppState) -> Router {
 #[axum::debug_handler]
 async fn publish_form(
     State(state): State<Arc<AppState>>,
-    Json(form): Json<PublishFormRequest>,
-) -> Result<(StatusCode, Json<PublishFormResponse>), ErrorResponse> {
+    Json(form): Json<PostFormRequest>,
+) -> Result<(StatusCode, Json<PostFormResponse>), ErrorResponse> {
     let store = state.store.without_authenticating();
 
     let template = FormTemplate {
@@ -100,7 +100,7 @@ async fn publish_form(
         })
         .map_err(internal_err)?;
 
-    let response = PublishFormResponse {
+    let response = PostFormResponse {
         form_id,
         client_key_id,
     };
