@@ -1,11 +1,11 @@
-use std::{fmt, str::FromStr};
+use std::str::FromStr;
 
 use anyhow::Context;
 use base64::prelude::*;
 use ed25519_dalek::{self as ed25519, Verifier};
 use jsonwebtoken as jwt;
 use rand::RngCore;
-use secrecy::{ExposeSecret, SecretSlice};
+use secrecy::{ExposeSecret, SecretSlice, SecretString};
 use serde::{Deserialize, Serialize};
 
 //
@@ -17,7 +17,10 @@ use serde::{Deserialize, Serialize};
 //
 
 #[derive(Debug, Clone)]
-pub struct EphemeralServerKey(SecretSlice<u8>);
+pub struct EphemeralServerKey {
+    bytes: SecretSlice<u8>,
+    encoded: SecretString,
+}
 
 impl EphemeralServerKey {
     pub const LEN: usize = 32;
@@ -26,21 +29,27 @@ impl EphemeralServerKey {
         let mut rng = rand::thread_rng();
         let mut buf = vec![0u8; Self::LEN];
         rng.fill_bytes(&mut buf);
-        Self(SecretSlice::from(buf))
+
+        let encoded = BASE64_STANDARD.encode(&buf);
+
+        Self {
+            bytes: SecretSlice::from(buf),
+            encoded: SecretString::from(encoded),
+        }
     }
 
     pub fn encoding_key(&self) -> jwt::EncodingKey {
-        jwt::EncodingKey::from_secret(self.0.expose_secret())
+        jwt::EncodingKey::from_secret(self.bytes.expose_secret())
     }
 
     pub fn decoding_key(&self) -> jwt::DecodingKey {
-        jwt::DecodingKey::from_secret(self.0.expose_secret())
+        jwt::DecodingKey::from_secret(self.bytes.expose_secret())
     }
 }
 
-impl fmt::Display for EphemeralServerKey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&BASE64_STANDARD.encode(self.0.expose_secret()))
+impl ExposeSecret<str> for EphemeralServerKey {
+    fn expose_secret(&self) -> &str {
+        self.encoded.expose_secret()
     }
 }
 
@@ -49,7 +58,10 @@ impl FromStr for EphemeralServerKey {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let decoded = BASE64_STANDARD.decode(s)?;
-        Ok(Self(SecretSlice::from(decoded)))
+        Ok(Self {
+            bytes: SecretSlice::from(decoded),
+            encoded: SecretString::from(s),
+        })
     }
 }
 

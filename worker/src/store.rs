@@ -1,6 +1,7 @@
 use std::fmt;
 
 use chrono::NaiveDateTime;
+use secrecy::ExposeSecret;
 use serde::Deserialize;
 use worker::{d1::D1Database, kv::KvStore, query};
 
@@ -381,7 +382,7 @@ impl Store {
         key: EphemeralServerKey,
     ) -> anyhow::Result<()> {
         self.kv
-            .put(&server_key_key(key_id), key.to_string())
+            .put(&server_key_key(key_id), key.expose_secret())
             .map_err(wrap_kv_err)?
             .expiration_ttl(server_key_ttl())
             .execute()
