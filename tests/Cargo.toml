@@ -1,0 +1,11 @@
+[package]
+name = "not-without-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.93"
+base64 = "0.22.1"
+clap = { version = "4.5.21", features = ["derive"] }
+ed25519-dalek = { version = "2.1.1", features = ["pkcs8", "pem", "rand_core"] }
+rand = "0.8.5"
