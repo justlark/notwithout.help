@@ -87,13 +87,13 @@ impl Default for SubmissionId {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ClientKeyId(u32);
+pub struct ClientKeyId(u64);
 
 impl FromStr for ClientKeyId {
-    type Err = <u32 as FromStr>::Err;
+    type Err = <u64 as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(u32::from_str(s)?))
+        Ok(Self(u64::from_str(s)?))
     }
 }
 
