@@ -1,6 +1,7 @@
 mod common;
 
 use reqwest::StatusCode;
+use serde_json::Value as JsonValue;
 use xpct::{be_ok, be_some, be_true, equal, expect};
 
 use common::http::{self, FormResponse};
@@ -9,12 +10,12 @@ use common::http::{self, FormResponse};
 async fn get_form_template() -> anyhow::Result<()> {
     let FormResponse { form_id, .. } = http::create_form().await?;
 
-    let req = http::client()
+    let resp = http::client()
         .get(http::path(&format!("/forms/{}", form_id)))
         .send()
         .await?;
 
-    let value = expect!(req.json::<serde_json::Value>().await)
+    let value = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
         .into_inner();
 
@@ -38,38 +39,40 @@ async fn get_form_template() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn get_form_template_form_not_found() -> anyhow::Result<()> {
-    let req = http::client()
+    let resp = http::client()
         .get(http::path("/forms/invalid-form-id"))
         .send()
         .await?;
 
-    expect!(req.status()).to(equal(StatusCode::NOT_FOUND));
+    expect!(resp.status()).to(equal(StatusCode::NOT_FOUND));
 
     Ok(())
 }
 
 #[tokio::test]
-async fn post_encrypted_submission() -> anyhow::Result<()> {
-    let FormResponse { form_id, .. } = http::create_form().await?;
+async fn delete_form() -> anyhow::Result<()> {
+    let FormResponse {
+        form_id,
+        client_key_id,
+        signing_key,
+    } = http::create_form().await?;
 
-    let req = http::client()
-        .post(http::path(&format!("/submissions/{}", form_id)))
+    let auth_token = http::authenticate(&form_id, client_key_id, &signing_key).await?;
+
+    let resp = http::client()
+        .delete(http::path(&format!("/forms/{}", form_id)))
+        .bearer_auth(auth_token)
         .send()
         .await?;
 
-    expect!(req.status()).to(equal(StatusCode::CREATED));
+    expect!(resp.status()).to(equal(StatusCode::NO_CONTENT));
 
-    Ok(())
-}
-
-#[tokio::test]
-async fn post_encrypted_submission_form_not_found() -> anyhow::Result<()> {
-    let req = http::client()
-        .post(http::path("/submissions/invalid-form-id"))
+    let resp = http::client()
+        .get(http::path(&format!("/forms/{}", form_id)))
         .send()
         .await?;
 
-    expect!(req.status()).to(equal(StatusCode::NOT_FOUND));
+    expect!(resp.status()).to(equal(StatusCode::NOT_FOUND));
 
     Ok(())
 }

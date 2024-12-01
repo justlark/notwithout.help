@@ -1,8 +1,8 @@
+use base64::prelude::*;
 use ed25519_dalek as ed25519;
-use notwithouttests::respond_challenge;
+use notwithouttests::{respond_challenge, ApiChallengeResponse};
 use reqwest::StatusCode;
-use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value as JsonValue};
 use xpct::{be_ok, be_some, equal, expect};
 
 const DEFAULT_API_URL: &str = "http://localhost:8787";
@@ -18,18 +18,22 @@ pub fn path(path: &str) -> String {
     format!("{}{}", api_url(), path)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct FormResponse {
     pub form_id: String,
     pub client_key_id: u64,
+    pub signing_key: ed25519::SigningKey,
 }
 
 pub async fn create_form() -> anyhow::Result<FormResponse> {
-    let req = client()
+    let signing_key = ed25519::SigningKey::generate(&mut rand::thread_rng());
+    let public_signing_key = BASE64_STANDARD.encode(signing_key.as_ref().to_bytes());
+
+    let resp = client()
         .post(path("/forms"))
         .json(&json!({
             "public_primary_key": "<public_primary_key>",
-            "public_signing_key": "Vp0SD6ySAex2vXtsaA8SbXKS3gS35yWO56MTWk2aJzw=",
+            "public_signing_key": public_signing_key,
             "org_name": "<org_name>",
             "description": "<description>",
             "contact_methods": ["<contact_method>"]
@@ -37,9 +41,9 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
         .send()
         .await?;
 
-    expect!(req.status()).to(equal(StatusCode::CREATED));
+    expect!(resp.status()).to(equal(StatusCode::CREATED));
 
-    let value = expect!(req.json::<serde_json::Value>().await)
+    let value = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
         .into_inner();
 
@@ -59,30 +63,46 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
     Ok(FormResponse {
         form_id,
         client_key_id,
+        signing_key,
     })
 }
 
-pub async fn challenge_response() -> anyhow::Result<String> {
-    let FormResponse {
-        form_id,
-        client_key_id,
-    } = create_form().await?;
-
-    let req = client()
+pub async fn gen_challenge_response(
+    form_id: &str,
+    client_key_id: u64,
+    signing_key: &ed25519::SigningKey,
+) -> anyhow::Result<ApiChallengeResponse> {
+    let resp = client()
         .get(path(&format!("/challenges/{}/{}", form_id, client_key_id)))
         .send()
         .await?;
 
-    expect!(req.status()).to(equal(StatusCode::OK));
+    expect!(resp.status()).to(equal(StatusCode::OK));
 
-    let challenge_token = expect!(req.text().await)
+    let challenge_token = expect!(resp.text().await)
         .to(be_ok())
         .map(|v| v.to_string())
         .into_inner();
 
-    let signing_key = ed25519::SigningKey::generate(&mut rand::thread_rng());
+    respond_challenge(&challenge_token, signing_key)
+}
 
-    let challenge_response = respond_challenge(challenge_token, signing_key)?;
+pub async fn authenticate(
+    form_id: &str,
+    client_key_id: u64,
+    signing_key: &ed25519::SigningKey,
+) -> anyhow::Result<String> {
+    let challenge_response = gen_challenge_response(form_id, client_key_id, signing_key).await?;
 
-    Ok(challenge_response)
+    let resp = client()
+        .post(path("/tokens"))
+        .json(&challenge_response)
+        .send()
+        .await?;
+
+    expect!(resp.status()).to(equal(StatusCode::OK));
+
+    let token = expect!(resp.text().await).to(be_ok()).into_inner();
+
+    Ok(token)
 }

@@ -17,15 +17,15 @@ pub struct ApiChallengeResponse {
 }
 
 pub fn respond_challenge(
-    token: String,
-    signing_key: ed25519::SigningKey,
-) -> anyhow::Result<String> {
+    token: &str,
+    signing_key: &ed25519::SigningKey,
+) -> anyhow::Result<ApiChallengeResponse> {
     let encoded_challenge = if token == "-" {
         let mut stdin = String::new();
         io::stdin().read_to_string(&mut stdin)?;
         stdin
     } else {
-        token.clone()
+        token.to_string()
     };
 
     let nonce = match encoded_challenge
@@ -45,10 +45,8 @@ pub fn respond_challenge(
 
     let nonce_signature = BASE64_STANDARD.encode(signing_key.sign(&nonce).to_bytes());
 
-    let response = ApiChallengeResponse {
+    Ok(ApiChallengeResponse {
         signature: nonce_signature,
         challenge: encoded_challenge,
-    };
-
-    Ok(serde_json::to_string_pretty(&response)?)
+    })
 }

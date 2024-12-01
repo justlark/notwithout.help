@@ -23,8 +23,8 @@ impl GenSigningKey {
 impl RespondChallenge {
     pub fn run(&self) -> anyhow::Result<()> {
         let key = ed25519::SigningKey::read_pkcs8_pem_file(&self.key)?;
-        let challenge_response = respond_challenge(self.token.clone(), key)?;
-        println!("{}", challenge_response);
+        let challenge_response = respond_challenge(&self.token, &key)?;
+        println!("{}", serde_json::to_string_pretty(&challenge_response)?);
         Ok(())
     }
 }
