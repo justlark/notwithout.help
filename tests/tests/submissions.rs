@@ -1,6 +1,6 @@
 use reqwest::StatusCode;
-use serde_json::Value as JsonValue;
-use xpct::{be_ok, be_true, equal, expect};
+use serde_json::{json, Value as JsonValue};
+use xpct::{be_ok, be_some, equal, expect, have_len};
 
 use common::http::{self, FormResponse};
 
@@ -12,6 +12,9 @@ async fn post_encrypted_submission() -> anyhow::Result<()> {
 
     let resp = http::client()
         .post(http::path(&format!("/submissions/{}", form_id)))
+        .json(&json!({
+            "encrypted_body": "<encrypted-body>",
+        }))
         .send()
         .await?;
 
@@ -24,6 +27,9 @@ async fn post_encrypted_submission() -> anyhow::Result<()> {
 async fn post_encrypted_submission_form_not_found() -> anyhow::Result<()> {
     let resp = http::client()
         .post(http::path("/submissions/invalid-form-id"))
+        .json(&json!({
+            "encrypted_body": "<encrypted-body>",
+        }))
         .send()
         .await?;
 
@@ -41,6 +47,17 @@ async fn get_encrypted_submission() -> anyhow::Result<()> {
     } = http::create_form().await?;
 
     let auth_token = http::authenticate(&form_id, client_key_id, &signing_key).await?;
+    let encrypted_body = "<encrypted-body>";
+
+    let resp = http::client()
+        .post(http::path(&format!("/submissions/{}", form_id)))
+        .json(&json!({
+            "encrypted_body": encrypted_body,
+        }))
+        .send()
+        .await?;
+
+    expect!(resp.status()).to(equal(StatusCode::CREATED));
 
     let resp = http::client()
         .get(http::path(&format!("/submissions/{}", form_id)))
@@ -52,9 +69,14 @@ async fn get_encrypted_submission() -> anyhow::Result<()> {
 
     expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
-        .map(|v| v.is_array())
-        .to(be_true())
-        .into_inner();
+        .map(|v| v.as_array().map(ToOwned::to_owned))
+        .to(be_some())
+        .to(have_len(1))
+        .map(|v| v.first().map(ToOwned::to_owned))
+        .to(be_some())
+        .map(|v| v.get("encrypted_body").map(ToOwned::to_owned))
+        .to(be_some())
+        .to(equal(encrypted_body));
 
     Ok(())
 }
