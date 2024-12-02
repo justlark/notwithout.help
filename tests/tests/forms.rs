@@ -15,21 +15,21 @@ async fn get_form_template() -> anyhow::Result<()> {
         .send()
         .await?;
 
-    let value = expect!(resp.json::<JsonValue>().await)
+    let body = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
         .into_inner();
 
-    expect!(value.get("org_name"))
+    expect!(body.get("org_name"))
         .to(be_some())
         .map(|v| v.is_string())
         .to(be_true());
 
-    expect!(value.get("description"))
+    expect!(body.get("description"))
         .to(be_some())
         .map(|v| v.is_string())
         .to(be_true());
 
-    expect!(value.get("contact_methods"))
+    expect!(body.get("contact_methods"))
         .to(be_some())
         .map(|v| v.is_array())
         .to(be_true());

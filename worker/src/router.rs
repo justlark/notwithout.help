@@ -15,6 +15,7 @@ use crate::{
         GetApiChallengeResponse, GetFormResponse, GetKeyResponse, ListKeysResponse,
         ListSubmissionsResponse, PatchKeyRequest, PostFormRequest, PostFormResponse,
         PostKeyRequest, PostKeyResponse, PostSubmissionRequest, PostTokenRequest,
+        PostTokenResponse,
     },
     auth::{auth_layer, ApiChallenge, ApiChallengeResponse, SignedApiAccessToken},
     config,
@@ -151,7 +152,7 @@ async fn store_form_submission(
 async fn request_challenge(
     State(state): State<Arc<AppState>>,
     Path((form_id, client_key_id)): Path<(FormId, ClientKeyId)>,
-) -> Result<GetApiChallengeResponse, ErrorResponse> {
+) -> Result<Json<GetApiChallengeResponse>, ErrorResponse> {
     let store = state.store.without_authenticating();
 
     let server_key_id = ServerKeyId::new();
@@ -179,17 +180,20 @@ async fn request_challenge(
         exp: config::challenge_token_exp(),
     };
 
-    Ok(challenge
+    let signed_challenge = challenge
         .encode(&ephemeral_server_key.encoding_key())
-        .map_err(internal_err)?
-        .to_string())
+        .map_err(internal_err)?;
+
+    Ok(Json(GetApiChallengeResponse {
+        challenge: signed_challenge,
+    }))
 }
 
 #[axum::debug_handler]
 async fn request_access_token(
     State(state): State<Arc<AppState>>,
     Json(body): Json<PostTokenRequest>,
-) -> Result<String, ErrorResponse> {
+) -> Result<Json<PostTokenResponse>, ErrorResponse> {
     let store = state.store.without_authenticating();
 
     let validated_challenge = ApiChallengeResponse::from(body)
@@ -210,7 +214,7 @@ async fn request_access_token(
         )
         .map_err(internal_err)?;
 
-    Ok(token.to_string())
+    Ok(Json(PostTokenResponse { token }))
 }
 
 #[axum::debug_handler]

@@ -43,18 +43,18 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
 
     expect!(resp.status()).to(equal(StatusCode::CREATED));
 
-    let value = expect!(resp.json::<JsonValue>().await)
+    let body = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
         .into_inner();
 
-    let form_id = expect!(value.get("form_id"))
+    let form_id = expect!(body.get("form_id"))
         .to(be_some())
         .map(|v| v.as_str())
         .to(be_some())
         .map(|v| v.to_string())
         .into_inner();
 
-    let client_key_id = expect!(value.get("client_key_id"))
+    let client_key_id = expect!(body.get("client_key_id"))
         .to(be_some())
         .map(|v| v.as_u64())
         .to(be_some())
@@ -79,12 +79,18 @@ pub async fn gen_challenge_response(
 
     expect!(resp.status()).to(equal(StatusCode::OK));
 
-    let challenge_token = expect!(resp.text().await)
+    let body = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
+        .into_inner();
+
+    let challenge = expect!(body.get("challenge"))
+        .to(be_some())
+        .map(|v| v.as_str())
+        .to(be_some())
         .map(|v| v.to_string())
         .into_inner();
 
-    respond_challenge(&challenge_token, signing_key)
+    respond_challenge(&challenge, signing_key)
 }
 
 pub async fn authenticate(
@@ -102,7 +108,16 @@ pub async fn authenticate(
 
     expect!(resp.status()).to(equal(StatusCode::OK));
 
-    let token = expect!(resp.text().await).to(be_ok()).into_inner();
+    let body = expect!(resp.json::<JsonValue>().await)
+        .to(be_ok())
+        .into_inner();
+
+    let token = expect!(body.get("token"))
+        .to(be_some())
+        .map(|v| v.as_str())
+        .to(be_some())
+        .map(|v| v.to_string())
+        .into_inner();
 
     Ok(token)
 }

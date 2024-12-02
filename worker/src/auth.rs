@@ -119,7 +119,8 @@ struct ApiAccessTokenClaims {
     exp: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(transparent)]
 pub struct SignedApiAccessToken(String);
 
 impl SignedApiAccessToken {
