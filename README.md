@@ -79,6 +79,15 @@ cd ./tests/
 cargo run -- --help
 ```
 
+In the [`./tests/`](./tests/) directory you'll also find a test suite for the
+backend worker. Once you've started the backend worker running locally, you can
+run the tests like this:
+
+```shell
+cd ./tests/
+cargo test
+```
+
 ## Documentation
 
 You can find documentation on how this app mitigates security risks in the
