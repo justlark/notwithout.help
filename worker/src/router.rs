@@ -130,14 +130,14 @@ async fn get_form(
 async fn store_form_submission(
     State(state): State<Arc<AppState>>,
     Path(form_id): Path<FormId>,
-    body: PostSubmissionRequest,
+    Json(body): Json<PostSubmissionRequest>,
 ) -> Result<StatusCode, ErrorResponse> {
     let store = state.store.without_authenticating();
 
     let submission_id = SubmissionId::new();
 
     let changed = store
-        .put_submission(form_id, submission_id, body.into())
+        .put_submission(form_id, submission_id, body.encrypted_body)
         .await
         .map_err(internal_err)?;
 

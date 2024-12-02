@@ -41,7 +41,10 @@ pub struct PostFormResponse {
     pub client_key_id: ClientKeyId,
 }
 
-pub type PostSubmissionRequest = String;
+#[derive(Debug, Deserialize)]
+pub struct PostSubmissionRequest {
+    pub encrypted_body: EncryptedSubmissionBody,
+}
 
 #[derive(Debug, Serialize)]
 pub struct ListSubmissionsResponse {
