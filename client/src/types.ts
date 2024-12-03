@@ -1,3 +1,5 @@
-export type FormId = string;
-export type SecretLinkKey = string;
-export type ClientKeyId = number;
+export type Newtype<T> = T & { readonly __tag: unique symbol };
+
+export type FormId = Newtype<string>;
+export type SecretLinkKey = Newtype<string>;
+export type ClientKeyId = Newtype<string>;
