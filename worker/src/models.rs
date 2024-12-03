@@ -85,8 +85,7 @@ impl Default for SubmissionId {
 // - Keys associated with different forms may have the same ID.
 //
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Copy)]
 pub struct ClientKeyId(u64);
 
 impl FromStr for ClientKeyId {
@@ -100,6 +99,29 @@ impl FromStr for ClientKeyId {
 impl fmt::Display for ClientKeyId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+// The format of the client ID should be opaque to the client (the fact that it's an
+// auto-incrementing integer is an implementation detail), so we serialize it as a string rather
+// than as an integer.
+impl Serialize for ClientKeyId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+// The client ID is stored in the database as an integer, so we need to be able to deserialize it
+// from an integer.
+impl<'de> Deserialize<'de> for ClientKeyId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Ok(Self(u64::deserialize(deserializer)?))
     }
 }
 
