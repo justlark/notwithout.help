@@ -16,7 +16,7 @@ async fn post_encrypted_submission() -> anyhow::Result<()> {
 
     let resp = endpoints::post_submission(&form_id)
         .json(&json!({
-            "encrypted_body": "<encrypted-body>",
+            "encrypted_body": "<encrypted_body>",
         }))
         .send()
         .await?;
@@ -30,7 +30,7 @@ async fn post_encrypted_submission() -> anyhow::Result<()> {
 async fn post_encrypted_submission_form_not_found() -> anyhow::Result<()> {
     let resp = endpoints::post_submission("invalid-form-id")
         .json(&json!({
-            "encrypted_body": "<encrypted-body>",
+            "encrypted_body": "<encrypted_body>",
         }))
         .send()
         .await?;
@@ -49,7 +49,7 @@ async fn get_encrypted_submission() -> anyhow::Result<()> {
     } = http::create_form().await?;
 
     let auth_token = http::authenticate(&form_id, &client_key_id, &signing_key).await?;
-    let encrypted_body = "<encrypted-body>";
+    let encrypted_body = "<encrypted_body>";
 
     let resp = endpoints::post_submission(&form_id)
         .json(&json!({
@@ -90,6 +90,15 @@ async fn get_encrypted_submission_form_not_found() -> anyhow::Result<()> {
         signing_key,
     } = http::create_form().await?;
 
+    let resp = endpoints::post_submission(&form_id)
+        .json(&json!({
+            "encrypted_body": "<encrypted_body>",
+        }))
+        .send()
+        .await?;
+
+    expect!(resp.status()).to(equal(StatusCode::CREATED));
+
     let auth_token = http::authenticate(&form_id, &client_key_id, &signing_key).await?;
 
     endpoints::delete_form(&form_id)
@@ -97,13 +106,37 @@ async fn get_encrypted_submission_form_not_found() -> anyhow::Result<()> {
         .send()
         .await?;
 
-    let resp = http::client()
-        .get(http::path(&format!("/submissions/{}", form_id)))
+    let resp = endpoints::get_submissions(&form_id)
         .bearer_auth(&auth_token)
         .send()
         .await?;
 
     expect!(resp.status()).to(equal(StatusCode::UNAUTHORIZED));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn get_encrypted_submission_when_there_are_none() -> anyhow::Result<()> {
+    let FormResponse {
+        form_id,
+        client_key_id,
+        signing_key,
+    } = http::create_form().await?;
+
+    let auth_token = http::authenticate(&form_id, &client_key_id, &signing_key).await?;
+
+    let resp = endpoints::get_submissions(&form_id)
+        .bearer_auth(&auth_token)
+        .send()
+        .await?;
+
+    expect!(resp.status()).to(equal(StatusCode::OK));
+
+    expect!(resp.json::<JsonValue>().await)
+        .to(be_ok())
+        .to(have_type::<JsonArray>())
+        .to(have_len(0));
 
     Ok(())
 }
