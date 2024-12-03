@@ -1,8 +1,11 @@
 use reqwest::StatusCode;
 use serde_json::{json, Value as JsonValue};
-use xpct::{be_ok, be_some, equal, expect, have_len};
+use xpct::{all, be_ok, equal, expect, have_len, match_elements};
 
-use common::http::{self, FormResponse};
+use common::{
+    http::{self, FormResponse},
+    matchers::{have_field, have_type, JsonArray, JsonString},
+};
 
 mod common;
 
@@ -67,16 +70,17 @@ async fn get_encrypted_submission() -> anyhow::Result<()> {
 
     expect!(resp.status()).to(equal(StatusCode::OK));
 
-    expect!(resp.json::<JsonValue>().await)
+    let body = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
-        .map(|v| v.as_array().map(ToOwned::to_owned))
-        .to(be_some())
+        .into_inner();
+
+    expect!(body)
+        .to(have_type::<JsonArray>())
         .to(have_len(1))
-        .map(|v| v.first().map(ToOwned::to_owned))
-        .to(be_some())
-        .map(|v| v.get("encrypted_body").map(ToOwned::to_owned))
-        .to(be_some())
-        .to(equal(encrypted_body));
+        .to(match_elements([all(|ctx| {
+            ctx.to(have_field::<JsonString>("encrypted_body"))?
+                .to(equal(encrypted_body))
+        })]));
 
     Ok(())
 }

@@ -3,7 +3,9 @@ use ed25519_dalek as ed25519;
 use notwithouttests::{respond_challenge, ApiChallengeResponse};
 use reqwest::StatusCode;
 use serde_json::{json, Value as JsonValue};
-use xpct::{be_ok, be_some, equal, expect};
+use xpct::{be_ok, equal, expect};
+
+use super::matchers::{have_field, JsonString, JsonU64};
 
 const DEFAULT_API_URL: &str = "http://localhost:8787";
 
@@ -47,17 +49,12 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
         .to(be_ok())
         .into_inner();
 
-    let form_id = expect!(body.get("form_id"))
-        .to(be_some())
-        .map(|v| v.as_str())
-        .to(be_some())
-        .map(|v| v.to_string())
+    let form_id = expect!(body.clone())
+        .to(have_field::<JsonString>("form_id"))
         .into_inner();
 
-    let client_key_id = expect!(body.get("client_key_id"))
-        .to(be_some())
-        .map(|v| v.as_u64())
-        .to(be_some())
+    let client_key_id = expect!(body)
+        .to(have_field::<JsonU64>("client_key_id"))
         .into_inner();
 
     Ok(FormResponse {
@@ -83,11 +80,8 @@ pub async fn gen_challenge_response(
         .to(be_ok())
         .into_inner();
 
-    let challenge = expect!(body.get("challenge"))
-        .to(be_some())
-        .map(|v| v.as_str())
-        .to(be_some())
-        .map(|v| v.to_string())
+    let challenge = expect!(body)
+        .to(have_field::<JsonString>("challenge"))
         .into_inner();
 
     respond_challenge(&challenge, signing_key)
@@ -112,11 +106,8 @@ pub async fn authenticate(
         .to(be_ok())
         .into_inner();
 
-    let token = expect!(body.get("token"))
-        .to(be_some())
-        .map(|v| v.as_str())
-        .to(be_some())
-        .map(|v| v.to_string())
+    let token = expect!(body)
+        .to(have_field::<JsonString>("token"))
         .into_inner();
 
     Ok(token)

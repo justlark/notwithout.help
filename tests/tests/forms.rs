@@ -2,9 +2,12 @@ mod common;
 
 use reqwest::StatusCode;
 use serde_json::Value as JsonValue;
-use xpct::{be_ok, be_some, be_true, equal, expect};
+use xpct::{be_ok, equal, expect};
 
-use common::http::{self, FormResponse};
+use common::{
+    http::{self, FormResponse},
+    matchers::{have_field, JsonArray, JsonString},
+};
 
 #[tokio::test]
 async fn get_form_template() -> anyhow::Result<()> {
@@ -19,20 +22,9 @@ async fn get_form_template() -> anyhow::Result<()> {
         .to(be_ok())
         .into_inner();
 
-    expect!(body.get("org_name"))
-        .to(be_some())
-        .map(|v| v.is_string())
-        .to(be_true());
-
-    expect!(body.get("description"))
-        .to(be_some())
-        .map(|v| v.is_string())
-        .to(be_true());
-
-    expect!(body.get("contact_methods"))
-        .to(be_some())
-        .map(|v| v.is_array())
-        .to(be_true());
+    expect!(body.clone()).to(have_field::<JsonString>("org_name"));
+    expect!(body.clone()).to(have_field::<JsonString>("description"));
+    expect!(body).to(have_field::<JsonArray<JsonString>>("contact_methods"));
 
     Ok(())
 }
