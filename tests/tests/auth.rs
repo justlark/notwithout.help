@@ -69,3 +69,30 @@ async fn not_returning_same_challenge_is_unauthorized() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn challenge_token_can_not_be_used_as_access_token() -> anyhow::Result<()> {
+    let FormResponse {
+        form_id,
+        client_key_id,
+        ..
+    } = http::create_form().await?;
+
+    let resp = endpoints::get_challenge(&form_id, &client_key_id)
+        .send()
+        .await?;
+
+    let challenge_token = expect!(resp.json::<JsonValue>().await)
+        .to(be_ok())
+        .to(have_field::<JsonString>("challenge"))
+        .into_inner();
+
+    let resp = endpoints::delete_form(&form_id)
+        .bearer_auth(&challenge_token)
+        .send()
+        .await?;
+
+    expect!(resp.status()).to(equal(StatusCode::UNAUTHORIZED));
+
+    Ok(())
+}
