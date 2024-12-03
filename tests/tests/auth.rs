@@ -1,5 +1,6 @@
 use common::{
     encoding::base64_encode,
+    endpoints,
     http::{self, gen_challenge_response, FormResponse},
     matchers::{have_field, JsonString},
 };
@@ -18,11 +19,7 @@ async fn valid_signature_of_wrong_nonce_is_unauthorized() -> anyhow::Result<()> 
         signing_key,
     } = http::create_form().await?;
 
-    let resp = http::client()
-        .get(http::path(&format!(
-            "/challenges/{}/{}",
-            form_id, client_key_id
-        )))
+    let resp = endpoints::get_challenge(&form_id, &client_key_id)
         .send()
         .await?;
 
@@ -57,7 +54,7 @@ async fn not_returning_same_challenge_is_unauthorized() -> anyhow::Result<()> {
         signing_key,
     } = http::create_form().await?;
 
-    let challenge_response = gen_challenge_response(&form_id, client_key_id, &signing_key).await?;
+    let challenge_response = gen_challenge_response(&form_id, &client_key_id, &signing_key).await?;
 
     let resp = http::client()
         .post(http::path("/tokens"))

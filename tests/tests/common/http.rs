@@ -5,7 +5,10 @@ use reqwest::StatusCode;
 use serde_json::{json, Value as JsonValue};
 use xpct::{be_ok, equal, expect};
 
-use super::matchers::{have_field, JsonString, JsonU64};
+use super::{
+    endpoints,
+    matchers::{have_field, JsonString},
+};
 
 const DEFAULT_API_URL: &str = "http://localhost:8787";
 
@@ -23,7 +26,7 @@ pub fn path(path: &str) -> String {
 #[derive(Debug)]
 pub struct FormResponse {
     pub form_id: String,
-    pub client_key_id: u64,
+    pub client_key_id: String,
     pub signing_key: ed25519::SigningKey,
 }
 
@@ -31,8 +34,7 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
     let signing_key = ed25519::SigningKey::generate(&mut rand::thread_rng());
     let public_signing_key = BASE64_STANDARD.encode(signing_key.as_ref().to_bytes());
 
-    let resp = client()
-        .post(path("/forms"))
+    let resp = endpoints::post_form()
         .json(&json!({
             "public_primary_key": "<public_primary_key>",
             "public_signing_key": public_signing_key,
@@ -54,7 +56,7 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
         .into_inner();
 
     let client_key_id = expect!(body)
-        .to(have_field::<JsonU64>("client_key_id"))
+        .to(have_field::<JsonString>("client_key_id"))
         .into_inner();
 
     Ok(FormResponse {
@@ -66,11 +68,10 @@ pub async fn create_form() -> anyhow::Result<FormResponse> {
 
 pub async fn gen_challenge_response(
     form_id: &str,
-    client_key_id: u64,
+    client_key_id: &str,
     signing_key: &ed25519::SigningKey,
 ) -> anyhow::Result<ApiChallengeResponse> {
-    let resp = client()
-        .get(path(&format!("/challenges/{}/{}", form_id, client_key_id)))
+    let resp = endpoints::get_challenge(form_id, client_key_id)
         .send()
         .await?;
 
@@ -89,13 +90,12 @@ pub async fn gen_challenge_response(
 
 pub async fn authenticate(
     form_id: &str,
-    client_key_id: u64,
+    client_key_id: &str,
     signing_key: &ed25519::SigningKey,
 ) -> anyhow::Result<String> {
     let challenge_response = gen_challenge_response(form_id, client_key_id, signing_key).await?;
 
-    let resp = client()
-        .post(path("/tokens"))
+    let resp = endpoints::post_token()
         .json(&challenge_response)
         .send()
         .await?;

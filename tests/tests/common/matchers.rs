@@ -36,17 +36,6 @@ impl JsonType for JsonString {
 }
 
 #[derive(Debug)]
-pub struct JsonU64;
-
-impl JsonType for JsonU64 {
-    type Type = u64;
-
-    fn from_json(value: JsonValue) -> Option<Self::Type> {
-        value.as_u64()
-    }
-}
-
-#[derive(Debug)]
 pub struct JsonArray<T = JsonAny> {
     _phantom: PhantomData<T>,
 }

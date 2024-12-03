@@ -3,6 +3,7 @@ use serde_json::{json, Value as JsonValue};
 use xpct::{all, be_ok, equal, expect, have_len, match_elements};
 
 use common::{
+    endpoints,
     http::{self, FormResponse},
     matchers::{have_field, have_type, JsonArray, JsonString},
 };
@@ -13,8 +14,7 @@ mod common;
 async fn post_encrypted_submission() -> anyhow::Result<()> {
     let FormResponse { form_id, .. } = http::create_form().await?;
 
-    let resp = http::client()
-        .post(http::path(&format!("/submissions/{}", form_id)))
+    let resp = endpoints::post_submission(&form_id)
         .json(&json!({
             "encrypted_body": "<encrypted-body>",
         }))
@@ -28,8 +28,7 @@ async fn post_encrypted_submission() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn post_encrypted_submission_form_not_found() -> anyhow::Result<()> {
-    let resp = http::client()
-        .post(http::path("/submissions/invalid-form-id"))
+    let resp = endpoints::post_submission("invalid-form-id")
         .json(&json!({
             "encrypted_body": "<encrypted-body>",
         }))
@@ -49,11 +48,10 @@ async fn get_encrypted_submission() -> anyhow::Result<()> {
         signing_key,
     } = http::create_form().await?;
 
-    let auth_token = http::authenticate(&form_id, client_key_id, &signing_key).await?;
+    let auth_token = http::authenticate(&form_id, &client_key_id, &signing_key).await?;
     let encrypted_body = "<encrypted-body>";
 
-    let resp = http::client()
-        .post(http::path(&format!("/submissions/{}", form_id)))
+    let resp = endpoints::post_submission(&form_id)
         .json(&json!({
             "encrypted_body": encrypted_body,
         }))
@@ -62,8 +60,7 @@ async fn get_encrypted_submission() -> anyhow::Result<()> {
 
     expect!(resp.status()).to(equal(StatusCode::CREATED));
 
-    let resp = http::client()
-        .get(http::path(&format!("/submissions/{}", form_id)))
+    let resp = endpoints::get_submissions(&form_id)
         .bearer_auth(auth_token)
         .send()
         .await?;
@@ -93,10 +90,9 @@ async fn get_encrypted_submission_form_not_found() -> anyhow::Result<()> {
         signing_key,
     } = http::create_form().await?;
 
-    let auth_token = http::authenticate(&form_id, client_key_id, &signing_key).await?;
+    let auth_token = http::authenticate(&form_id, &client_key_id, &signing_key).await?;
 
-    http::client()
-        .delete(http::path(&format!("/forms/{}", form_id)))
+    endpoints::delete_form(&form_id)
         .bearer_auth(&auth_token)
         .send()
         .await?;

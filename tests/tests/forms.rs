@@ -5,6 +5,7 @@ use serde_json::Value as JsonValue;
 use xpct::{be_ok, equal, expect};
 
 use common::{
+    endpoints,
     http::{self, FormResponse},
     matchers::{have_field, JsonArray, JsonString},
 };
@@ -13,10 +14,7 @@ use common::{
 async fn get_form_template() -> anyhow::Result<()> {
     let FormResponse { form_id, .. } = http::create_form().await?;
 
-    let resp = http::client()
-        .get(http::path(&format!("/forms/{}", form_id)))
-        .send()
-        .await?;
+    let resp = endpoints::get_form(&form_id).send().await?;
 
     let body = expect!(resp.json::<JsonValue>().await)
         .to(be_ok())
@@ -31,10 +29,7 @@ async fn get_form_template() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn get_form_template_form_not_found() -> anyhow::Result<()> {
-    let resp = http::client()
-        .get(http::path("/forms/invalid-form-id"))
-        .send()
-        .await?;
+    let resp = endpoints::get_form("invalid-form-id").send().await?;
 
     expect!(resp.status()).to(equal(StatusCode::NOT_FOUND));
 
@@ -49,20 +44,16 @@ async fn delete_form() -> anyhow::Result<()> {
         signing_key,
     } = http::create_form().await?;
 
-    let auth_token = http::authenticate(&form_id, client_key_id, &signing_key).await?;
+    let auth_token = http::authenticate(&form_id, &client_key_id, &signing_key).await?;
 
-    let resp = http::client()
-        .delete(http::path(&format!("/forms/{}", form_id)))
+    let resp = endpoints::delete_form(&form_id)
         .bearer_auth(auth_token)
         .send()
         .await?;
 
     expect!(resp.status()).to(equal(StatusCode::NO_CONTENT));
 
-    let resp = http::client()
-        .get(http::path(&format!("/forms/{}", form_id)))
-        .send()
-        .await?;
+    let resp = endpoints::get_form(&form_id).send().await?;
 
     expect!(resp.status()).to(equal(StatusCode::NOT_FOUND));
 
