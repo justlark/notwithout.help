@@ -1,14 +1,62 @@
 <script setup lang="ts">
+import { reactive, ref } from "vue";
 import { Form } from "@primevue/forms";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-import { contactMethods } from "@/vars";
+import ValidationMessage from "@/components/ValidationMessage.vue";
+import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
+import { zodResolver } from "@primevue/forms/resolvers/zod";
+import { z } from "zod";
+
+const emit = defineEmits(["submit"]);
+
+const submitForm = ({ valid }: { valid: boolean }) => {
+  if (valid) {
+    emit("submit");
+  }
+};
+
+const initialValues = reactive({
+  name: "",
+  contact: "",
+  contactType: undefined,
+});
+
+const resolver = ref(
+  zodResolver(
+    z.object({
+      name: z.string().min(1, { message: "You must provide a name." }),
+      contact: z.string().min(1, { message: "You must provide a way to contact you." }),
+      contactType: z.object(
+        {
+          name: z.string(),
+          code: z.enum(CONTACT_METHOD_TYPES as readonly [string, ...string[]]),
+        },
+        { message: "You must provide a preferred contact method." },
+      ),
+    }),
+  ),
+);
 </script>
 
 <template>
-  <Form class="max-w-xl mx-auto flex flex-col gap-8">
+  <!--
+    All these @vue-ignore directives are necessary to work around an apparent
+    bug in the typing for the PrimeVue forms library. See this issue for
+    details:
+
+    https://github.com/primefaces/primevue/issues/6723
+  -->
+
+  <Form
+    v-slot="$form"
+    class="max-w-xl mx-auto flex flex-col gap-8"
+    :initial-values="initialValues"
+    :resolver="resolver"
+    @submit="submitForm"
+  >
     <div class="flex flex-col gap-2">
       <label for="name-input">Your name</label>
       <InputText
@@ -19,6 +67,8 @@ import { contactMethods } from "@/vars";
         placeholder="Jane"
         aria-describedby="name-help"
       />
+      <!-- @vue-ignore -->
+      <ValidationMessage name="name" :state="$form.name" />
       <Message id="name-help" size="small" severity="secondary" variant="simple">
         The name, nickname, alias, or handle you want to send to the organizers.
       </Message>
@@ -37,14 +87,18 @@ import { contactMethods } from "@/vars";
           class="grow"
         />
         <Select
-          name="contact_type"
-          :options="contactMethods"
+          name="contactType"
+          :options="[...CONTACT_METHODS]"
           option-label="name"
           size="large"
           placeholder="Method"
           class="basis-1/3 max-sm:grow"
         />
       </div>
+      <!-- @vue-ignore -->
+      <ValidationMessage name="contact" :state="$form.contact" />
+      <!-- @vue-ignore -->
+      <ValidationMessage name="contact-type" :state="$form.contactType" />
       <Message id="contact-help" size="small" severity="secondary" variant="simple">
         How you want the organizers to contact you.
       </Message>

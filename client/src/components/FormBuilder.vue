@@ -6,7 +6,8 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
-import { contactMethods } from "@/vars";
+import ValidationMessage from "@/components/ValidationMessage.vue";
+import { CONTACT_METHODS } from "@/vars";
 import { reactive, ref } from "vue";
 import { z } from "zod";
 
@@ -45,6 +46,7 @@ const resolver = ref(
 
     https://github.com/primefaces/primevue/issues/6723
   -->
+
   <Form
     v-slot="$form"
     class="max-w-xl mx-auto flex flex-col gap-8"
@@ -65,16 +67,7 @@ const resolver = ref(
         aria-describedby="title-help"
       />
       <!-- @vue-ignore -->
-      <Message
-        id="title-error"
-        v-if="$form.title?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
-        <!-- @vue-ignore -->
-        {{ $form.title?.error.message }}
-      </Message>
+      <ValidationMessage name="title" :state="$form.title" />
       <Message id="title-help" size="small" severity="secondary" variant="simple">
         A title for your form. Include the name of your group or organization.
       </Message>
@@ -91,16 +84,7 @@ const resolver = ref(
         aria-describedby="description-help"
       />
       <!-- @vue-ignore -->
-      <Message
-        id="description-error"
-        v-if="$form.description?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
-        <!-- @vue-ignore -->
-        {{ $form.description?.error.message }}
-      </Message>
+      <ValidationMessage name="description" :state="$form.description" />
       <Message id="description-help" size="small" severity="secondary" variant="simple">
         Provide some information about your group or organization and what you're looking for.
       </Message>
@@ -113,7 +97,7 @@ const resolver = ref(
       <MultiSelect
         id="contact-input"
         name="contactMethods"
-        :options="contactMethods"
+        :options="[...CONTACT_METHODS]"
         option-label="name"
         placeholder="Select contact methods"
         display="chip"
@@ -121,16 +105,7 @@ const resolver = ref(
         aria-describedby="contact-help"
       />
       <!-- @vue-ignore -->
-      <Message
-        id="contact-error"
-        v-if="$form.contactMethods?.invalid"
-        severity="error"
-        size="small"
-        variant="simple"
-      >
-        <!-- @vue-ignore -->
-        {{ $form.contactMethods?.error.message }}
-      </Message>
+      <ValidationMessage name="contact" :state="$form.contactMethods" />
       <Message id="contact-help" size="small" severity="secondary" variant="simple">
         Specify what contact methods you want respondents to pick from when leaving their contact
         information.

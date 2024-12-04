@@ -1,6 +1,6 @@
 export const TOAST_TTL = 2000;
 
-export const contactMethods = [
+export const CONTACT_METHODS = [
   { name: "Email", code: "email" },
   { name: "SMS", code: "sms" },
   { name: "Signal", code: "signal" },
@@ -15,4 +15,7 @@ export const contactMethods = [
   { name: "Instagram", code: "instagram" },
   { name: "Facebook", code: "facebook" },
   { name: "Other", code: "other" },
-];
+] as const;
+
+export const CONTACT_METHOD_TYPES: ReadonlyArray<(typeof CONTACT_METHODS)[number]["code"]> =
+  CONTACT_METHODS.map((method) => method.code);
