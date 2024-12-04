@@ -40,7 +40,8 @@ const resolver = ref(
 <template>
   <!--
     All these @vue-ignore directives are necessary to work around an apparent
-    bug in the typing for the PrimeVue forms library. See this bug for detail:
+    bug in the typing for the PrimeVue forms library. See this issue for
+    details:
 
     https://github.com/primefaces/primevue/issues/6723
   -->
