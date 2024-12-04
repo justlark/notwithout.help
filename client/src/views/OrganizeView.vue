@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import FormLinks from "@/components/FormLinks.vue";
+import FormBuilder from "@/components/FormBuilder.vue";
 import type { ClientKeyId, FormId, SecretLinkKey } from "@/types";
 
 // TODO: Example of a Form ID.
@@ -11,12 +12,24 @@ const clientKeyId = ref("0" as ClientKeyId);
 
 // TODO: Example of a base64url-encoded Secret Link Key.
 const secretLinkKey = ref("6IKYnsjFRUkvZfpcLjlaMEAvo61IUO44y8EIcCbV2rM=" as SecretLinkKey);
+
+const formSubmitted = ref(false);
+
+const submitForm = () => {
+  formSubmitted.value = true;
+};
 </script>
 
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>
-    <FormLinks :formId="formId" :clientKeyId="clientKeyId" :secretLinkKey="secretLinkKey" />
+    <FormBuilder v-if="!formSubmitted" @submit="submitForm" />
+    <FormLinks
+      v-if="formSubmitted"
+      :formId="formId"
+      :clientKeyId="clientKeyId"
+      :secretLinkKey="secretLinkKey"
+    />
   </main>
 </template>
 

@@ -1,27 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { Form } from "@primevue/forms";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-
-const contactTypes = ref([
-  { name: "Email", code: "email" },
-  { name: "SMS", code: "sms" },
-  { name: "Signal", code: "signal" },
-  { name: "Matrix", code: "matrix" },
-  { name: "Telegram", code: "telegram" },
-  { name: "Discord", code: "discord" },
-  { name: "Mastodon", code: "mastodon" },
-  { name: "Bluesky", code: "bluesky" },
-  { name: "Threads", code: "threads" },
-  { name: "Twitter", code: "twitter" },
-  { name: "WhatsApp", code: "whatsapp" },
-  { name: "Instagram", code: "instagram" },
-  { name: "Facebook", code: "facebook" },
-  { name: "Other", code: "other" },
-]);
+import { contactMethods } from "@/vars";
 </script>
 
 <template>
@@ -39,7 +22,7 @@ const contactTypes = ref([
           aria-describedby="name-help"
         />
         <Message id="name-help" size="small" severity="secondary" variant="simple">
-          The name, nickname, alias, or handle you want to send to the organizers
+          The name, nickname, alias, or handle you want to send to the organizers.
         </Message>
       </div>
 
@@ -57,15 +40,15 @@ const contactTypes = ref([
           />
           <Select
             name="contact_type"
-            :options="contactTypes"
-            optionLabel="name"
+            :options="contactMethods"
+            option-label="name"
             size="large"
             placeholder="Method"
             class="basis-1/3 max-sm:grow"
           />
         </div>
         <Message id="contact-help" size="small" severity="secondary" variant="simple">
-          How you want the organizers to contact you
+          How you want the organizers to contact you.
         </Message>
       </div>
 
