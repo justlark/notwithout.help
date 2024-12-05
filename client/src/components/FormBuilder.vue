@@ -16,7 +16,7 @@ const FORM_STORAGE_KEY = "template";
 
 const emit = defineEmits(["submit"]);
 
-const submitForm = ({ valid, values }: FormSubmitEvent) => {
+const submitForm = ({ valid, values }: FormSubmitEvent & { values: FormValues }) => {
   if (valid) {
     emit("submit", values);
   }
@@ -26,7 +26,7 @@ type FormValues = {
   title: string;
   description: string;
   contactMethods: Array<ContactMethodCode>;
-  date?: Date;
+  expirationDate?: Date;
 };
 
 const initialValues = computed<FormValues>(() =>
@@ -34,7 +34,7 @@ const initialValues = computed<FormValues>(() =>
     title: "",
     description: "",
     contactMethods: [],
-    date: undefined,
+    expirationDate: undefined,
   }),
 );
 
@@ -46,7 +46,7 @@ const resolver = persistingZodResolver(
     contactMethods: z
       .array(z.enum(CONTACT_METHOD_TYPES))
       .nonempty({ message: "You must specify at least one contact method." }),
-    date: z.date().optional(),
+    expirationDate: z.date().optional(),
   }),
 );
 </script>
