@@ -17,6 +17,7 @@ preview_database_id = "2d37dfc0-148f-4b60-badc-124ed3224fa2"
 [[kv_namespaces]]
 binding = "KV"
 id = "0d384462670944d6bb2f1430e7e82772"
+preview_id = "d1d7071dbb5844c881205305d52757e6"
 
 [env.dev]
 
