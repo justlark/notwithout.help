@@ -14,9 +14,9 @@ const FORM_STORAGE_KEY = "form";
 
 const emit = defineEmits(["submit"]);
 
-const submitForm = ({ valid, values }: FormSubmitEvent & { values: FormValues }) => {
+const submitForm = ({ valid, values }: FormSubmitEvent) => {
   if (valid) {
-    emit("submit", values.name);
+    emit("submit", values as FormValues);
   }
 };
 

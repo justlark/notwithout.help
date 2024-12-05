@@ -20,9 +20,9 @@ type Emits = {
 
 const emit = defineEmits<Emits>();
 
-const submitForm = ({ valid, values }: FormSubmitEvent & { values: FormValues }) => {
+const submitForm = ({ valid, values }: FormSubmitEvent) => {
   if (valid) {
-    emit("submit", values);
+    emit("submit", values as FormValues);
   }
 };
 
