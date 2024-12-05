@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import FormLinks from "@/components/FormLinks.vue";
-import FormBuilder from "@/components/FormBuilder.vue";
+import FormBuilder, { type FormValues } from "@/components/FormBuilder.vue";
 import type { ClientKeyId, FormId, SecretLinkKey } from "@/types";
 
 // TODO: Example of a Form ID.
@@ -15,7 +15,7 @@ const secretLinkKey = ref("6IKYnsjFRUkvZfpcLjlaMEAvo61IUO44y8EIcCbV2rM=" as Secr
 
 const formSubmitted = ref(false);
 
-const submitForm = () => {
+const submitForm = (values: FormValues) => {
   formSubmitted.value = true;
 };
 </script>

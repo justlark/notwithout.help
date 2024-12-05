@@ -14,7 +14,11 @@ import { z } from "zod";
 
 const FORM_STORAGE_KEY = "template";
 
-const emit = defineEmits(["submit"]);
+type Emits = {
+  (eventName: "submit", values: FormValues): void;
+};
+
+const emit = defineEmits<Emits>();
 
 const submitForm = ({ valid, values }: FormSubmitEvent & { values: FormValues }) => {
   if (valid) {
@@ -22,7 +26,7 @@ const submitForm = ({ valid, values }: FormSubmitEvent & { values: FormValues })
   }
 };
 
-type FormValues = {
+export type FormValues = {
   title: string;
   description: string;
   contactMethods: Array<ContactMethodCode>;
