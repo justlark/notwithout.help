@@ -8,3 +8,11 @@ export const decodeBase64 = (base64: string): Uint8Array =>
   Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
 export const encodeUtf8 = (str: string): Uint8Array => new TextEncoder().encode(str);
+
+export const parseDate = (date: string): Date => {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+export const formatDate = (date: Date): string =>
+  `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;

@@ -27,11 +27,11 @@ type FormValues = {
 };
 
 const initialValues = computed<FormValues>(() =>
-  loadPersisted(FORM_STORAGE_KEY, {
-    name: "",
-    contact: "",
-    contactType: undefined,
-  }),
+  loadPersisted(FORM_STORAGE_KEY, (values) => ({
+    name: values.name ?? "",
+    contact: values.contact ?? "",
+    contactType: values.contactType ?? undefined,
+  })),
 );
 
 const resolver = persistingZodResolver(

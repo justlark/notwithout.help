@@ -11,6 +11,7 @@ import { CONTACT_METHOD_TYPES, CONTACT_METHODS, type ContactMethodCode } from "@
 import { computed } from "vue";
 import { loadPersisted, persistingZodResolver } from "@/forms";
 import { z } from "zod";
+import { formatDate, parseDate } from "@/encoding";
 
 const FORM_STORAGE_KEY = "template";
 
@@ -34,11 +35,15 @@ export type FormValues = {
 };
 
 const initialValues = computed<FormValues>(() =>
-  loadPersisted(FORM_STORAGE_KEY, {
-    title: "",
-    description: "",
-    contactMethods: [],
-    expirationDate: undefined,
+  loadPersisted(FORM_STORAGE_KEY, (values) => {
+    console.log(values.expirationDate);
+    console.log(new Date(Date.parse(values.expirationDate)));
+    return {
+      title: values.title ?? "",
+      description: values.description ?? "",
+      contactMethods: values.contactMethods ?? [],
+      expirationDate: values.expirationDate ? parseDate(values.expirationDate) : undefined,
+    };
   }),
 );
 
@@ -50,7 +55,10 @@ const resolver = persistingZodResolver(
     contactMethods: z
       .array(z.enum(CONTACT_METHOD_TYPES))
       .nonempty({ message: "You must specify at least one contact method." }),
-    expirationDate: z.date().optional(),
+    expirationDate: z
+      .date()
+      .optional()
+      .transform((date) => (!date ? undefined : formatDate(date))),
   }),
 );
 </script>
