@@ -158,7 +158,8 @@ export const unsealSubmissionBody = (
   privatePrimaryKey: PrivatePrimaryKey,
 ): Uint8Array => unsealBox(body, publicPrimaryKey, privatePrimaryKey);
 
-export const signApiChallengeNonce = (
+export const signApiChallengeNonce = async (
   nonce: ApiChallengeNonce,
   privateSigningKey: PrivateSigningKey,
-): ApiChallengeSignature => sign(nonce, privateSigningKey) as ApiChallengeSignature;
+): Promise<ApiChallengeSignature> =>
+  (await sign(nonce, privateSigningKey)) as ApiChallengeSignature;
