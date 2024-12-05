@@ -16,6 +16,7 @@
     "@primevue/forms": "^4.2.4",
     "@primevue/themes": "^4.2.4",
     "install": "^0.13.0",
+    "libsodium": "^0.7.15",
     "npm": "^10.9.0",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.4",
