@@ -6,9 +6,9 @@ import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
 import ValidationMessage from "@/components/ValidationMessage.vue";
-import { CONTACT_METHOD_TYPES, CONTACT_METHODS, type ContactMethodCode } from "@/vars";
+import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
 import { z } from "zod";
-import { loadPersisted, persistingZodResolver } from "@/forms";
+import { loadPersisted, persistingResolver } from "@/forms";
 
 const FORM_STORAGE_KEY = "form";
 
@@ -20,29 +20,20 @@ const submitForm = ({ valid, values }: FormSubmitEvent) => {
   }
 };
 
-type FormValues = {
-  name: string;
-  contact: string;
-  contactType?: ContactMethodCode;
-};
-
-const initialValues = computed<FormValues>(() =>
-  loadPersisted(FORM_STORAGE_KEY, (values) => ({
-    name: values.name ?? "",
-    contact: values.contact ?? "",
-    contactType: values.contactType ?? undefined,
-  })),
-);
-
-const resolver = persistingZodResolver(
-  FORM_STORAGE_KEY,
-  z.object({
-    name: z.string().min(1, { message: "You must provide a name." }),
-    contact: z.string().min(1, { message: "You must provide a way to contact you." }),
-    contactType: z.enum(CONTACT_METHOD_TYPES, {
-      message: "You must provide a preferred contact method.",
-    }),
+const schema = z.object({
+  name: z.string().min(1, { message: "You must provide a name." }),
+  contact: z.string().min(1, { message: "You must provide a way to contact you." }),
+  contactType: z.enum(CONTACT_METHOD_TYPES, {
+    message: "You must provide a preferred contact method.",
   }),
+});
+
+export type FormValues = z.infer<typeof schema>;
+
+const resolver = persistingResolver(FORM_STORAGE_KEY, schema);
+
+const initialValues = computed<Partial<FormValues>>(() =>
+  loadPersisted(FORM_STORAGE_KEY, (values) => values),
 );
 </script>
 

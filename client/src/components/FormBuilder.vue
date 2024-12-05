@@ -7,9 +7,9 @@ import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import DatePicker from "primevue/datepicker";
 import ValidationMessage from "@/components/ValidationMessage.vue";
-import { CONTACT_METHOD_TYPES, CONTACT_METHODS, type ContactMethodCode } from "@/vars";
+import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
 import { computed } from "vue";
-import { loadPersisted, persistingZodResolver } from "@/forms";
+import { loadPersisted, persistingResolver } from "@/forms";
 import { z } from "zod";
 import { formatDate, parseDate } from "@/encoding";
 
@@ -27,39 +27,29 @@ const submitForm = ({ valid, values }: FormSubmitEvent) => {
   }
 };
 
-export type FormValues = {
-  title: string;
-  description: string;
-  contactMethods: Array<ContactMethodCode>;
-  expirationDate?: Date;
-};
+const schema = z.object({
+  title: z.string().min(1, { message: "You must provide a title." }),
+  description: z.string().min(1, { message: "You must provide a description." }),
+  contactMethods: z
+    .array(z.enum(CONTACT_METHOD_TYPES))
+    .nonempty({ message: "You must specify at least one contact method." }),
+  expirationDate: z.date().optional(),
+});
 
-const initialValues = computed<FormValues>(() =>
-  loadPersisted(FORM_STORAGE_KEY, (values) => {
-    console.log(values.expirationDate);
-    console.log(new Date(Date.parse(values.expirationDate)));
-    return {
-      title: values.title ?? "",
-      description: values.description ?? "",
-      contactMethods: values.contactMethods ?? [],
-      expirationDate: values.expirationDate ? parseDate(values.expirationDate) : undefined,
-    };
-  }),
-);
+export type FormValues = z.infer<typeof schema>;
 
-const resolver = persistingZodResolver(
-  FORM_STORAGE_KEY,
-  z.object({
-    title: z.string().min(1, { message: "Title is required." }),
-    description: z.string().min(1, { message: "Description is required." }),
-    contactMethods: z
-      .array(z.enum(CONTACT_METHOD_TYPES))
-      .nonempty({ message: "You must specify at least one contact method." }),
-    expirationDate: z
-      .date()
-      .optional()
-      .transform((date) => (!date ? undefined : formatDate(date))),
-  }),
+const resolver = persistingResolver(FORM_STORAGE_KEY, schema, (input) => ({
+  title: input.title ?? undefined,
+  description: input.description ?? undefined,
+  contactMethods: input.contactMethods ?? [],
+  expirationDate: input.expirationDate ? formatDate(input.expirationDate) : undefined,
+}));
+
+const initialValues = computed<Partial<FormValues>>(() =>
+  loadPersisted(FORM_STORAGE_KEY, (values) => ({
+    ...values,
+    expirationDate: values.expirationDate ? parseDate(values.expirationDate) : undefined,
+  })),
 );
 </script>
 
