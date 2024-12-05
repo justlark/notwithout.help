@@ -5,7 +5,8 @@ import type { ClientKeyId, FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_TTL } from "@/vars";
 import Toast from "primevue/toast";
-import { encodeBase64Url, type SecretLinkKey } from "@/crypto";
+import { type SecretLinkKey } from "@/crypto";
+import { encodeBase64Url } from "@/encoding";
 
 const TOAST_GROUP = "form-link-copy";
 

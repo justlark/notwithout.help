@@ -1,5 +1,4 @@
 import {
-  encodeBase64,
   type ApiAccessToken,
   type ApiChallengeSignature,
   type ApiChallengeToken,
@@ -8,6 +7,7 @@ import {
   type PublicSigningKey,
   type WrappedPrivatePrimaryKey,
 } from "./crypto";
+import { encodeBase64 } from "./encoding";
 import type { ClientKeyId, FormId } from "./types";
 import type { ContactMethodCode } from "./vars";
 

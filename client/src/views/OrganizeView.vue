@@ -6,15 +6,14 @@ import type { ClientKeyId, FormId } from "@/types";
 import api from "@/api";
 import {
   deriveKeys,
-  encodeUtf8,
   encryptKeyComment,
-  extractNonce,
   generatePrimaryKeypair,
   generateSecretLinkKey,
-  signApiChallengeNonce,
   wrapPrivatePrimaryKey,
   type SecretLinkKey,
 } from "@/crypto";
+import { getAccessToken } from "@/auth";
+import { encodeUtf8 } from "@/encoding";
 
 const INITIAL_KEY_COMMENT = "Original";
 
@@ -40,14 +39,11 @@ const submitForm = async (values: FormValues) => {
   clientKeyId.value = response.clientKeyId;
   secretLinkKey.value = newSecretLinkKey;
 
-  // TODO: Refactor this out into a separate function.
-  const challenge = await api.getChallengeToken(formId.value, clientKeyId.value);
-  const nonce = extractNonce(challenge);
-  const signature = await signApiChallengeNonce(nonce, derivedKeys.privateSigningKey);
-  const accessToken = await api.postAccessToken({
-    challenge,
-    signature,
-  });
+  const accessToken = await getAccessToken(
+    formId.value,
+    clientKeyId.value,
+    derivedKeys.privateSigningKey,
+  );
 
   const encryptedComment = encryptKeyComment(
     encodeUtf8(INITIAL_KEY_COMMENT),

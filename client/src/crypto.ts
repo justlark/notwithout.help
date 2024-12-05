@@ -1,31 +1,14 @@
 import _sodium from "libsodium-wrappers";
-import { jwtDecode } from "jwt-decode";
 import * as ed from "@noble/ed25519";
 import type { Newtype } from "./types";
 
 await _sodium.ready;
 export const sodium = _sodium;
 
-export const encodeBase64 = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode.apply(null, [...bytes]));
-
-export const encodeBase64Url = (bytes: Uint8Array): string =>
-  encodeBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-
-export const decodeBase64 = (base64: string): Uint8Array =>
-  Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-
-export const encodeUtf8 = (str: string): Uint8Array => new TextEncoder().encode(str);
-
 export type ApiAccessToken = Newtype<string, { readonly __tag: unique symbol }>;
 export type ApiChallengeToken = Newtype<string, { readonly __tag: unique symbol }>;
 export type ApiChallengeNonce = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type ApiChallengeSignature = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
-
-export const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
-  const { nonce } = jwtDecode<{ nonce: string }>(challengeToken);
-  return decodeBase64(nonce) as ApiChallengeNonce;
-};
 
 export type PrivatePrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type PublicPrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
