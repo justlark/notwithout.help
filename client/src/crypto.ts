@@ -9,8 +9,14 @@ export type PrivatePrimaryKey = Newtype<Uint8Array>;
 export type PublicPrimaryKey = Newtype<Uint8Array>;
 export type SecretLinkKey = Newtype<Uint8Array>;
 export type SecretWrappingKey = Newtype<Uint8Array>;
+export type WrappedPrivatePrimaryKey = Newtype<Uint8Array>;
 export type PrivateSigningKey = Newtype<Uint8Array>;
 export type PublicSigningKey = Newtype<Uint8Array>;
+
+export type EncryptedSubmissionBody = Newtype<Uint8Array>;
+export type EncryptedKeyComment = Newtype<Uint8Array>;
+export type ApiChallengeNonce = Newtype<Uint8Array>;
+export type ApiChallengeSignature = Newtype<Uint8Array>;
 
 export type PrimaryKeypair = {
   private: PrivatePrimaryKey;
@@ -26,10 +32,20 @@ export type DerivedKeys = {
 type DerivedKeyParams = {
   index: number;
   context: string;
+  len: number;
 };
 
-const SECRET_WRAPPING_KEY_PARAMS: DerivedKeyParams = { index: 1, context: "nwh-wrap" };
-const SIGNING_KEYS_SEED_KEY_PARAMS: DerivedKeyParams = { index: 2, context: "nwh-sign" };
+const SECRET_WRAPPING_KEY_PARAMS: DerivedKeyParams = {
+  index: 1,
+  context: "nwh-wrap",
+  len: sodium["crypto_secretbox_KEYBYTES"],
+};
+
+const PRIVATE_SIGNING_KEY_PARAMS: DerivedKeyParams = {
+  index: 2,
+  context: "nwh-sign",
+  len: 32,
+};
 
 export const generateSecretLinkKey = (): SecretLinkKey =>
   sodium.crypto_kdf_keygen() as SecretLinkKey;
@@ -45,25 +61,93 @@ export const generatePrimaryKeypair = (): PrimaryKeypair => {
 
 export function deriveKeys(secretLinkKey: SecretLinkKey): DerivedKeys {
   const secretWrappingKey = sodium.crypto_kdf_derive_from_key(
-    sodium["crypto_secretbox_KEYBYTES"],
+    SECRET_WRAPPING_KEY_PARAMS.len,
     SECRET_WRAPPING_KEY_PARAMS.index,
     SECRET_WRAPPING_KEY_PARAMS.context,
     secretLinkKey,
-  );
+  ) as SecretWrappingKey;
 
-  const signingKeysSeedKey = sodium.crypto_kdf_derive_from_key(
-    sodium["crypto_sign_SEEDBYTES"],
-    SIGNING_KEYS_SEED_KEY_PARAMS.index,
-    SIGNING_KEYS_SEED_KEY_PARAMS.context,
+  const privateSigningKey = sodium.crypto_kdf_derive_from_key(
+    PRIVATE_SIGNING_KEY_PARAMS.len,
+    PRIVATE_SIGNING_KEY_PARAMS.index,
+    PRIVATE_SIGNING_KEY_PARAMS.context,
     secretLinkKey,
-  );
+  ) as PrivateSigningKey;
 
-  const { publicKey: publicSigningKey, privateKey: privateSigningKey } =
-    sodium.crypto_sign_seed_keypair(signingKeysSeedKey);
+  const publicSigningKey = ed.getPublicKey(privateSigningKey) as PublicSigningKey;
 
   return {
-    secretWrappingKey: secretWrappingKey as SecretWrappingKey,
-    privateSigningKey: privateSigningKey as PrivateSigningKey,
-    publicSigningKey: publicSigningKey as PublicSigningKey,
+    secretWrappingKey,
+    privateSigningKey,
+    publicSigningKey,
   };
 }
+
+const encryptSecretbox = (
+  plaintext: Uint8Array,
+  secretWrappingKey: SecretWrappingKey,
+): Uint8Array => {
+  const nonce = sodium.randombytes_buf(sodium["crypto_secretbox_NONCEBYTES"]);
+  const ciphertext = sodium.crypto_secretbox_easy(plaintext, nonce, secretWrappingKey);
+  return new Uint8Array([...nonce, ...ciphertext]);
+};
+
+export const decryptSecretbox = (
+  ciphertext: Uint8Array,
+  secretWrappingKey: SecretWrappingKey,
+): Uint8Array => {
+  const nonce = ciphertext.slice(0, sodium["crypto_secretbox_NONCEBYTES"]);
+  const message = ciphertext.slice(sodium["crypto_secretbox_NONCEBYTES"]);
+
+  return sodium.crypto_secretbox_open_easy(message, nonce, secretWrappingKey);
+};
+
+const sealBox = (message: Uint8Array, publicPrimaryKey: PublicPrimaryKey): Uint8Array =>
+  sodium.crypto_box_seal(message, publicPrimaryKey);
+
+const unsealBox = (
+  ciphertext: Uint8Array,
+  publicPrimaryKey: PublicPrimaryKey,
+  privatePrimaryKey: PrivatePrimaryKey,
+): Uint8Array => sodium.crypto_box_seal_open(ciphertext, publicPrimaryKey, privatePrimaryKey);
+
+const sign = (message: Uint8Array, privateSigningKey: PrivateSigningKey): Uint8Array =>
+  ed.sign(message, privateSigningKey);
+
+export const wrapPrivatePrimaryKey = (
+  privatePrimaryKey: PrivatePrimaryKey,
+  secretWrappingKey: SecretWrappingKey,
+): WrappedPrivatePrimaryKey =>
+  encryptSecretbox(privatePrimaryKey, secretWrappingKey) as WrappedPrivatePrimaryKey;
+
+export const unwrapPrivatePrimaryKey = (
+  wrappedPrivatePrimaryKey: WrappedPrivatePrimaryKey,
+  secretWrappingKey: SecretWrappingKey,
+): PrivatePrimaryKey =>
+  decryptSecretbox(wrappedPrivatePrimaryKey, secretWrappingKey) as PrivatePrimaryKey;
+
+export const encryptKeyComment = (
+  comment: Uint8Array,
+  secretWrappingKey: SecretWrappingKey,
+): EncryptedKeyComment => encryptSecretbox(comment, secretWrappingKey) as EncryptedKeyComment;
+
+export const decryptKeyComment = (
+  comment: EncryptedKeyComment,
+  secretWrappingKey: SecretWrappingKey,
+): Uint8Array => decryptSecretbox(comment, secretWrappingKey);
+
+export const sealSubmissionBody = (
+  body: Uint8Array,
+  publicPrimaryKey: PublicPrimaryKey,
+): EncryptedSubmissionBody => sealBox(body, publicPrimaryKey) as EncryptedSubmissionBody;
+
+export const unsealSubmissionBody = (
+  body: EncryptedSubmissionBody,
+  publicPrimaryKey: PublicPrimaryKey,
+  privatePrimaryKey: PrivatePrimaryKey,
+): Uint8Array => unsealBox(body, publicPrimaryKey, privatePrimaryKey);
+
+export const signApiChallengeNonce = (
+  nonce: ApiChallengeNonce,
+  privateSigningKey: PrivateSigningKey,
+): ApiChallengeSignature => sign(nonce, privateSigningKey) as ApiChallengeSignature;
