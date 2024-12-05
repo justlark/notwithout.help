@@ -3,7 +3,7 @@
 **Author**: Lark (they/it)\
 **Contact**: <lark@lark.gay>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 28 Nov 2024
+**Last Updated**: 5 Dec 2024
 
 This document is an informal overview of how [Not Without
 Help](https://notwithout.help) mitigates security risks.
@@ -242,21 +242,31 @@ validates to authorize the request. The server validates:
 - **Submissions** are encrypted with the **Public Primary Key** using
   [libsodium](https://doc.libsodium.org/public-key_cryptography/sealed_boxes)
   via `crypto_box_seal`.
+- The **Private Primary Key** is encrypted with the **Secret Wrapping Key**
+  using
+  [libsodium](https://doc.libsodium.org/secret-key_cryptography/secretbox) via
+  `crypto_secretbox_easy`.
+- Comments on **Secret Links** are encrypted with the **Secret Wrapping Key**
+  using
+  [libsodium](https://doc.libsodium.org/secret-key_cryptography/secretbox) via
+  `crypto_secretbox_easy`.
 - **API Challenges** and **API Access Tokens** are signed with the **Ephemeral
   Server Key** using [jsonwebtoken](https://crates.io/crates/jsonwebtoken) via
   `HS256` (HMAC-SHA256).
 - The **API Challenge** nonce is signed with the **Private Signing Key** using
   [noble-ed25519](https://www.npmjs.com/package/@noble/ed25519) via `sign`.
+- The **Public Primary Key** and **Private Primary Key** are generated using
+  [libsodium](https://doc.libsodium.org/public-key_cryptography/sealed_boxes)
+  via `crypto_box_keypair`.
 - The **Secret Link Key** is generated using
   [libsodium](https://doc.libsodium.org/key_derivation) via
   `crypto_kdf_keygen`.
 - The **Secret Wrapping Key** is derived from the **Secret Link Key** using
   [libsodium](https://doc.libsodium.org/key_derivation) via
   `crypto_kdf_derive_from_key`.
-- The **Private Signing Key** and **Public Signing Key** are derived from the
-  **Secret Link Key** using
+- The **Private Signing Key** is derived from the **Secret Link Key** using
   [libsodium](https://doc.libsodium.org/key_derivation) via
-  `crypto_kdf_derive_from_key` and `crypto_sign_seed_keypair`.
+  `crypto_kdf_derive_from_key`.
 - The **Public Signing Key** is derived from the **Private Signing Key** using
   [noble-ed25519](https://www.npmjs.com/package/@noble/ed25519) via
   `getPublicKey`.
