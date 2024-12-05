@@ -879,7 +879,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "not-without-tests"
+name = "notwithouttests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
