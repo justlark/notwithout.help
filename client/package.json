@@ -17,6 +17,7 @@
     "@primevue/forms": "^4.2.4",
     "@primevue/themes": "^4.2.4",
     "install": "^0.13.0",
+    "jwt-decode": "^4.0.0",
     "libsodium": "^0.7.15",
     "libsodium-wrappers": "^0.7.15",
     "npm": "^10.9.0",

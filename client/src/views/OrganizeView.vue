@@ -6,15 +6,21 @@ import type { ClientKeyId, FormId } from "@/types";
 import api from "@/api";
 import {
   deriveKeys,
+  encodeUtf8,
+  encryptKeyComment,
+  extractNonce,
   generatePrimaryKeypair,
   generateSecretLinkKey,
+  signApiChallengeNonce,
+  wrapPrivatePrimaryKey,
   type SecretLinkKey,
 } from "@/crypto";
+
+const INITIAL_KEY_COMMENT = "Original";
 
 const formId = ref<FormId>();
 const clientKeyId = ref<ClientKeyId>();
 const secretLinkKey = ref<SecretLinkKey>();
-
 const formSubmitted = ref(false);
 
 const submitForm = async (values: FormValues) => {
@@ -33,6 +39,32 @@ const submitForm = async (values: FormValues) => {
   formId.value = response.formId;
   clientKeyId.value = response.clientKeyId;
   secretLinkKey.value = newSecretLinkKey;
+
+  // TODO: Refactor this out into a separate function.
+  const challenge = await api.getChallengeToken(formId.value, clientKeyId.value);
+  const nonce = extractNonce(challenge);
+  const signature = await signApiChallengeNonce(nonce, derivedKeys.privateSigningKey);
+  const accessToken = await api.postAccessToken({
+    challenge,
+    signature,
+  });
+
+  const encryptedComment = encryptKeyComment(
+    encodeUtf8(INITIAL_KEY_COMMENT),
+    derivedKeys.secretWrappingKey,
+  );
+  const wrappedPrivatePrimaryKey = wrapPrivatePrimaryKey(
+    newPrimaryKeypair.private,
+    derivedKeys.secretWrappingKey,
+  );
+
+  await api.patchKey({
+    formId: formId.value,
+    clientKeyId: clientKeyId.value,
+    wrappedPrivatePrimaryKey,
+    encryptedComment,
+    accessToken,
+  });
 
   formSubmitted.value = true;
 };
