@@ -1,25 +1,39 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
-import type { ClientKeyId, FormId, SecretLinkKey } from "@/types";
+import type { ClientKeyId, FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_TTL } from "@/vars";
 import Toast from "primevue/toast";
+import { encodeBase64Url, type SecretLinkKey } from "@/crypto";
 
 const TOAST_GROUP = "form-link-copy";
 
 const props = defineProps<{
-  formId: FormId;
-  clientKeyId: ClientKeyId;
-  secretLinkKey: SecretLinkKey;
+  formId: FormId | undefined;
+  clientKeyId: ClientKeyId | undefined;
+  secretLinkKey: SecretLinkKey | undefined;
 }>();
 
 const origin = computed(() => window.location.origin);
-const shareLink = computed(() => new URL(`${origin.value}/share/#/${props.formId}`));
-const secretLink = computed(
-  () =>
-    new URL(`${origin.value}/view/#/${props.formId}/${props.clientKeyId}/${props.secretLinkKey}`),
-);
+
+const shareLink = computed(() => {
+  if (!props.formId) {
+    return undefined;
+  }
+
+  return new URL(`${origin.value}/share/#/${props.formId}`);
+});
+
+const secretLink = computed(() => {
+  if (!props.formId || !props.clientKeyId || !props.secretLinkKey) {
+    return undefined;
+  }
+
+  return new URL(
+    `${origin.value}/view/#/${props.formId}/${props.clientKeyId}/${encodeBase64Url(props.secretLinkKey)}`,
+  );
+});
 
 const toast = useToast();
 
@@ -51,7 +65,7 @@ const copySecretLink = () => {
 <template>
   <div class="max-w-xl mx-auto flex flex-col gap-8">
     <Toast position="bottom-center" :group="TOAST_GROUP" />
-    <LinkAdmonition :link="shareLink" @click="copyShareLink">
+    <LinkAdmonition v-if="shareLink" :link="shareLink" @click="copyShareLink">
       <template #title>
         <span class="flex gap-3 items-center">
           <i class="pi pi-share-alt"></i>
@@ -72,7 +86,7 @@ const copySecretLink = () => {
       </template>
     </LinkAdmonition>
 
-    <LinkAdmonition :link="secretLink" @click="copySecretLink">
+    <LinkAdmonition v-if="secretLink" :link="secretLink" @click="copySecretLink">
       <template #title>
         <span class="flex gap-3 items-center">
           <i class="pi pi-lock"></i>

@@ -5,6 +5,15 @@ import type { Newtype } from "./types";
 await _sodium.ready;
 export const sodium = _sodium;
 
+export const encodeBase64 = (bytes: Uint8Array): string =>
+  btoa(String.fromCharCode.apply(null, [...bytes]));
+
+export const encodeBase64Url = (bytes: Uint8Array): string =>
+  encodeBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+export const decodeBase64 = (base64: string): Uint8Array =>
+  Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+
 export type PrivatePrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type PublicPrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type SecretLinkKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
@@ -59,7 +68,7 @@ export const generatePrimaryKeypair = (): PrimaryKeypair => {
   };
 };
 
-export function deriveKeys(secretLinkKey: SecretLinkKey): DerivedKeys {
+export const deriveKeys = async (secretLinkKey: SecretLinkKey): Promise<DerivedKeys> => {
   const secretWrappingKey = sodium.crypto_kdf_derive_from_key(
     SECRET_WRAPPING_KEY_PARAMS.len,
     SECRET_WRAPPING_KEY_PARAMS.index,
@@ -74,14 +83,14 @@ export function deriveKeys(secretLinkKey: SecretLinkKey): DerivedKeys {
     secretLinkKey,
   ) as PrivateSigningKey;
 
-  const publicSigningKey = ed.getPublicKey(privateSigningKey) as PublicSigningKey;
+  const publicSigningKey = (await ed.getPublicKeyAsync(privateSigningKey)) as PublicSigningKey;
 
   return {
     secretWrappingKey,
     privateSigningKey,
     publicSigningKey,
   };
-}
+};
 
 const encryptSecretbox = (
   plaintext: Uint8Array,
@@ -111,8 +120,10 @@ const unsealBox = (
   privatePrimaryKey: PrivatePrimaryKey,
 ): Uint8Array => sodium.crypto_box_seal_open(ciphertext, publicPrimaryKey, privatePrimaryKey);
 
-const sign = (message: Uint8Array, privateSigningKey: PrivateSigningKey): Uint8Array =>
-  ed.sign(message, privateSigningKey);
+const sign = async (
+  message: Uint8Array,
+  privateSigningKey: PrivateSigningKey,
+): Promise<Uint8Array> => ed.signAsync(message, privateSigningKey);
 
 export const wrapPrivatePrimaryKey = (
   privatePrimaryKey: PrivatePrimaryKey,
