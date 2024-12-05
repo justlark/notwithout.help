@@ -5,18 +5,18 @@ import type { Newtype } from "./types";
 await _sodium.ready;
 export const sodium = _sodium;
 
-export type PrivatePrimaryKey = Newtype<Uint8Array>;
-export type PublicPrimaryKey = Newtype<Uint8Array>;
-export type SecretLinkKey = Newtype<Uint8Array>;
-export type SecretWrappingKey = Newtype<Uint8Array>;
-export type WrappedPrivatePrimaryKey = Newtype<Uint8Array>;
-export type PrivateSigningKey = Newtype<Uint8Array>;
-export type PublicSigningKey = Newtype<Uint8Array>;
+export type PrivatePrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type PublicPrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type SecretLinkKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type SecretWrappingKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type WrappedPrivatePrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type PrivateSigningKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type PublicSigningKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 
-export type EncryptedSubmissionBody = Newtype<Uint8Array>;
-export type EncryptedKeyComment = Newtype<Uint8Array>;
-export type ApiChallengeNonce = Newtype<Uint8Array>;
-export type ApiChallengeSignature = Newtype<Uint8Array>;
+export type EncryptedSubmissionBody = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type EncryptedKeyComment = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type ApiChallengeNonce = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type ApiChallengeSignature = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 
 export type PrimaryKeypair = {
   private: PrivatePrimaryKey;
