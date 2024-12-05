@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { computed } from "vue";
 import { Form } from "@primevue/forms";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
@@ -7,8 +7,10 @@ import Button from "primevue/button";
 import Select from "primevue/select";
 import ValidationMessage from "@/components/ValidationMessage.vue";
 import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
-import { zodResolver } from "@primevue/forms/resolvers/zod";
 import { z } from "zod";
+import { loadPersisted, persistingZodResolver } from "@/forms";
+
+const FORM_STORAGE_KEY = "form";
 
 const emit = defineEmits(["submit"]);
 
@@ -18,26 +20,23 @@ const submitForm = ({ valid }: { valid: boolean }) => {
   }
 };
 
-const initialValues = reactive({
-  name: "",
-  contact: "",
-  contactType: undefined,
-});
+const initialValues = computed(() =>
+  loadPersisted(FORM_STORAGE_KEY, {
+    name: "",
+    contact: "",
+    contactType: undefined,
+  }),
+);
 
-const resolver = ref(
-  zodResolver(
-    z.object({
-      name: z.string().min(1, { message: "You must provide a name." }),
-      contact: z.string().min(1, { message: "You must provide a way to contact you." }),
-      contactType: z.object(
-        {
-          name: z.string(),
-          code: z.enum(CONTACT_METHOD_TYPES as readonly [string, ...string[]]),
-        },
-        { message: "You must provide a preferred contact method." },
-      ),
+const resolver = persistingZodResolver(
+  FORM_STORAGE_KEY,
+  z.object({
+    name: z.string().min(1, { message: "You must provide a name." }),
+    contact: z.string().min(1, { message: "You must provide a way to contact you." }),
+    contactType: z.enum(CONTACT_METHOD_TYPES as readonly [string, ...string[]], {
+      message: "You must provide a preferred contact method.",
     }),
-  ),
+  }),
 );
 </script>
 
@@ -90,6 +89,7 @@ const resolver = ref(
           name="contactType"
           :options="[...CONTACT_METHODS]"
           option-label="name"
+          option-value="code"
           size="large"
           placeholder="Method"
           class="basis-1/3 max-sm:grow"

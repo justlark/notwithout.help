@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { Form } from "@primevue/forms";
-import { zodResolver } from "@primevue/forms/resolvers/zod";
 import Textarea from "primevue/textarea";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import ValidationMessage from "@/components/ValidationMessage.vue";
-import { CONTACT_METHODS } from "@/vars";
-import { reactive, ref } from "vue";
+import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
+import { computed } from "vue";
+import { loadPersisted, persistingZodResolver } from "@/forms";
 import { z } from "zod";
+
+const FORM_STORAGE_KEY = "template";
 
 const emit = defineEmits(["submit"]);
 
@@ -19,22 +21,23 @@ const submitForm = ({ valid }: { valid: boolean }) => {
   }
 };
 
-const initialValues = reactive({
-  title: "",
-  description: "",
-  contactMethods: [],
-});
+const initialValues = computed(() =>
+  loadPersisted(FORM_STORAGE_KEY, {
+    title: "",
+    description: "",
+    contactMethods: [],
+  }),
+);
 
-const resolver = ref(
-  zodResolver(
-    z.object({
-      title: z.string().min(1, { message: "Title is required." }),
-      description: z.string().min(1, { message: "Description is required." }),
-      contactMethods: z
-        .array(z.object({}))
-        .nonempty({ message: "You must specify at least one contact method." }),
-    }),
-  ),
+const resolver = persistingZodResolver(
+  FORM_STORAGE_KEY,
+  z.object({
+    title: z.string().min(1, { message: "Title is required." }),
+    description: z.string().min(1, { message: "Description is required." }),
+    contactMethods: z
+      .array(z.enum(CONTACT_METHOD_TYPES as readonly [string, ...string[]]))
+      .nonempty({ message: "You must specify at least one contact method." }),
+  }),
 );
 </script>
 
@@ -99,6 +102,7 @@ const resolver = ref(
         name="contactMethods"
         :options="[...CONTACT_METHODS]"
         option-label="name"
+        option-value="code"
         placeholder="Select contact methods"
         display="chip"
         size="large"
