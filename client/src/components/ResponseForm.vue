@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Form } from "@primevue/forms";
+import { Form, type FormSubmitEvent } from "@primevue/forms";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
 import ValidationMessage from "@/components/ValidationMessage.vue";
-import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
+import { CONTACT_METHOD_TYPES, CONTACT_METHODS, type ContactMethodCode } from "@/vars";
 import { z } from "zod";
 import { loadPersisted, persistingZodResolver } from "@/forms";
 
@@ -14,13 +14,19 @@ const FORM_STORAGE_KEY = "form";
 
 const emit = defineEmits(["submit"]);
 
-const submitForm = ({ valid }: { valid: boolean }) => {
+const submitForm = ({ valid, values }: FormSubmitEvent) => {
   if (valid) {
-    emit("submit");
+    emit("submit", values);
   }
 };
 
-const initialValues = computed(() =>
+type FormValues = {
+  name: string;
+  contact: string;
+  contactType?: ContactMethodCode;
+};
+
+const initialValues = computed<FormValues>(() =>
   loadPersisted(FORM_STORAGE_KEY, {
     name: "",
     contact: "",
@@ -33,7 +39,7 @@ const resolver = persistingZodResolver(
   z.object({
     name: z.string().min(1, { message: "You must provide a name." }),
     contact: z.string().min(1, { message: "You must provide a way to contact you." }),
-    contactType: z.enum(CONTACT_METHOD_TYPES as readonly [string, ...string[]], {
+    contactType: z.enum(CONTACT_METHOD_TYPES, {
       message: "You must provide a preferred contact method.",
     }),
   }),
