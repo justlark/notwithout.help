@@ -69,7 +69,7 @@ const createSecretLink = () => {
               placeholder="Who are you sharing this link with?"
               size="small"
             />
-            <Button @click="createSecretLink" label="Create" />
+            <Button @click="createSecretLink" label="Create" size="small" />
           </span>
         </div>
       </div>

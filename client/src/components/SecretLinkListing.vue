@@ -30,7 +30,7 @@ const props = defineProps<{
         </span>
       </div>
     </div>
-    <Button label="Revoke" severity="danger" />
+    <Button label="Revoke" severity="danger" size="small" />
   </div>
 </template>
 
