@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ClientKeyId, FormId } from "@/types";
 import { type SecretLinkKey } from "@/crypto";
+import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
+import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 
 const TOAST_GROUP = "form-link-copy";
 
