@@ -13,7 +13,7 @@ import SecretLinkList from "@/components/SecretLinkList.vue";
         <FormResponse
           index="1"
           class="w-full xl:w-3/4"
-          name="Kit has a really really really really long name"
+          name="Kit"
           contact="kit@example.com"
           contactType="email"
           :createdAt="new Date()"
