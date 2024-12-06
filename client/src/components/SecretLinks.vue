@@ -12,7 +12,7 @@ const count = ref(4);
 
 <template>
   <section aria-labelledby="secret-links-list-heading">
-    <Panel toggleable>
+    <Panel toggleable collapsed>
       <template #header>
         <span class="flex items-center gap-3">
           <i class="pi pi-lock !text-xl"></i>
