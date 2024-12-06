@@ -24,7 +24,7 @@ const createSecretAdminLink = () => {
 const secretLinkActions = [
   {
     label: "Admin",
-    icon: "pi pi-plus",
+    icon: "pi pi-shield",
     command: createSecretAdminLink,
   },
 ];
