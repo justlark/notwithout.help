@@ -8,8 +8,8 @@ const props = defineProps<{
 
 const emit = defineEmits(["click"]);
 
-const copyLink = () => {
-  navigator.clipboard.writeText(props.link.href);
+const copyLink = async () => {
+  await navigator.clipboard.writeText(props.link.href);
   emit("click");
 };
 </script>
