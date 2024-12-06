@@ -5,7 +5,6 @@ import Button from "primevue/button";
 import Tag from "primevue/tag";
 
 const props = defineProps<{
-  index: string;
   comment: string;
   formId: FormId;
   clientKeyId: ClientKeyId;

@@ -42,7 +42,6 @@ const secretLinkActions = [
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <SecretLinkListItem
-            index="1"
             comment="Lark"
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
@@ -50,7 +49,6 @@ const secretLinkActions = [
             :isAdmin="true"
           />
           <SecretLinkListItem
-            index="1"
             comment="Avery"
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
@@ -58,7 +56,6 @@ const secretLinkActions = [
             :isAdmin="false"
           />
           <SecretLinkListItem
-            index="1"
             comment="Kai"
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
@@ -66,7 +63,6 @@ const secretLinkActions = [
             :isAdmin="false"
           />
           <SecretLinkListItem
-            index="1"
             comment="Ash"
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
