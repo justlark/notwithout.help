@@ -83,16 +83,16 @@ async fn publish_form(
     let form_id = FormId::new();
 
     store
-        .put_form_template(form_id.clone(), template, form.public_primary_key)
+        .put_form_template(&form_id, &template, &form.public_primary_key)
         .await
         .map_err(internal_err)?;
 
     let client_key_id = store
         .store_client_keys(
-            form_id.clone(),
-            form.public_signing_key,
+            &form_id,
+            &form.public_signing_key,
             None,
-            EncryptedKeyComment::default(),
+            &EncryptedKeyComment::default(),
         )
         .await
         .map_err(internal_err)?
@@ -118,7 +118,7 @@ async fn get_form(
 
     Ok(Json(
         store
-            .get_form_template(form_id)
+            .get_form_template(&form_id)
             .await
             .map_err(internal_err)?
             .ok_or(StatusCode::NOT_FOUND)?
@@ -137,7 +137,7 @@ async fn store_form_submission(
     let submission_id = SubmissionId::new();
 
     let changed = store
-        .put_submission(form_id, submission_id, body.encrypted_body)
+        .put_submission(&form_id, &submission_id, &body.encrypted_body)
         .await
         .map_err(internal_err)?;
 
@@ -159,14 +159,14 @@ async fn request_challenge(
     let ephemeral_server_key = EphemeralServerKey::generate();
 
     store
-        .store_ephemeral_server_key(server_key_id.clone(), ephemeral_server_key.clone())
+        .store_ephemeral_server_key(&server_key_id, &ephemeral_server_key)
         .await
         .map_err(internal_err)?;
 
     let challenge_id = ChallengeId::new();
 
     store
-        .store_challenge_id(challenge_id.clone())
+        .store_challenge_id(&challenge_id)
         .await
         .map_err(internal_err)?;
 
@@ -202,7 +202,7 @@ async fn request_access_token(
         .map_err(auth_err)?;
 
     let ephemeral_server_key = store
-        .get_ephemeral_server_key(validated_challenge.server_key_id())
+        .get_ephemeral_server_key(&validated_challenge.server_key_id())
         .await
         .map_err(internal_err)?
         .ok_or(StatusCode::UNAUTHORIZED)?;
@@ -224,12 +224,12 @@ async fn list_form_submissions(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
     let submissions = store
-        .list_submissions(form_id)
+        .list_submissions(&form_id)
         .await
         .map_err(internal_err)?;
 
@@ -243,11 +243,11 @@ async fn delete_form(
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
-    store.delete_form(form_id).await.map_err(internal_err)?;
+    store.delete_form(&form_id).await.map_err(internal_err)?;
 
     Ok(NoContent)
 }
@@ -259,12 +259,12 @@ async fn get_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<Json<GetKeyResponse>, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
     let client_keys = store
-        .get_client_keys(form_id, key_id)
+        .get_client_keys(&form_id, &key_id)
         .await
         .map_err(internal_err)?
         .ok_or(StatusCode::NOT_FOUND)?;
@@ -281,12 +281,12 @@ async fn list_keys(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
     let client_keys = store
-        .list_client_keys(form_id)
+        .list_client_keys(&form_id)
         .await
         .map_err(internal_err)?;
 
@@ -301,16 +301,16 @@ async fn add_key(
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
     let client_key_id = store
         .store_client_keys(
-            form_id,
-            body.public_signing_key,
-            Some(body.wrapped_private_primary_key),
-            body.encrypted_comment,
+            &form_id,
+            &body.public_signing_key,
+            Some(&body.wrapped_private_primary_key),
+            &body.encrypted_comment,
         )
         .await
         .map_err(internal_err)?
@@ -329,16 +329,16 @@ async fn update_key(
     Json(body): Json<PatchKeyRequest>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
     store
         .update_client_keys(
-            form_id,
-            key_id,
-            body.wrapped_private_primary_key,
-            body.encrypted_comment,
+            &form_id,
+            &key_id,
+            body.wrapped_private_primary_key.as_ref(),
+            body.encrypted_comment.as_ref(),
         )
         .await
         .map_err(internal_err)?;
@@ -353,12 +353,12 @@ async fn delete_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, form_id.clone())
+        .validate(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
     store
-        .delete_client_keys(form_id, key_id)
+        .delete_client_keys(&form_id, &key_id)
         .await
         .map_err(internal_err)?;
 

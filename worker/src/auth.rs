@@ -124,11 +124,11 @@ struct ApiAccessTokenClaims {
 pub struct SignedApiAccessToken(String);
 
 impl SignedApiAccessToken {
-    pub async fn validate(
+    pub async fn validate<'a>(
         self,
-        store: &UnauthenticatedStore,
-        form_id: FormId,
-    ) -> anyhow::Result<&Store> {
+        store: &'a UnauthenticatedStore,
+        form_id: &'a FormId,
+    ) -> anyhow::Result<&'a Store> {
         let store = store.without_authenticating();
 
         let header = jwt::decode_header(&self.0)?;
@@ -139,7 +139,7 @@ impl SignedApiAccessToken {
             .parse()?;
 
         let ephemeral_server_key = store
-            .get_ephemeral_server_key(server_key_id)
+            .get_ephemeral_server_key(&server_key_id)
             .await?
             .ok_or_else(|| {
                 anyhow::anyhow!("Ephemeral server key for access token `kid` does not exist.")
@@ -158,12 +158,12 @@ impl SignedApiAccessToken {
             bail!("Attempted to use a challenge token as an access token.");
         }
 
-        if token_claims.sub.form_id != form_id {
+        if &token_claims.sub.form_id != form_id {
             bail!("Form ID in access token `sub` does not match the form being accessed.");
         }
 
         let client_keys = store
-            .get_client_keys(token_claims.sub.form_id, token_claims.sub.client_key_id)
+            .get_client_keys(&token_claims.sub.form_id, &token_claims.sub.client_key_id)
             .await?;
 
         if client_keys.is_none() {
@@ -243,7 +243,7 @@ impl SignedApiChallenge {
             .parse()?;
 
         let ephemeral_server_key = store
-            .get_ephemeral_server_key(server_key_id.clone())
+            .get_ephemeral_server_key(&server_key_id)
             .await?
             .ok_or_else(|| {
                 anyhow!("Ephemeral server key for challenge token `kid` does not exist.")
@@ -260,11 +260,11 @@ impl SignedApiChallenge {
             bail!("Attempted to use an access token as a challenge token.");
         }
 
-        if !store.has_challenge_id(claims.jti.clone()).await? {
+        if !store.has_challenge_id(&claims.jti).await? {
             bail!("This challenge token has already been used.");
         }
 
-        store.delete_challenge_id(claims.jti.clone()).await?;
+        store.delete_challenge_id(&claims.jti).await?;
 
         Ok(ValidatedApiChallenge(ApiChallenge {
             server_key_id,
@@ -295,7 +295,7 @@ impl ApiChallengeResponse {
         let challenge = self.challenge.validate(store).await?.0;
 
         let client_keys = store
-            .get_client_keys(challenge.form_id.clone(), challenge.client_key_id)
+            .get_client_keys(&challenge.form_id, &challenge.client_key_id)
             .await?;
 
         let public_signing_key = client_keys

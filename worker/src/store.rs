@@ -26,11 +26,11 @@ fn challenge_ttl() -> u64 {
     config::challenge_token_exp().as_secs() * 2
 }
 
-fn server_key_key(server_id: ServerKeyId) -> String {
+fn server_key_key(server_id: &ServerKeyId) -> String {
     format!("key:{}", server_id)
 }
 
-fn challenge_key(challenge_id: ChallengeId) -> String {
+fn challenge_key(challenge_id: &ChallengeId) -> String {
     format!("challenge:{}", challenge_id)
 }
 
@@ -65,7 +65,10 @@ impl fmt::Debug for Store {
 
 impl Store {
     #[worker::send]
-    pub async fn get_form_template(&self, form_id: FormId) -> anyhow::Result<Option<FormTemplate>> {
+    pub async fn get_form_template(
+        &self,
+        form_id: &FormId,
+    ) -> anyhow::Result<Option<FormTemplate>> {
         let stmt = query!(
             &self.db,
             "
@@ -86,9 +89,9 @@ impl Store {
     #[worker::send]
     pub async fn put_form_template(
         &self,
-        form_id: FormId,
-        template: FormTemplate,
-        public_primary_key: PublicPrimaryKey,
+        form_id: &FormId,
+        template: &FormTemplate,
+        public_primary_key: &PublicPrimaryKey,
     ) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
@@ -107,7 +110,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn delete_form(&self, form_id: FormId) -> anyhow::Result<()> {
+    pub async fn delete_form(&self, form_id: &FormId) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
             "
@@ -123,7 +126,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn list_submissions(&self, form_id: FormId) -> anyhow::Result<Vec<Submission>> {
+    pub async fn list_submissions(&self, form_id: &FormId) -> anyhow::Result<Vec<Submission>> {
         let stmt = query!(
             &self.db,
             "
@@ -162,9 +165,9 @@ impl Store {
     #[worker::send]
     pub async fn put_submission(
         &self,
-        form_id: FormId,
-        submission_id: SubmissionId,
-        encrypted_submission: EncryptedSubmissionBody,
+        form_id: &FormId,
+        submission_id: &SubmissionId,
+        encrypted_submission: &EncryptedSubmissionBody,
     ) -> anyhow::Result<bool> {
         let stmt = query!(
             &self.db,
@@ -191,8 +194,8 @@ impl Store {
     #[worker::send]
     pub async fn get_client_keys(
         &self,
-        form_id: FormId,
-        key_id: ClientKeyId,
+        form_id: &FormId,
+        key_id: &ClientKeyId,
     ) -> anyhow::Result<Option<ClientKeys>> {
         let stmt = query!(
             &self.db,
@@ -220,7 +223,7 @@ impl Store {
 
         row.map(|row| -> anyhow::Result<_> {
             Ok(ClientKeys {
-                id: key_id,
+                id: key_id.to_owned(),
                 public_signing_key: row.public_signing_key,
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
@@ -230,7 +233,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn list_client_keys(&self, form_id: FormId) -> anyhow::Result<Vec<ClientKeys>> {
+    pub async fn list_client_keys(&self, form_id: &FormId) -> anyhow::Result<Vec<ClientKeys>> {
         let stmt = query!(
             &self.db,
             "
@@ -272,10 +275,10 @@ impl Store {
     #[worker::send]
     pub async fn store_client_keys(
         &self,
-        form_id: FormId,
-        public_signing_key: PublicSigningKey,
-        wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
-        encrypted_comment: EncryptedKeyComment,
+        form_id: &FormId,
+        public_signing_key: &PublicSigningKey,
+        wrapped_private_primary_key: Option<&WrappedPrivatePrimaryKey>,
+        encrypted_comment: &EncryptedKeyComment,
     ) -> anyhow::Result<Option<ClientKeyId>> {
         let stmt = query!(
             &self.db,
@@ -318,10 +321,10 @@ impl Store {
     #[worker::send]
     pub async fn update_client_keys(
         &self,
-        form_id: FormId,
-        key_id: ClientKeyId,
-        wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
-        encrypted_comment: Option<EncryptedKeyComment>,
+        form_id: &FormId,
+        key_id: &ClientKeyId,
+        wrapped_private_primary_key: Option<&WrappedPrivatePrimaryKey>,
+        encrypted_comment: Option<&EncryptedKeyComment>,
     ) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
@@ -352,8 +355,8 @@ impl Store {
     #[worker::send]
     pub async fn delete_client_keys(
         &self,
-        form_id: FormId,
-        key_id: ClientKeyId,
+        form_id: &FormId,
+        key_id: &ClientKeyId,
     ) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
@@ -378,8 +381,8 @@ impl Store {
     #[worker::send]
     pub async fn store_ephemeral_server_key(
         &self,
-        key_id: ServerKeyId,
-        key: EphemeralServerKey,
+        key_id: &ServerKeyId,
+        key: &EphemeralServerKey,
     ) -> anyhow::Result<()> {
         self.kv
             .put(&server_key_key(key_id), key.expose_secret())
@@ -395,7 +398,7 @@ impl Store {
     #[worker::send]
     pub async fn get_ephemeral_server_key(
         &self,
-        key_id: ServerKeyId,
+        key_id: &ServerKeyId,
     ) -> anyhow::Result<Option<EphemeralServerKey>> {
         Ok(self
             .kv
@@ -408,7 +411,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn has_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<bool> {
+    pub async fn has_challenge_id(&self, challenge_id: &ChallengeId) -> anyhow::Result<bool> {
         Ok(self
             .kv
             .get(&challenge_key(challenge_id))
@@ -419,7 +422,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn store_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
+    pub async fn store_challenge_id(&self, challenge_id: &ChallengeId) -> anyhow::Result<()> {
         self.kv
             .put(&challenge_key(challenge_id), "")
             .map_err(wrap_kv_err)?
@@ -432,7 +435,7 @@ impl Store {
     }
 
     #[worker::send]
-    pub async fn delete_challenge_id(&self, challenge_id: ChallengeId) -> anyhow::Result<()> {
+    pub async fn delete_challenge_id(&self, challenge_id: &ChallengeId) -> anyhow::Result<()> {
         self.kv
             .delete(&challenge_key(challenge_id))
             .await
