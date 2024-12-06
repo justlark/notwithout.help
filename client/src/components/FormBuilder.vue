@@ -9,7 +9,7 @@ import DatePicker from "primevue/datepicker";
 import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
 import { loadState, persistState } from "@/state";
 import { z } from "zod";
-import { formatDate, parseDate } from "@/encoding";
+import { serializeDate, deserializeDate } from "@/encoding";
 import { toTypedSchema } from "@vee-validate/zod";
 import { computed, watch } from "vue";
 
@@ -37,7 +37,7 @@ const initialValues = computed(() =>
     title: values.title ?? "",
     description: values.description ?? "",
     contactMethods: values.contactMethods ?? [],
-    expirationDate: values.expirationDate ? parseDate(values.expirationDate) : undefined,
+    expirationDate: values.expirationDate ? deserializeDate(values.expirationDate) : undefined,
   })),
 );
 
@@ -60,7 +60,7 @@ const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 watch(values, () => {
   persistState(FORM_STORAGE_KEY, values, (values) => ({
     ...values,
-    expirationDate: values.expirationDate ? formatDate(values.expirationDate) : undefined,
+    expirationDate: values.expirationDate ? serializeDate(values.expirationDate) : undefined,
   }));
 });
 

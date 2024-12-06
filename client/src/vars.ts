@@ -26,4 +26,7 @@ export const CONTACT_METHOD_TYPES: AtLeastOne<(typeof CONTACT_METHODS)[number]["
   ...CONTACT_METHODS.slice(1).map((method) => method.code),
 ];
 
+export const contactMethodByCode = (code: string) =>
+  CONTACT_METHODS.find((method) => method.code === code)?.name ?? "Other";
+
 export type ContactMethodCode = (typeof CONTACT_METHOD_TYPES)[number];
