@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use axum::{
-    extract::{Extension, Json, Path, State},
+    extract::{DefaultBodyLimit, Extension, Json, Path, State},
     http::StatusCode,
     response::{ErrorResponse, NoContent},
     routing::{delete, get, patch, post},
@@ -64,6 +64,7 @@ pub fn new(state: AppState) -> Router {
         )
         .route("/tokens", post(request_access_token))
         .layer(cors_layer())
+        .layer(DefaultBodyLimit::max(config::max_request_body_len()))
         .with_state(Arc::new(state))
 }
 
