@@ -15,7 +15,11 @@ const props = defineProps<{
 <template>
   <div class="flex gap-8 items-center justify-between">
     <div class="flex gap-4 items-center">
-      <i class="!hidden md:!inline pi pi-key" style="font-size: 1.5rem" aria-hidden="true"></i>
+      <i
+        class="key-icon !hidden md:!inline pi pi-key"
+        style="font-size: 1.5rem"
+        aria-hidden="true"
+      ></i>
       <div class="flex flex-col">
         <span>{{ props.comment }}</span>
         <span class="text-muted-color">
@@ -30,4 +34,14 @@ const props = defineProps<{
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.key-icon {
+  color: var(--p-green-500);
+}
+
+@media (prefers-color-scheme: dark) {
+  .key-icon {
+    color: var(--p-green-200);
+  }
+}
+</style>
