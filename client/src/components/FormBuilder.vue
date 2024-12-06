@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Form, type FormSubmitEvent } from "@primevue/forms";
+import { useForm } from "vee-validate";
 import Textarea from "primevue/textarea";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import DatePicker from "primevue/datepicker";
-import ValidationMessage from "@/components/ValidationMessage.vue";
 import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
-import { computed } from "vue";
-import { loadPersisted, persistingResolver } from "@/forms";
+import { loadState, persistState } from "@/state";
 import { z } from "zod";
 import { formatDate, parseDate } from "@/encoding";
+import { toTypedSchema } from "@vee-validate/zod";
+import { computed, watch } from "vue";
 
 const FORM_STORAGE_KEY = "template";
 
@@ -20,12 +20,6 @@ type Emits = {
 };
 
 const emit = defineEmits<Emits>();
-
-const submitForm = ({ valid, values }: FormSubmitEvent) => {
-  if (valid) {
-    emit("submit", values as FormValues);
-  }
-};
 
 const schema = z.object({
   title: z.string().min(1, { message: "You must provide a title." }),
@@ -38,37 +32,50 @@ const schema = z.object({
 
 export type FormValues = z.infer<typeof schema>;
 
-const resolver = persistingResolver(FORM_STORAGE_KEY, schema, (input) => ({
-  title: input.title ?? undefined,
-  description: input.description ?? undefined,
-  contactMethods: input.contactMethods ?? [],
-  expirationDate: input.expirationDate ? formatDate(input.expirationDate) : undefined,
-}));
-
-const initialValues = computed<Partial<FormValues>>(() =>
-  loadPersisted(FORM_STORAGE_KEY, (values) => ({
-    ...values,
+const initialValues = computed(() =>
+  loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
+    title: values.title ?? "",
+    description: values.description ?? "",
+    contactMethods: values.contactMethods ?? [],
     expirationDate: values.expirationDate ? parseDate(values.expirationDate) : undefined,
   })),
 );
+
+const {
+  values,
+  errors,
+  defineField,
+  resetForm: resetFormInner,
+  handleSubmit,
+} = useForm<FormValues>({
+  validationSchema: toTypedSchema(schema),
+  initialValues: initialValues.value,
+});
+
+const [title, titleAttrs] = defineField("title");
+const [description, descriptionAttrs] = defineField("description");
+const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
+const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
+
+watch(values, () => {
+  persistState(FORM_STORAGE_KEY, values, (values) => ({
+    ...values,
+    expirationDate: values.expirationDate ? formatDate(values.expirationDate) : undefined,
+  }));
+});
+
+handleSubmit((values) => {
+  emit("submit", values);
+});
+
+const resetForm = () => {
+  localStorage.removeItem(FORM_STORAGE_KEY);
+  resetFormInner({ values: initialValues.value });
+};
 </script>
 
 <template>
-  <!--
-    All these @vue-ignore directives are necessary to work around an apparent
-    bug in the typing for the PrimeVue forms library. See this issue for
-    details:
-
-    https://github.com/primefaces/primevue/issues/6723
-  -->
-
-  <Form
-    v-slot="$form"
-    class="max-w-xl mx-auto flex flex-col gap-8"
-    :initial-values="initialValues"
-    :resolver="resolver"
-    @submit="submitForm"
-  >
+  <form class="max-w-xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <label for="title-input" class="flex gap-2">
         Title
@@ -76,13 +83,15 @@ const initialValues = computed<Partial<FormValues>>(() =>
       </label>
       <InputText
         id="title-input"
-        name="title"
+        v-model="title"
+        v-bind="titleAttrs"
         type="text"
         size="large"
         aria-describedby="title-help"
       />
-      <!-- @vue-ignore -->
-      <ValidationMessage name="title" :state="$form.title" />
+      <Message v-if="errors.title" severity="error" size="small" variant="simple">
+        {{ errors.title }}
+      </Message>
       <Message id="title-help" size="small" severity="secondary" variant="simple">
         A title for your form. Include the name of your group or organization.
       </Message>
@@ -95,12 +104,14 @@ const initialValues = computed<Partial<FormValues>>(() =>
       </label>
       <Textarea
         id="description-input"
-        name="description"
+        v-model="description"
+        v-bind="descriptionAttrs"
         auto-resize
         aria-describedby="description-help"
       />
-      <!-- @vue-ignore -->
-      <ValidationMessage name="description" :state="$form.description" />
+      <Message v-if="errors.description" severity="error" size="small" variant="simple">
+        {{ errors.description }}
+      </Message>
       <Message id="description-help" size="small" severity="secondary" variant="simple">
         Provide some information about your group or organization and what you're looking for.
       </Message>
@@ -113,7 +124,8 @@ const initialValues = computed<Partial<FormValues>>(() =>
       </label>
       <MultiSelect
         id="contact-input"
-        name="contactMethods"
+        v-model="contactMethods"
+        v-bind="contactMethodsAttrs"
         :options="[...CONTACT_METHODS]"
         option-label="name"
         option-value="code"
@@ -122,8 +134,9 @@ const initialValues = computed<Partial<FormValues>>(() =>
         size="large"
         aria-describedby="contact-help"
       />
-      <!-- @vue-ignore -->
-      <ValidationMessage name="contact" :state="$form.contactMethods" />
+      <Message v-if="errors.contactMethods" severity="error" size="small" variant="simple">
+        {{ errors.contactMethods }}
+      </Message>
       <Message id="contact-help" size="small" severity="secondary" variant="simple">
         Specify what contact methods you want respondents to pick from when leaving their contact
         information.
@@ -132,15 +145,27 @@ const initialValues = computed<Partial<FormValues>>(() =>
 
     <div class="flex flex-col gap-2">
       <label for="date-input">Expiration date</label>
-      <DatePicker id="date-input" name="expirationDate" size="large" aria-describedby="date-help" />
+      <DatePicker
+        id="date-input"
+        v-model="expirationDate"
+        v-bind="expirationDateAttrs"
+        size="large"
+        aria-describedby="date-help"
+      />
+      <Message v-if="errors.expirationDate" severity="error" size="small" variant="simple">
+        {{ errors.expirationDate }}
+      </Message>
       <Message id="date-help" size="small" severity="secondary" variant="simple">
         Specify an optional expiration date for the form. All submissions will be permanently
         deleted after this date.
       </Message>
     </div>
 
-    <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
-  </Form>
+    <div class="flex justify-around">
+      <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
+      <Button @click="resetForm" severity="secondary" label="Reset" class="max-w-24" />
+    </div>
+  </form>
 </template>
 
 <style scoped>

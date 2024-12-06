@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { Form, type FormSubmitEvent } from "@primevue/forms";
+import { computed, watch } from "vue";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-import ValidationMessage from "@/components/ValidationMessage.vue";
 import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
 import { z } from "zod";
-import { loadPersisted, persistingResolver } from "@/forms";
+import { loadState, persistState } from "@/state";
+import { useForm } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/zod";
 
 const FORM_STORAGE_KEY = "form";
 
-const emit = defineEmits(["submit"]);
-
-const submitForm = ({ valid, values }: FormSubmitEvent) => {
-  if (valid) {
-    emit("submit", values as FormValues);
-  }
+type Emits = {
+  (eventName: "submit", values: FormValues): void;
 };
+
+const emit = defineEmits<Emits>();
 
 const schema = z.object({
   name: z.string().min(1, { message: "You must provide a name." }),
@@ -30,41 +28,59 @@ const schema = z.object({
 
 export type FormValues = z.infer<typeof schema>;
 
-const resolver = persistingResolver(FORM_STORAGE_KEY, schema);
-
-const initialValues = computed<Partial<FormValues>>(() =>
-  loadPersisted(FORM_STORAGE_KEY, (values) => values),
+const initialValues = computed(() =>
+  loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
+    name: values.name ?? "",
+    contact: values.contact ?? "",
+    contactType: values.contactType,
+  })),
 );
+
+const {
+  values,
+  errors,
+  defineField,
+  resetForm: resetFormInner,
+  handleSubmit,
+} = useForm<FormValues>({
+  validationSchema: toTypedSchema(schema),
+  initialValues: initialValues.value,
+});
+
+const [name, nameAttrs] = defineField("name");
+const [contact, contactAttrs] = defineField("contact");
+const [contactType, contactTypeAttrs] = defineField("contactType");
+
+watch(values, () => {
+  persistState(FORM_STORAGE_KEY, values);
+});
+
+handleSubmit((values) => {
+  emit("submit", values);
+});
+
+const resetForm = () => {
+  localStorage.removeItem(FORM_STORAGE_KEY);
+  resetFormInner({ values: initialValues.value });
+};
 </script>
 
 <template>
-  <!--
-    All these @vue-ignore directives are necessary to work around an apparent
-    bug in the typing for the PrimeVue forms library. See this issue for
-    details:
-
-    https://github.com/primefaces/primevue/issues/6723
-  -->
-
-  <Form
-    v-slot="$form"
-    class="max-w-xl mx-auto flex flex-col gap-8"
-    :initial-values="initialValues"
-    :resolver="resolver"
-    @submit="submitForm"
-  >
+  <form class="max-w-xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <label for="name-input">Your name</label>
       <InputText
         id="name-input"
-        name="name"
+        v-model="name"
+        v-bind="nameAttrs"
         type="text"
         size="large"
         placeholder="Jane"
         aria-describedby="name-help"
       />
-      <!-- @vue-ignore -->
-      <ValidationMessage name="name" :state="$form.name" />
+      <Message v-if="errors.name" severity="error" size="small" variant="simple">
+        {{ errors.name }}
+      </Message>
       <Message id="name-help" size="small" severity="secondary" variant="simple">
         The name, nickname, alias, or handle you want to send to the organizers.
       </Message>
@@ -75,7 +91,8 @@ const initialValues = computed<Partial<FormValues>>(() =>
       <div class="flex max-sm:flex-col gap-2">
         <InputText
           id="contact-input"
-          name="contact"
+          v-model="contact"
+          v-bind="contactAttrs"
           type="text"
           size="large"
           placeholder="jane@example.com"
@@ -83,7 +100,8 @@ const initialValues = computed<Partial<FormValues>>(() =>
           class="grow"
         />
         <Select
-          name="contactType"
+          v-model="contactType"
+          v-bind="contactTypeAttrs"
           :options="[...CONTACT_METHODS]"
           option-label="name"
           option-value="code"
@@ -92,17 +110,22 @@ const initialValues = computed<Partial<FormValues>>(() =>
           class="basis-1/3 max-sm:grow"
         />
       </div>
-      <!-- @vue-ignore -->
-      <ValidationMessage name="contact" :state="$form.contact" />
-      <!-- @vue-ignore -->
-      <ValidationMessage name="contact-type" :state="$form.contactType" />
+      <Message v-if="errors.contact" severity="error" size="small" variant="simple">
+        {{ errors.contact }}
+      </Message>
+      <Message v-if="errors.contactType" severity="error" size="small" variant="simple">
+        {{ errors.contactType }}
+      </Message>
       <Message id="contact-help" size="small" severity="secondary" variant="simple">
         How you want the organizers to contact you.
       </Message>
     </div>
 
-    <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
-  </Form>
+    <div class="flex justify-around">
+      <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
+      <Button @click="resetForm" severity="secondary" label="Reset" class="max-w-24" />
+    </div>
+  </form>
 </template>
 
 <style scoped></style>
