@@ -25,3 +25,9 @@ CREATE TABLE "keys" (
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
 );
+
+CREATE TABLE "access_log" (
+  "id" integer PRIMARY KEY,
+  "key" integer REFERENCES "keys" ("id") ON DELETE CASCADE,
+  "accessed_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

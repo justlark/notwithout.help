@@ -170,6 +170,10 @@ impl SignedApiAccessToken {
             bail!("Client key in access token `sub` does not exist or has been revoked.");
         }
 
+        store
+            .log_access(form_id, &token_claims.sub.client_key_id)
+            .await?;
+
         Ok(store)
     }
 }

@@ -203,7 +203,13 @@ impl Store {
             SELECT
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
-                keys.encrypted_comment
+                keys.encrypted_comment,
+                (
+                    SELECT MAX(access_log.accessed_at)
+                    FROM access_log
+                    WHERE access_log.key = keys.id
+                    GROUP BY access_log.key
+                ) AS accessed_at
             FROM keys
             JOIN forms ON keys.form = forms.id
             WHERE forms.form_id = ?1 AND keys.key_index = ?2;
@@ -227,6 +233,7 @@ impl Store {
                 public_signing_key: row.public_signing_key,
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
+                accessed_at: None,
             })
         })
         .transpose()
@@ -241,7 +248,13 @@ impl Store {
                 keys.key_index,
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
-                keys.encrypted_comment
+                keys.encrypted_comment,
+                (
+                    SELECT MAX(access_log.accessed_at)
+                    FROM access_log
+                    WHERE access_log.key = keys.id
+                    GROUP BY access_log.key
+                ) AS accessed_at
             FROM keys
             JOIN forms ON keys.form = forms.id
             WHERE forms.form_id = ?1
@@ -256,6 +269,7 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
+            accessed_at: Option<String>,
         }
 
         let rows = stmt.all().await?.results::<Row>()?;
@@ -267,6 +281,11 @@ impl Store {
                     public_signing_key: row.public_signing_key,
                     wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
+                    accessed_at: row
+                        .accessed_at
+                        .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
+                        .transpose()?
+                        .map(|dt| dt.and_utc()),
                 })
             })
             .collect::<anyhow::Result<Vec<_>>>()
@@ -440,6 +459,26 @@ impl Store {
             .delete(&challenge_key(challenge_id))
             .await
             .map_err(wrap_kv_err)?;
+
+        Ok(())
+    }
+
+    #[worker::send]
+    pub async fn log_access(&self, form_id: &FormId, key_id: &ClientKeyId) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            INSERT INTO access_log (key)
+            SELECT keys.id
+            FROM keys
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ?1 AND keys.key_index = ?2;
+            ",
+            form_id,
+            key_id,
+        )?;
+
+        stmt.run().await?.meta()?;
 
         Ok(())
     }

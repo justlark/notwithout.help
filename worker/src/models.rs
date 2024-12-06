@@ -212,4 +212,5 @@ pub struct ClientKeys {
     pub public_signing_key: PublicSigningKey,
     pub wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
     pub encrypted_comment: EncryptedKeyComment,
+    pub accessed_at: Option<DateTime<Utc>>,
 }
