@@ -30,3 +30,15 @@ export const contactMethodByCode = (code: string) =>
   CONTACT_METHODS.find((method) => method.code === code)?.name ?? "Other";
 
 export type ContactMethodCode = (typeof CONTACT_METHOD_TYPES)[number];
+
+export const TITLE_LEADS = [
+  "How can I get folks organized?",
+  "How can I enact lasting change?",
+  "How can I make a real difference?",
+  "How can I start a movement?",
+  "How can I start a campaign?",
+];
+
+const pickRandom = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+
+export const randomTitleLead = () => pickRandom(TITLE_LEADS);
