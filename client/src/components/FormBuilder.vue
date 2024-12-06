@@ -64,7 +64,7 @@ watch(values, () => {
   }));
 });
 
-handleSubmit((values) => {
+const submitForm = handleSubmit((values) => {
   emit("submit", values);
 });
 
@@ -75,7 +75,7 @@ const resetForm = () => {
 </script>
 
 <template>
-  <form class="max-w-xl mx-auto flex flex-col gap-8">
+  <form @submit="submitForm" class="max-w-xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <label for="title-input" class="flex gap-2">
         Title
