@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Panel from "primevue/panel";
-import SecretLinkListing from "@/components/SecretLinkListing.vue";
+import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
 import type { ClientKeyId, FormId } from "@/types";
@@ -41,7 +41,7 @@ const secretLinkActions = [
       </template>
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
-          <SecretLinkListing
+          <SecretLinkListItem
             index="1"
             comment="Lark"
             :formId="mockFormId"
@@ -49,7 +49,7 @@ const secretLinkActions = [
             :accessedAt="new Date()"
             :isAdmin="true"
           />
-          <SecretLinkListing
+          <SecretLinkListItem
             index="1"
             comment="Avery"
             :formId="mockFormId"
@@ -57,7 +57,7 @@ const secretLinkActions = [
             :accessedAt="new Date()"
             :isAdmin="false"
           />
-          <SecretLinkListing
+          <SecretLinkListItem
             index="1"
             comment="Kai"
             :formId="mockFormId"
@@ -65,7 +65,7 @@ const secretLinkActions = [
             :accessedAt="new Date()"
             :isAdmin="false"
           />
-          <SecretLinkListing
+          <SecretLinkListItem
             index="1"
             comment="Ash"
             :formId="mockFormId"
