@@ -35,6 +35,7 @@ const createSecretLink = () => {
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
             :accessedAt="new Date()"
+            :isAdmin="true"
           />
           <SecretLinkListing
             index="1"
@@ -42,6 +43,7 @@ const createSecretLink = () => {
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
             :accessedAt="new Date()"
+            :isAdmin="false"
           />
           <SecretLinkListing
             index="1"
@@ -49,6 +51,7 @@ const createSecretLink = () => {
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
             :accessedAt="new Date()"
+            :isAdmin="false"
           />
           <SecretLinkListing
             index="1"
@@ -56,6 +59,7 @@ const createSecretLink = () => {
             :formId="mockFormId"
             :clientKeyId="mockClientKeyId"
             :accessedAt="new Date()"
+            :isAdmin="false"
           />
         </div>
         <div class="flex flex-col gap-2">

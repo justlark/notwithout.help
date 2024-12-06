@@ -2,6 +2,7 @@
 import type { ClientKeyId, FormId } from "@/types";
 import { formatDateTime } from "@/encoding";
 import Button from "primevue/button";
+import Tag from "primevue/tag";
 
 const props = defineProps<{
   index: string;
@@ -9,6 +10,7 @@ const props = defineProps<{
   formId: FormId;
   clientKeyId: ClientKeyId;
   accessedAt: Date;
+  isAdmin: boolean;
 }>();
 </script>
 
@@ -23,7 +25,8 @@ const props = defineProps<{
       <div class="flex flex-col">
         <span class="flex gap-2 items-baseline">
           <i class="pi pi-key md:!hidden key-icon" aria-hidden="true"></i>
-          {{ props.comment }}
+          <span>{{ props.comment }}</span>
+          <Tag class="text-xs" v-if="props.isAdmin" value="admin" severity="warn" rounded />
         </span>
         <span class="text-muted-color">
           last used
