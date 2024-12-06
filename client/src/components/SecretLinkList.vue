@@ -2,7 +2,7 @@
 import Panel from "primevue/panel";
 import SecretLinkListing from "@/components/SecretLinkListing.vue";
 import InputText from "primevue/inputtext";
-import Button from "primevue/button";
+import SplitButton from "primevue/splitbutton";
 import type { ClientKeyId, FormId } from "@/types";
 import { ref } from "vue";
 
@@ -16,6 +16,18 @@ const newLinkComment = ref("");
 const createSecretLink = () => {
   // TODO: Implement this.
 };
+
+const createSecretAdminLink = () => {
+  // TODO: Implement this.
+};
+
+const secretLinkActions = [
+  {
+    label: "Admin",
+    icon: "pi pi-plus",
+    command: createSecretAdminLink,
+  },
+];
 </script>
 
 <template>
@@ -73,7 +85,14 @@ const createSecretLink = () => {
               placeholder="Who are you sharing this link with?"
               size="small"
             />
-            <Button @click="createSecretLink" label="Create" size="small" />
+            <SplitButton
+              @click="createSecretLink"
+              icon="pi pi-plus"
+              :button-props="{ 'aria-label': 'Create' }"
+              :menu-button-props="{ 'aria-label': 'More options' }"
+              :model="secretLinkActions"
+              size="small"
+            />
           </span>
         </div>
       </div>

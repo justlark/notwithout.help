@@ -38,11 +38,11 @@
     @apply text-xl;
   }
 
-  a:not(.p-button) {
+  a:not(.p-button, .p-tieredmenu-item-link) {
     @apply text-primary underline underline-offset-2;
   }
 
-  a:hover:not(.p-button) {
+  a:hover:not(.p-button, .p-tieredmenu-item-link) {
     @apply decoration-2;
   }
 
