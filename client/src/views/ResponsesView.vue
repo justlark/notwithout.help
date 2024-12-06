@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import FormResponse from "@/components/FormResponse.vue";
 import Toast from "primevue/toast";
-import SecretLinks from "@/components/SecretLinks.vue";
+import SecretLinkList from "@/components/SecretLinkList.vue";
 </script>
 
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">View responses</h1>
     <div class="flex flex-col gap-8">
-      <SecretLinks class="self-center w-full xl:w-3/4" />
+      <SecretLinkList class="self-center w-full xl:w-3/4" />
       <div class="flex flex-col gap-4 items-center">
         <FormResponse
           index="1"

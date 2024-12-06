@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Panel from "primevue/panel";
-import SecretLink from "@/components/SecretLink.vue";
+import SecretLinkListing from "@/components/SecretLinkListing.vue";
 import type { ClientKeyId, FormId } from "@/types";
 import { ref } from "vue";
 
@@ -20,28 +20,28 @@ const count = ref(4);
         </span>
       </template>
       <div class="flex flex-col gap-2">
-        <SecretLink
+        <SecretLinkListing
           index="1"
           comment="Lark"
           :formId="mockFormId"
           :clientKeyId="mockClientKeyId"
           :accessedAt="new Date()"
         />
-        <SecretLink
+        <SecretLinkListing
           index="1"
           comment="Avery"
           :formId="mockFormId"
           :clientKeyId="mockClientKeyId"
           :accessedAt="new Date()"
         />
-        <SecretLink
+        <SecretLinkListing
           index="1"
           comment="Kai"
           :formId="mockFormId"
           :clientKeyId="mockClientKeyId"
           :accessedAt="new Date()"
         />
-        <SecretLink
+        <SecretLinkListing
           index="1"
           comment="Ash has a really long name"
           :formId="mockFormId"
