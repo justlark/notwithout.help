@@ -22,8 +22,16 @@ import SecretLinkList from "@/components/SecretLinkList.vue";
           index="2"
           class="w-full xl:w-3/4"
           name="Aster"
-          contact="aster@example.com"
-          contactType="email"
+          contact="@aster"
+          contactType="telegram"
+          :createdAt="new Date()"
+        />
+        <FormResponse
+          index="3"
+          class="w-full xl:w-3/4"
+          name="Rowan"
+          contact="555-555-1234"
+          contactType="sms"
           :createdAt="new Date()"
         />
       </div>
