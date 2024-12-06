@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import FormLinks from "@/components/FormLinks.vue";
 import FormBuilder, { type FormValues } from "@/components/FormBuilder.vue";
 import type { ClientKeyId, FormId } from "@/types";
@@ -20,7 +20,13 @@ const INITIAL_KEY_COMMENT = "Original";
 const formId = ref<FormId>();
 const clientKeyId = ref<ClientKeyId>();
 const secretLinkKey = ref<SecretLinkKey>();
-const formSubmitted = ref(false);
+
+const formSubmitted = computed(
+  () =>
+    formId.value !== undefined &&
+    clientKeyId.value !== undefined &&
+    secretLinkKey.value !== undefined,
+);
 
 const submitForm = async (values: FormValues) => {
   const newSecretLinkKey = generateSecretLinkKey();
@@ -61,8 +67,6 @@ const submitForm = async (values: FormValues) => {
     encryptedComment,
     accessToken,
   });
-
-  formSubmitted.value = true;
 };
 </script>
 
