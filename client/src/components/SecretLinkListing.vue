@@ -21,7 +21,10 @@ const props = defineProps<{
         aria-hidden="true"
       ></i>
       <div class="flex flex-col">
-        <span>{{ props.comment }}</span>
+        <span class="flex gap-2 items-baseline">
+          <i class="pi pi-key md:!hidden key-icon" aria-hidden="true"></i>
+          {{ props.comment }}
+        </span>
         <span class="text-muted-color">
           last used
           <time class="text-nowrap" datetime="props.accessedAt.toISOString()">
