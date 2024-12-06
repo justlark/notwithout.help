@@ -60,7 +60,7 @@ pub fn new(state: AppState) -> Router {
         .route("/submissions/:form_id", post(store_form_submission))
         .route(
             "/challenges/:form_id/:client_key_id",
-            get(request_challenge),
+            post(request_challenge),
         )
         .route("/tokens", post(request_access_token))
         .layer(cors_layer())

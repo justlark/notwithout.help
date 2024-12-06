@@ -59,7 +59,9 @@ export const getChallengeToken = async (
   formId: FormId,
   clientKeyId: ClientKeyId,
 ): Promise<ApiChallengeToken> => {
-  const response = await fetch(`${API_URL}/challenges/${formId}/${clientKeyId}`, { method: "GET" });
+  const response = await fetch(`${API_URL}/challenges/${formId}/${clientKeyId}`, {
+    method: "POST",
+  });
 
   const { challenge } = await response.json();
 
