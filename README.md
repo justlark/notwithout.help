@@ -14,6 +14,8 @@ How it works:
   and organizers have a separate link to view the responses.
 - Only the organizers can see the volunteers' responses. Neither the website
   owner nor the hosting provider have access to them.
+- Organizers can individually revoke access to volunteers' responses at any
+  time.
 
 ## Architecture
 
