@@ -73,11 +73,7 @@ const resetForm = () => {
 </script>
 
 <template>
-  <form
-    @submit="submitForm"
-    class="max-w-xl mx-auto flex flex-col gap-8"
-    aria-labelledby="form-title"
-  >
+  <form @submit="submitForm" class="max-w-xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <label for="name-input">Your name</label>
       <InputText
