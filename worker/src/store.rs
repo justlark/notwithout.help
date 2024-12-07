@@ -9,8 +9,8 @@ use crate::{
     config,
     keys::{EphemeralServerKey, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
-        ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
-        FormTemplate, ServerKeyId, Submission, SubmissionId,
+        ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody,
+        FormData, FormId, FormTemplate, ServerKeyId, Submission, SubmissionId,
     },
 };
 
@@ -65,25 +65,32 @@ impl fmt::Debug for Store {
 
 impl Store {
     #[worker::send]
-    pub async fn get_form_template(
-        &self,
-        form_id: &FormId,
-    ) -> anyhow::Result<Option<FormTemplate>> {
+    pub async fn get_form_data(&self, form_id: &FormId) -> anyhow::Result<Option<FormData>> {
         let stmt = query!(
             &self.db,
             "
-            SELECT template
+            SELECT template, public_primary_key
             FROM forms
             WHERE form_id = ?1;
             ",
             form_id,
         )?;
 
-        Ok(stmt
-            .first::<String>(Some("template"))
+        #[derive(Debug, Deserialize)]
+        struct Row {
+            template: String,
+            public_primary_key: PublicPrimaryKey,
+        }
+
+        stmt.first::<Row>(None)
             .await?
-            .map(|raw| serde_json::from_str(&raw))
-            .transpose()?)
+            .map(|raw| -> anyhow::Result<_> {
+                Ok(FormData {
+                    template: serde_json::from_str::<FormTemplate>(&raw.template)?,
+                    public_primary_key: raw.public_primary_key,
+                })
+            })
+            .transpose()
     }
 
     #[worker::send]

@@ -4,8 +4,8 @@ use crate::{
     auth::{ApiChallengeResponse, SignedApiAccessToken, SignedApiChallenge},
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
-        ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormId,
-        FormTemplate, Submission,
+        ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormData, FormId,
+        Submission,
     },
 };
 
@@ -14,14 +14,16 @@ pub struct GetFormResponse {
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
+    pub public_primary_key: PublicPrimaryKey,
 }
 
-impl From<FormTemplate> for GetFormResponse {
-    fn from(template: FormTemplate) -> Self {
+impl From<FormData> for GetFormResponse {
+    fn from(data: FormData) -> Self {
         Self {
-            org_name: template.org_name,
-            description: template.description,
-            contact_methods: template.contact_methods,
+            org_name: data.template.org_name,
+            description: data.template.description,
+            contact_methods: data.template.contact_methods,
+            public_primary_key: data.public_primary_key,
         }
     }
 }

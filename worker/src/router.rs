@@ -119,7 +119,7 @@ async fn get_form(
 
     Ok(Json(
         store
-            .get_form_template(&form_id)
+            .get_form_data(&form_id)
             .await
             .map_err(internal_err)?
             .ok_or(StatusCode::NOT_FOUND)?

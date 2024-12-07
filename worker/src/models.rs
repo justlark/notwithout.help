@@ -5,7 +5,7 @@ use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::keys::{PublicSigningKey, WrappedPrivatePrimaryKey};
+use crate::keys::{PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey};
 
 //
 // See the security architecture document for information on the purpose of these values and how
@@ -198,6 +198,12 @@ pub struct FormTemplate {
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FormData {
+    pub template: FormTemplate,
+    pub public_primary_key: PublicPrimaryKey,
 }
 
 #[derive(Debug)]
