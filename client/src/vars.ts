@@ -32,11 +32,11 @@ export const contactMethodByCode = (code: string) =>
 export type ContactMethodCode = (typeof CONTACT_METHOD_TYPES)[number];
 
 export const TITLE_LEADS = [
-  "How can I get folks organized?",
-  "How can I enact lasting change?",
-  "How can I make a real difference?",
-  "How can I start a movement?",
-  "How can I start a campaign?",
+  "Can I mobilize my community?",
+  "Can I enact lasting change?",
+  "Can I make a real difference?",
+  "Can I start a movement?",
+  "Can I change the world?",
 ];
 
 const pickRandom = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
