@@ -4,12 +4,13 @@ import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import { sealSubmissionBody, type PublicPrimaryKey } from "@/crypto";
 import { encodeUtf8, parseShareLinkFragment } from "@/encoding";
 import type { ContactMethodCode } from "@/vars";
-import { onBeforeMount } from "vue";
+import { computed, watchEffect } from "vue";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
-const { formId } = parseShareLinkFragment(route.hash);
+
+const linkParts = computed(() => parseShareLinkFragment(route.hash));
 
 const orgName = ref("");
 const description = ref("");
@@ -32,10 +33,14 @@ const postSubmission = async (values: FormValues) => {
     publicPrimaryKey.value,
   );
 
+  const { formId } = linkParts.value;
+
   api.postSubmission({ formId, encryptedBody });
 };
 
-onBeforeMount(async () => {
+watchEffect(async () => {
+  const { formId } = linkParts.value;
+
   const formData = await api.getForm({ formId });
 
   orgName.value = formData.orgName;

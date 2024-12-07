@@ -22,16 +22,16 @@ const submissions = ref<Array<Submission>>([]);
 
 const route = useRoute();
 
-const secretLinkParts = computed(() => parseSecretLinkFragment(route.hash));
+const linkParts = computed(() => parseSecretLinkFragment(route.hash));
 
-const formData = computed(async () => await api.getForm({ formId: secretLinkParts.value.formId }));
+const formData = computed(async () => await api.getForm({ formId: linkParts.value.formId }));
 
-const derivedKeys = computed(async () => await deriveKeys(secretLinkParts.value.secretLinkKey));
+const derivedKeys = computed(async () => await deriveKeys(linkParts.value.secretLinkKey));
 
 const privatePrimaryKey = computed(async () => {
   const wrappedPrivatePrimaryKey = await api.getKey({
-    formId: secretLinkParts.value.formId,
-    clientKeyId: secretLinkParts.value.clientKeyId,
+    formId: linkParts.value.formId,
+    clientKeyId: linkParts.value.clientKeyId,
     accessToken: await accessToken.value,
   });
 
@@ -44,15 +44,15 @@ const accessToken = computed(async () => {
   const { privateSigningKey } = await derivedKeys.value;
 
   return await getAccessToken(
-    secretLinkParts.value.formId,
-    secretLinkParts.value.clientKeyId,
+    linkParts.value.formId,
+    linkParts.value.clientKeyId,
     privateSigningKey,
   );
 });
 
 const computedSubmissions = computed(async () => {
   const submissions = await api.getSubmissions({
-    formId: secretLinkParts.value.formId,
+    formId: linkParts.value.formId,
     accessToken: await accessToken.value,
   });
 
@@ -79,7 +79,7 @@ const computedSubmissions = computed(async () => {
 });
 
 const deleteForm = async () => {
-  api.deleteForm({ formId: secretLinkParts.value.formId, accessToken: await accessToken.value });
+  api.deleteForm({ formId: linkParts.value.formId, accessToken: await accessToken.value });
 };
 
 watchEffect(async () => {
