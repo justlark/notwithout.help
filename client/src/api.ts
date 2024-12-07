@@ -3,11 +3,12 @@ import {
   type ApiChallengeSignature,
   type ApiChallengeToken,
   type EncryptedKeyComment,
+  type EncryptedSubmissionBody,
   type PublicPrimaryKey,
   type PublicSigningKey,
   type WrappedPrivatePrimaryKey,
 } from "./crypto";
-import { encodeBase64 } from "./encoding";
+import { decodeBase64, encodeBase64 } from "./encoding";
 import type { ClientKeyId, FormId } from "./types";
 import type { ContactMethodCode } from "./vars";
 
@@ -24,6 +25,26 @@ export interface PostFormRequest {
   description: string;
   contactMethods: Array<ContactMethodCode>;
 }
+
+export interface GetFormResponse {
+  orgName: string;
+  description: string;
+  contactMethods: Array<ContactMethodCode>;
+  publicPrimaryKey: PublicPrimaryKey;
+}
+
+export const getForm = async (formId: FormId): Promise<GetFormResponse> => {
+  const response = await fetch(`${API_URL}/forms/${formId}`);
+
+  const { org_name, description, contact_methods, public_primary_key } = await response.json();
+
+  return {
+    orgName: org_name,
+    description,
+    contactMethods: contact_methods,
+    publicPrimaryKey: decodeBase64(public_primary_key) as PublicPrimaryKey,
+  };
+};
 
 export interface PostFormResponse {
   formId: FormId;
@@ -116,9 +137,30 @@ export const postAccessToken = async (request: PostAccessTokenRequest) => {
   return token as ApiAccessToken;
 };
 
+export interface PostSubmissionRequest {
+  formId: FormId;
+  encryptedBody: EncryptedSubmissionBody;
+}
+
+export const postSubmission = async (request: PostSubmissionRequest) => {
+  const requestBody = {
+    encrypted_body: encodeBase64(request.encryptedBody),
+  };
+
+  await fetch(`${API_URL}/submissions/${request.formId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+};
+
 export default {
+  getForm,
   postForm,
   getChallengeToken,
   patchKey,
   postAccessToken,
+  postSubmission,
 };

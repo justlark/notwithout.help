@@ -12,6 +12,8 @@ import { toTypedSchema } from "@vee-validate/zod";
 
 const FORM_STORAGE_KEY = "form";
 
+const body = defineModel<FormValues>();
+
 type Emits = {
   (eventName: "submit", values: FormValues): void;
 };
@@ -53,9 +55,10 @@ const [contactType, contactTypeAttrs] = defineField("contactType");
 
 watch(values, () => {
   persistState(FORM_STORAGE_KEY, values);
+  body.value = values;
 });
 
-handleSubmit((values) => {
+const submitForm = handleSubmit((values) => {
   emit("submit", values);
 });
 
@@ -66,7 +69,7 @@ const resetForm = () => {
 </script>
 
 <template>
-  <form class="max-w-xl mx-auto flex flex-col gap-8">
+  <form @submit="submitForm" class="max-w-xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <label for="name-input">Your name</label>
       <InputText

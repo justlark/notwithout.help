@@ -1,3 +1,6 @@
+import type { SecretLinkKey } from "./crypto";
+import type { ClientKeyId, FormId } from "./types";
+
 export const encodeBase64 = (bytes: Uint8Array): string =>
   btoa(String.fromCharCode.apply(null, [...bytes]));
 
@@ -23,3 +26,23 @@ const localeDateTimeFormat = new Intl.DateTimeFormat(undefined, {
 });
 
 export const formatDateTime = (date: Date): string => localeDateTimeFormat.format(date);
+
+export const parseShareLinkFragment = (fragment: string): { formId: FormId } => {
+  const [, formId] = fragment.split("/");
+
+  return {
+    formId: formId as FormId,
+  };
+};
+
+export const parseSecretLinkFragment = (
+  fragment: string,
+): { formId: FormId; clientKeyId: ClientKeyId; secretLinkKey: SecretLinkKey } => {
+  const [, formId, clientKeyId, secretLinkKey] = fragment.split("/");
+
+  return {
+    formId: formId as FormId,
+    clientKeyId: clientKeyId as ClientKeyId,
+    secretLinkKey: decodeBase64(secretLinkKey) as SecretLinkKey,
+  };
+};
