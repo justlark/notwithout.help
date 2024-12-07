@@ -32,7 +32,16 @@ const secretLinkActions = [
 
 <template>
   <section aria-labelledby="secret-links-list-heading">
-    <Panel toggleable collapsed>
+    <Panel
+      toggleable
+      collapsed
+      :toggle-button-props="{
+        severity: 'secondary',
+        text: true,
+        rounded: true,
+        'aria-label': 'Expand',
+      }"
+    >
       <template #header>
         <span class="flex items-center gap-3">
           <i class="pi pi-lock !text-xl"></i>
