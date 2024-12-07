@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import Card from "primevue/card";
 import { formatDateTime } from "@/encoding";
-import { type ContactMethodCode, contactMethodByCode } from "@/vars";
+import { type ContactMethodCode, contactMethodByCode, TOAST_TTL } from "@/vars";
 import { useToast } from "primevue";
-import { TOAST_TTL } from "@/vars";
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -51,7 +50,7 @@ const headingId = computed(() => `contact-card-heading-${props.index}`);
           </button>
           <span>{{ props.contact }}</span>
           <span class="text-sm text-muted-color"
-            >({{ contactMethodByCode(props.contactType) }})</span
+            >({{ contactMethodByCode(props.contactType)?.name }})</span
           >
         </div>
       </template>

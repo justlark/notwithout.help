@@ -4,7 +4,7 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
+import { CONTACT_METHOD_TYPES, contactMethodByCode, type ContactMethodCode } from "@/vars";
 import { z } from "zod";
 import { loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
@@ -13,6 +13,10 @@ import { toTypedSchema } from "@vee-validate/zod";
 const FORM_STORAGE_KEY = "form";
 
 const body = defineModel<FormValues>();
+
+const props = defineProps<{
+  contactMethods: Array<ContactMethodCode>;
+}>();
 
 type Emits = {
   (eventName: "submit", values: FormValues): void;
@@ -69,7 +73,11 @@ const resetForm = () => {
 </script>
 
 <template>
-  <form @submit="submitForm" class="max-w-xl mx-auto flex flex-col gap-8">
+  <form
+    @submit="submitForm"
+    class="max-w-xl mx-auto flex flex-col gap-8"
+    aria-labelledby="form-title"
+  >
     <div class="flex flex-col gap-2">
       <label for="name-input">Your name</label>
       <InputText
@@ -105,7 +113,7 @@ const resetForm = () => {
         <Select
           v-model="contactType"
           v-bind="contactTypeAttrs"
-          :options="[...CONTACT_METHODS]"
+          :options="props.contactMethods.map(contactMethodByCode)"
           option-label="name"
           option-value="code"
           size="large"
