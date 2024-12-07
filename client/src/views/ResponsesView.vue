@@ -42,8 +42,19 @@ import Button from "primevue/button";
         <div
           class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
         >
-          <Button label="Export" severity="secondary" icon="pi pi-download" />
-          <Button label="Delete" severity="danger" icon="pi pi-trash" />
+          <Button
+            class="!justify-start"
+            label="Export"
+            severity="secondary"
+            icon="pi pi-download"
+          />
+          <Button
+            class="!justify-start"
+            label="Edit"
+            severity="secondary"
+            icon="pi pi-pen-to-square"
+          />
+          <Button class="!justify-start" label="Delete" severity="danger" icon="pi pi-trash" />
         </div>
       </div>
     </div>
