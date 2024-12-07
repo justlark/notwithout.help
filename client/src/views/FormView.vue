@@ -3,12 +3,15 @@ import api, { type SubmissionBody } from "@/api";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import { sealSubmissionBody, type PublicPrimaryKey } from "@/crypto";
 import { encodeUtf8, parseShareLinkFragment } from "@/encoding";
-import type { ContactMethodCode } from "@/vars";
+import { TOAST_TTL, type ContactMethodCode } from "@/vars";
+import { useToast } from "primevue";
+import Toast from "primevue/toast";
 import { computed, watchEffect } from "vue";
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
+const toast = useToast();
 
 const linkParts = computed(() => parseShareLinkFragment(route.hash));
 
@@ -36,6 +39,13 @@ const postSubmission = async (values: FormValues) => {
   const { formId } = linkParts.value;
 
   api.postSubmission({ formId, encryptedBody });
+
+  toast.add({
+    severity: "success",
+    summary: "Response submitted",
+    detail: "Your response has been sent to the organizers.",
+    life: TOAST_TTL,
+  });
 };
 
 watchEffect(async () => {
@@ -55,6 +65,7 @@ watchEffect(async () => {
     <h1 id="main-heading" class="text-center mb-10">{{ orgName }}</h1>
     <p class="text-jusitfy max-w-xl mx-auto">{{ description }}</p>
     <ResponseForm @submit="postSubmission" :contact-methods="contactMethods" />
+    <Toast position="bottom-center" />
   </main>
 </template>
 

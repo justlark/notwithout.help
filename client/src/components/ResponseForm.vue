@@ -61,6 +61,7 @@ watch(values, () => {
 
 const submitForm = handleSubmit((values) => {
   emit("submit", values);
+  resetForm();
 });
 
 const resetForm = () => {
