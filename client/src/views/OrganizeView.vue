@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import FormLinks from "@/components/FormLinks.vue";
+import FormAdmonitions from "@/components/FormAdmonitions.vue";
 import FormBuilder, { type FormValues } from "@/components/FormBuilder.vue";
 import type { ClientKeyId, FormId } from "@/types";
 import api from "@/api";
@@ -74,7 +74,7 @@ const submitForm = async (values: FormValues) => {
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>
     <FormBuilder v-if="!formSubmitted" @submit="submitForm" />
-    <FormLinks
+    <FormAdmonitions
       v-if="formSubmitted"
       :formId="formId"
       :clientKeyId="clientKeyId"
