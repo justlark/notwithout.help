@@ -9,7 +9,7 @@ const props = defineProps<{
   index: string;
   name: string;
   contact: string;
-  contactType: ContactMethodCode;
+  contactMethod: ContactMethodCode;
   createdAt: Date;
 }>();
 
@@ -50,7 +50,7 @@ const headingId = computed(() => `contact-card-heading-${props.index}`);
           </button>
           <span>{{ props.contact }}</span>
           <span class="text-sm text-muted-color"
-            >({{ contactMethodByCode(props.contactType)?.name }})</span
+            >({{ contactMethodByCode(props.contactMethod)?.name }})</span
           >
         </div>
       </template>

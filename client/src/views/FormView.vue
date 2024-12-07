@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import api from "@/api";
+import api, { type SubmissionBody } from "@/api";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import { sealSubmissionBody, type PublicPrimaryKey } from "@/crypto";
 import { encodeUtf8, parseShareLinkFragment } from "@/encoding";
@@ -21,8 +21,14 @@ const postSubmission = async (values: FormValues) => {
     return;
   }
 
+  const submissionBody: SubmissionBody = {
+    name: values.name,
+    contact: values.contact,
+    contact_method: values.contactMethod,
+  };
+
   const encryptedBody = sealSubmissionBody(
-    encodeUtf8(JSON.stringify(values)),
+    encodeUtf8(JSON.stringify(submissionBody)),
     publicPrimaryKey.value,
   );
 
@@ -30,7 +36,7 @@ const postSubmission = async (values: FormValues) => {
 };
 
 onBeforeMount(async () => {
-  const formData = await api.getForm(formId);
+  const formData = await api.getForm({ formId });
 
   orgName.value = formData.orgName;
   description.value = formData.description;

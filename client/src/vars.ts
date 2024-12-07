@@ -21,12 +21,12 @@ export const CONTACT_METHODS = [
   { name: "Other", code: "other" },
 ] as const;
 
-export const CONTACT_METHOD_TYPES: AtLeastOne<(typeof CONTACT_METHODS)[number]["code"]> = [
+export const CONTACT_METHOD_CODES: AtLeastOne<(typeof CONTACT_METHODS)[number]["code"]> = [
   CONTACT_METHODS[0].code,
   ...CONTACT_METHODS.slice(1).map((method) => method.code),
 ];
 
-export type ContactMethodCode = (typeof CONTACT_METHOD_TYPES)[number];
+export type ContactMethodCode = (typeof CONTACT_METHOD_CODES)[number];
 
 export const contactMethodByCode = (code: ContactMethodCode) =>
   CONTACT_METHODS.find((method) => method.code === code);

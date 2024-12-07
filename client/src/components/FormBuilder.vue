@@ -6,7 +6,7 @@ import Message from "primevue/message";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import DatePicker from "primevue/datepicker";
-import { CONTACT_METHOD_TYPES, CONTACT_METHODS } from "@/vars";
+import { CONTACT_METHOD_CODES, CONTACT_METHODS } from "@/vars";
 import { loadState, persistState } from "@/state";
 import { z } from "zod";
 import { serializeDate, deserializeDate } from "@/encoding";
@@ -25,7 +25,7 @@ const schema = z.object({
   title: z.string().min(1, { message: "You must provide a title." }),
   description: z.string().min(1, { message: "You must provide a description." }),
   contactMethods: z
-    .array(z.enum(CONTACT_METHOD_TYPES))
+    .array(z.enum(CONTACT_METHOD_CODES))
     .nonempty({ message: "You must specify at least one contact method." }),
   expirationDate: z.date().optional(),
 });

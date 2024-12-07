@@ -18,12 +18,16 @@ import type { ContactMethodCode } from "./vars";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 
-export interface PostFormRequest {
-  publicPrimaryKey: PublicPrimaryKey;
-  publicSigningKey: PublicSigningKey;
-  orgName: string;
-  description: string;
-  contactMethods: Array<ContactMethodCode>;
+// This is the shape of the object that's serialized, sealed, and sent to the
+// server.
+export interface SubmissionBody {
+  name: string;
+  contact: string;
+  contact_method: ContactMethodCode;
+}
+
+export interface GetFormParams {
+  formId: FormId;
 }
 
 export interface GetFormResponse {
@@ -33,7 +37,7 @@ export interface GetFormResponse {
   publicPrimaryKey: PublicPrimaryKey;
 }
 
-export const getForm = async (formId: FormId): Promise<GetFormResponse> => {
+export const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
   const response = await fetch(`${API_URL}/forms/${formId}`);
 
   const { org_name, description, contact_methods, public_primary_key } = await response.json();
@@ -46,18 +50,32 @@ export const getForm = async (formId: FormId): Promise<GetFormResponse> => {
   };
 };
 
+export interface PostFormParams {
+  publicPrimaryKey: PublicPrimaryKey;
+  publicSigningKey: PublicSigningKey;
+  orgName: string;
+  description: string;
+  contactMethods: Array<ContactMethodCode>;
+}
+
 export interface PostFormResponse {
   formId: FormId;
   clientKeyId: ClientKeyId;
 }
 
-export const postForm = async (request: PostFormRequest): Promise<PostFormResponse> => {
+export const postForm = async ({
+  publicPrimaryKey,
+  publicSigningKey,
+  orgName,
+  description,
+  contactMethods,
+}: PostFormParams): Promise<PostFormResponse> => {
   const requestBody = {
-    public_primary_key: encodeBase64(request.publicPrimaryKey),
-    public_signing_key: encodeBase64(request.publicSigningKey),
-    org_name: request.orgName,
-    description: request.description,
-    contact_methods: request.contactMethods,
+    public_primary_key: encodeBase64(publicPrimaryKey),
+    public_signing_key: encodeBase64(publicSigningKey),
+    org_name: orgName,
+    description: description,
+    contact_methods: contactMethods,
   };
 
   const response = await fetch(`${API_URL}/forms`, {
@@ -76,10 +94,15 @@ export const postForm = async (request: PostFormRequest): Promise<PostFormRespon
   };
 };
 
-export const getChallengeToken = async (
-  formId: FormId,
-  clientKeyId: ClientKeyId,
-): Promise<ApiChallengeToken> => {
+export interface GetChallengeTokenParams {
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+}
+
+export const getChallengeToken = async ({
+  formId,
+  clientKeyId,
+}: GetChallengeTokenParams): Promise<ApiChallengeToken> => {
   const response = await fetch(`${API_URL}/challenges/${formId}/${clientKeyId}`, {
     method: "POST",
   });
@@ -89,7 +112,7 @@ export const getChallengeToken = async (
   return challenge as ApiChallengeToken;
 };
 
-export interface PatchKeyRequest {
+export interface PatchKeyParams {
   formId: FormId;
   clientKeyId: ClientKeyId;
   wrappedPrivatePrimaryKey: WrappedPrivatePrimaryKey;
@@ -97,31 +120,59 @@ export interface PatchKeyRequest {
   accessToken: ApiAccessToken;
 }
 
-export const patchKey = async (request: PatchKeyRequest) => {
+export const patchKey = async ({
+  formId,
+  clientKeyId,
+  wrappedPrivatePrimaryKey,
+  encryptedComment,
+  accessToken,
+}: PatchKeyParams) => {
   const requestBody = {
-    wrapped_private_primary_key: encodeBase64(request.wrappedPrivatePrimaryKey),
-    encrypted_comment: encodeBase64(request.encryptedComment),
+    wrapped_private_primary_key: encodeBase64(wrappedPrivatePrimaryKey),
+    encrypted_comment: encodeBase64(encryptedComment),
   };
 
-  await fetch(`${API_URL}/keys/${request.formId}/${request.clientKeyId}`, {
+  await fetch(`${API_URL}/keys/${formId}/${clientKeyId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${request.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(requestBody),
   });
 };
 
-export interface PostAccessTokenRequest {
+export interface GetKeyParams {
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  accessToken: ApiAccessToken;
+}
+
+export const getKey = async ({
+  formId,
+  clientKeyId,
+  accessToken,
+}: GetKeyParams): Promise<WrappedPrivatePrimaryKey> => {
+  const response = await fetch(`${API_URL}/keys/${formId}/${clientKeyId}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const { wrapped_private_primary_key } = await response.json();
+
+  return decodeBase64(wrapped_private_primary_key) as WrappedPrivatePrimaryKey;
+};
+
+export interface PostAccessTokenParams {
   signature: ApiChallengeSignature;
   challenge: ApiChallengeToken;
 }
 
-export const postAccessToken = async (request: PostAccessTokenRequest) => {
+export const postAccessToken = async ({ signature, challenge }: PostAccessTokenParams) => {
   const requestBody = {
-    signature: encodeBase64(request.signature),
-    challenge: request.challenge,
+    signature: encodeBase64(signature),
+    challenge: challenge,
   };
 
   const response = await fetch(`${API_URL}/tokens`, {
@@ -137,17 +188,17 @@ export const postAccessToken = async (request: PostAccessTokenRequest) => {
   return token as ApiAccessToken;
 };
 
-export interface PostSubmissionRequest {
+export interface PostSubmissionParams {
   formId: FormId;
   encryptedBody: EncryptedSubmissionBody;
 }
 
-export const postSubmission = async (request: PostSubmissionRequest) => {
+export const postSubmission = async ({ formId, encryptedBody }: PostSubmissionParams) => {
   const requestBody = {
-    encrypted_body: encodeBase64(request.encryptedBody),
+    encrypted_body: encodeBase64(encryptedBody),
   };
 
-  await fetch(`${API_URL}/submissions/${request.formId}`, {
+  await fetch(`${API_URL}/submissions/${formId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -156,11 +207,42 @@ export const postSubmission = async (request: PostSubmissionRequest) => {
   });
 };
 
+export interface GetSubmissionsParams {
+  formId: FormId;
+  accessToken: ApiAccessToken;
+}
+
+export interface GetSubmissionsResponse {
+  encryptedBody: EncryptedSubmissionBody;
+  createdAt: Date;
+}
+
+export const getSubmissions = async ({
+  formId,
+  accessToken,
+}: GetSubmissionsParams): Promise<Array<GetSubmissionsResponse>> => {
+  const response = await fetch(`${API_URL}/submissions/${formId}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const submissions: Array<any> = await response.json();
+
+  return submissions.map(({ encrypted_body, created_at }) => ({
+    encryptedBody: decodeBase64(encrypted_body) as EncryptedSubmissionBody,
+    createdAt: new Date(created_at),
+  }));
+};
+
 export default {
   getForm,
   postForm,
   getChallengeToken,
+  getKey,
   patchKey,
   postAccessToken,
   postSubmission,
+  getSubmissions,
 };

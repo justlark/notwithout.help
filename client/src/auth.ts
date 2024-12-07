@@ -20,7 +20,7 @@ export const getAccessToken = async (
   clientKeyId: ClientKeyId,
   privateSigningKey: PrivateSigningKey,
 ): Promise<ApiAccessToken> => {
-  const challenge = await api.getChallengeToken(formId, clientKeyId);
+  const challenge = await api.getChallengeToken({ formId, clientKeyId });
   const nonce = extractNonce(challenge);
   const signature = await signApiChallengeNonce(nonce, privateSigningKey);
   return await api.postAccessToken({

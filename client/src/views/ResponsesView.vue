@@ -3,8 +3,55 @@ import FormResponse from "@/components/FormResponse.vue";
 import Toast from "primevue/toast";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Button from "primevue/button";
-</script>
+import type { ContactMethodCode } from "@/vars";
+import { onBeforeMount, ref } from "vue";
+import { useRoute } from "vue-router";
+import { decodeUtf8, parseSecretLinkFragment } from "@/encoding";
+import { deriveKeys, unsealSubmissionBody, unwrapPrivatePrimaryKey } from "@/crypto";
+import { getAccessToken } from "@/auth";
+import api, { type SubmissionBody } from "@/api";
 
+export interface Response {
+  name: string;
+  contact: string;
+  contactMethod: ContactMethodCode;
+  createdAt: Date;
+}
+
+const route = useRoute();
+const responses = ref<Array<Response>>([]);
+
+onBeforeMount(async () => {
+  const { formId, clientKeyId, secretLinkKey } = parseSecretLinkFragment(route.hash);
+
+  const { publicPrimaryKey } = await api.getForm({ formId });
+  const { privateSigningKey, secretWrappingKey } = await deriveKeys(secretLinkKey);
+
+  const accessToken = await getAccessToken(formId, clientKeyId, privateSigningKey);
+
+  const wrappedPrivatePrimaryKey = await api.getKey({ formId, clientKeyId, accessToken });
+  const privatePrimaryKey = unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey);
+
+  const submissions = await api.getSubmissions({ formId, accessToken });
+
+  responses.value = submissions.map(({ encryptedBody, createdAt }) => {
+    const encodedSubmissionBody = unsealSubmissionBody(
+      encryptedBody,
+      publicPrimaryKey,
+      privatePrimaryKey,
+    );
+
+    const submissionBody: SubmissionBody = JSON.parse(decodeUtf8(encodedSubmissionBody));
+
+    return {
+      name: submissionBody.name,
+      contact: submissionBody.contact,
+      contactMethod: submissionBody.contact_method,
+      createdAt: new Date(createdAt),
+    };
+  });
+});
+</script>
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">View responses</h1>
@@ -13,28 +60,14 @@ import Button from "primevue/button";
         <SecretLinkList class="self-center w-full" />
         <div class="flex flex-col gap-4 items-center">
           <FormResponse
-            index="1"
+            v-for="(response, index) in responses"
+            :key="index"
+            :index="index.toString()"
             class="w-full"
-            name="Kit"
-            contact="kit@example.com"
-            contactType="email"
-            :createdAt="new Date()"
-          />
-          <FormResponse
-            index="2"
-            class="w-full"
-            name="Aster"
-            contact="@aster"
-            contactType="telegram"
-            :createdAt="new Date()"
-          />
-          <FormResponse
-            index="3"
-            class="w-full"
-            name="Rowan"
-            contact="555-555-1234"
-            contactType="sms"
-            :createdAt="new Date()"
+            :name="response.name"
+            :contact="response.contact"
+            :contactMethod="response.contactMethod"
+            :createdAt="response.createdAt"
           />
         </div>
       </div>

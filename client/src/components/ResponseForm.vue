@@ -4,7 +4,7 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-import { CONTACT_METHOD_TYPES, contactMethodByCode, type ContactMethodCode } from "@/vars";
+import { CONTACT_METHOD_CODES, contactMethodByCode, type ContactMethodCode } from "@/vars";
 import { z } from "zod";
 import { loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
@@ -25,7 +25,7 @@ const emit = defineEmits<Emits>();
 const schema = z.object({
   name: z.string().min(1, { message: "You must provide a name." }),
   contact: z.string().min(1, { message: "You must provide a way to contact you." }),
-  contactType: z.enum(CONTACT_METHOD_TYPES, {
+  contactMethod: z.enum(CONTACT_METHOD_CODES, {
     message: "You must provide a preferred contact method.",
   }),
 });
@@ -36,7 +36,7 @@ const initialValues = computed(() =>
   loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
     name: values.name ?? "",
     contact: values.contact ?? "",
-    contactType: values.contactType,
+    contactMethod: values.contactMethod,
   })),
 );
 
@@ -53,7 +53,7 @@ const {
 
 const [name, nameAttrs] = defineField("name");
 const [contact, contactAttrs] = defineField("contact");
-const [contactType, contactTypeAttrs] = defineField("contactType");
+const [contactMethod, contactMethodAttrs] = defineField("contactMethod");
 
 watch(values, () => {
   persistState(FORM_STORAGE_KEY, values);
@@ -104,8 +104,8 @@ const resetForm = () => {
           class="grow"
         />
         <Select
-          v-model="contactType"
-          v-bind="contactTypeAttrs"
+          v-model="contactMethod"
+          v-bind="contactMethodAttrs"
           :options="props.contactMethods.map(contactMethodByCode)"
           option-label="name"
           option-value="code"
@@ -117,8 +117,8 @@ const resetForm = () => {
       <Message v-if="errors.contact" severity="error" size="small" variant="simple">
         {{ errors.contact }}
       </Message>
-      <Message v-if="errors.contactType" severity="error" size="small" variant="simple">
-        {{ errors.contactType }}
+      <Message v-if="errors.contactMethod" severity="error" size="small" variant="simple">
+        {{ errors.contactMethod }}
       </Message>
       <Message id="contact-help" size="small" severity="secondary" variant="simple">
         How you want the organizers to contact you.
