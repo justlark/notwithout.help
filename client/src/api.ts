@@ -94,6 +94,20 @@ export const postForm = async ({
   };
 };
 
+export interface DeleteFormParams {
+  formId: FormId;
+  accessToken: ApiAccessToken;
+}
+
+export const deleteForm = async ({ formId, accessToken }: DeleteFormParams) => {
+  await fetch(`${API_URL}/forms/${formId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+};
+
 export interface GetChallengeTokenParams {
   formId: FormId;
   clientKeyId: ClientKeyId;
@@ -239,6 +253,7 @@ export const getSubmissions = async ({
 export default {
   getForm,
   postForm,
+  deleteForm,
   getChallengeToken,
   getKey,
   patchKey,
