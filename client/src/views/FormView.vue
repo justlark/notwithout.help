@@ -11,20 +11,18 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 const { formId } = parseShareLinkFragment(route.hash);
 
-const body = ref<FormValues>();
-
 const orgName = ref("");
 const description = ref("");
 const contactMethods = ref<Array<ContactMethodCode>>([]);
 const publicPrimaryKey = ref<PublicPrimaryKey>();
 
-const postSubmission = async () => {
+const postSubmission = async (values: FormValues) => {
   if (!publicPrimaryKey.value) {
     return;
   }
 
   const encryptedBody = sealSubmissionBody(
-    encodeUtf8(JSON.stringify(body.value)),
+    encodeUtf8(JSON.stringify(values)),
     publicPrimaryKey.value,
   );
 
@@ -45,7 +43,7 @@ onBeforeMount(async () => {
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">{{ orgName }}</h1>
     <p class="text-jusitfy max-w-xl mx-auto">{{ description }}</p>
-    <ResponseForm @submit="postSubmission" v-model="body" :contact-methods="contactMethods" />
+    <ResponseForm @submit="postSubmission" :contact-methods="contactMethods" />
   </main>
 </template>
 

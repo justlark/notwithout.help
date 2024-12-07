@@ -12,8 +12,6 @@ import { toTypedSchema } from "@vee-validate/zod";
 
 const FORM_STORAGE_KEY = "form";
 
-const body = defineModel<FormValues>();
-
 const props = defineProps<{
   contactMethods: Array<ContactMethodCode>;
 }>();
@@ -59,7 +57,6 @@ const [contactType, contactTypeAttrs] = defineField("contactType");
 
 watch(values, () => {
   persistState(FORM_STORAGE_KEY, values);
-  body.value = values;
 });
 
 const submitForm = handleSubmit((values) => {
