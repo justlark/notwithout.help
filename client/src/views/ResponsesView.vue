@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import FormResponse from "@/components/FormResponse.vue";
 import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Button from "primevue/button";
 import { TOAST_TTL, type ContactMethodCode } from "@/vars";
@@ -9,7 +10,7 @@ import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
 import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
-import { useToast } from "primevue";
+import { useConfirm, useToast } from "primevue";
 
 export interface Submission {
   name: string;
@@ -21,24 +22,43 @@ export interface Submission {
 const submissions = ref<Array<Submission>>([]);
 
 const toast = useToast();
+const confirm = useConfirm();
+
 const { formId } = useSecretLink();
 const { accessToken } = useAccessToken();
 const { privatePrimaryKey } = usePrivatePrimaryKey(accessToken);
 const { publicPrimaryKey } = useForm();
 
-const deleteForm = async () => {
-  if (formId.value === undefined || accessToken.value === undefined) {
-    return;
-  }
+const deleteForm = () => {
+  confirm.require({
+    header: "Delete this form?",
+    message:
+      "Do you want to permanently delete this form and all submissions? Make sure you export your data first; this cannot be undone.",
+    icon: "pi pi-info-circle",
+    acceptProps: {
+      label: "Delete",
+      severity: "danger",
+    },
+    rejectProps: {
+      label: "Cancel",
+      severity: "secondary",
+      outlined: true,
+    },
+    accept: async () => {
+      if (formId.value === undefined || accessToken.value === undefined) {
+        return;
+      }
 
-  await api.deleteForm({ formId: formId.value, accessToken: accessToken.value });
-  submissions.value = [];
+      await api.deleteForm({ formId: formId.value, accessToken: accessToken.value });
+      submissions.value = [];
 
-  toast.add({
-    severity: "success",
-    summary: "Form deleted",
-    detail: "The form and all submissions have been permanently deleted.",
-    life: TOAST_TTL,
+      toast.add({
+        severity: "success",
+        summary: "Form deleted",
+        detail: "The form and all submissions have been permanently deleted.",
+        life: TOAST_TTL,
+      });
+    },
   });
 };
 
@@ -124,6 +144,7 @@ watchEffect(async () => {
       </div>
     </div>
     <Toast position="bottom-center" />
+    <ConfirmDialog class="max-w-xl" />>
   </main>
 </template>
 

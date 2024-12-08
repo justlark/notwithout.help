@@ -3,6 +3,7 @@ import "primeicons/primeicons.css";
 
 import { createApp } from "vue";
 import ToastService from "primevue/toastservice";
+import ConfirmationService from "primevue/confirmationservice";
 import PrimeVue from "primevue/config";
 import Aura from "@primevue/themes/aura";
 
@@ -18,5 +19,6 @@ app.use(PrimeVue, {
   },
 });
 app.use(ToastService);
+app.use(ConfirmationService);
 
 app.mount("#app");
