@@ -3,12 +3,13 @@ import FormResponse from "@/components/FormResponse.vue";
 import Toast from "primevue/toast";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Button from "primevue/button";
-import type { ContactMethodCode } from "@/vars";
+import { TOAST_TTL, type ContactMethodCode } from "@/vars";
 import { ref, watchEffect } from "vue";
 import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
 import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
+import { useToast } from "primevue";
 
 export interface Submission {
   name: string;
@@ -19,6 +20,7 @@ export interface Submission {
 
 const submissions = ref<Array<Submission>>([]);
 
+const toast = useToast();
 const { formId } = useSecretLink();
 const { accessToken } = useAccessToken();
 const { privatePrimaryKey } = usePrivatePrimaryKey(accessToken);
@@ -30,6 +32,14 @@ const deleteForm = async () => {
   }
 
   await api.deleteForm({ formId: formId.value, accessToken: accessToken.value });
+  submissions.value = [];
+
+  toast.add({
+    severity: "success",
+    summary: "Form deleted",
+    detail: "The form and all submissions have been permanently deleted.",
+    life: TOAST_TTL,
+  });
 };
 
 watchEffect(async () => {
