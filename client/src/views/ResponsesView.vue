@@ -144,7 +144,7 @@ watchEffect(async () => {
       </div>
     </div>
     <Toast position="bottom-center" />
-    <ConfirmDialog class="max-w-xl mx-6" />>
+    <ConfirmDialog class="max-w-xl mx-6" />
   </main>
 </template>
 
