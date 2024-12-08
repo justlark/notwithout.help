@@ -13,7 +13,7 @@ import {
 } from "./crypto";
 import type { ClientKeyId, FormId } from "./types";
 import api from "./api";
-import { decodeBase64 } from "./encoding";
+import { decodeBase64, decodeBase64Url } from "./encoding";
 import { ref, watchEffect, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import type { ContactMethodCode } from "./vars";
@@ -60,7 +60,7 @@ export const useSecretLink = () => {
 
   formId.value = formIdSegment as FormId;
   clientKeyId.value = clientKeyIdSegment as ClientKeyId;
-  secretLinkKey.value = decodeBase64(secretLinkKeySegment) as SecretLinkKey;
+  secretLinkKey.value = decodeBase64Url(secretLinkKeySegment) as SecretLinkKey;
 
   return { formId, clientKeyId, secretLinkKey };
 };
