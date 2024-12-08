@@ -14,7 +14,7 @@ import {
 import type { ClientKeyId, FormId } from "./types";
 import api from "./api";
 import { decodeBase64 } from "./encoding";
-import { ref, watchEffect } from "vue";
+import { ref, watchEffect, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import type { ContactMethodCode } from "./vars";
 
@@ -71,7 +71,11 @@ export const useAccessToken = () => {
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
   watchEffect(async () => {
-    if (!formId.value || !clientKeyId.value || !secretLinkKey.value) {
+    if (
+      formId.value === undefined ||
+      clientKeyId.value === undefined ||
+      secretLinkKey.value === undefined
+    ) {
       return;
     }
 
@@ -83,14 +87,18 @@ export const useAccessToken = () => {
   return { accessToken };
 };
 
-export const usePrivatePrimaryKey = () => {
+export const usePrivatePrimaryKey = (accessToken: Ref<ApiAccessToken | undefined>) => {
   const privatePrimaryKey = ref<PrivatePrimaryKey>();
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
-  const { accessToken } = useAccessToken();
 
   watchEffect(async () => {
-    if (!formId.value || !clientKeyId.value || !secretLinkKey.value || !accessToken.value) {
+    if (
+      formId.value === undefined ||
+      clientKeyId.value === undefined ||
+      secretLinkKey.value === undefined ||
+      accessToken.value === undefined
+    ) {
       return;
     }
 
@@ -117,7 +125,7 @@ export const useForm = () => {
   const { formId } = useLink();
 
   watchEffect(async () => {
-    if (!formId.value) {
+    if (formId.value === undefined) {
       return;
     }
 

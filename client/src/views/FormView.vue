@@ -14,7 +14,7 @@ const { formId } = useLink();
 const { orgName, description, contactMethods, publicPrimaryKey } = useForm();
 
 const postSubmission = async (values: FormValues) => {
-  if (!formId.value || !publicPrimaryKey.value) {
+  if (formId.value === undefined || publicPrimaryKey.value === undefined) {
     return;
   }
 

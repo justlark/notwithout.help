@@ -21,11 +21,11 @@ const submissions = ref<Array<Submission>>([]);
 
 const { formId } = useSecretLink();
 const { accessToken } = useAccessToken();
-const { privatePrimaryKey } = usePrivatePrimaryKey();
+const { privatePrimaryKey } = usePrivatePrimaryKey(accessToken);
 const { publicPrimaryKey } = useForm();
 
 const deleteForm = async () => {
-  if (!formId.value || !accessToken.value) {
+  if (formId.value === undefined || accessToken.value === undefined) {
     return;
   }
 
@@ -33,8 +33,9 @@ const deleteForm = async () => {
 };
 
 watchEffect(async () => {
-  if (!formId.value || !accessToken.value) {
-    submissions.value = [];
+  submissions.value = [];
+
+  if (formId.value === undefined || accessToken.value === undefined) {
     return;
   }
 
@@ -44,8 +45,7 @@ watchEffect(async () => {
   });
 
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
-    if (!privatePrimaryKey.value || !publicPrimaryKey.value) {
-      submissions.value = [];
+    if (privatePrimaryKey.value === undefined || publicPrimaryKey.value === undefined) {
       return;
     }
 
