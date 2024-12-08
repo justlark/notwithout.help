@@ -35,7 +35,13 @@ const deleteForm = async () => {
 watchEffect(async () => {
   submissions.value = [];
 
-  if (formId.value === undefined || accessToken.value === undefined) {
+  // Ensure all of these are tracked by Vue before the first await boundary.
+  if (
+    formId.value === undefined ||
+    accessToken.value === undefined ||
+    privatePrimaryKey.value === undefined ||
+    publicPrimaryKey.value === undefined
+  ) {
     return;
   }
 
@@ -45,10 +51,6 @@ watchEffect(async () => {
   });
 
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
-    if (privatePrimaryKey.value === undefined || publicPrimaryKey.value === undefined) {
-      return;
-    }
-
     const encodedSubmissionBody = unsealSubmissionBody(
       encryptedBody,
       publicPrimaryKey.value,
