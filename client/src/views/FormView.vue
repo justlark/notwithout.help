@@ -1,27 +1,20 @@
 <script setup lang="ts">
 import api, { type SubmissionBody } from "@/api";
+import { useForm, useLink } from "@/auth";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
-import { sealSubmissionBody, type PublicPrimaryKey } from "@/crypto";
-import { encodeUtf8, parseShareLinkFragment } from "@/encoding";
-import { TOAST_TTL, type ContactMethodCode } from "@/vars";
+import { sealSubmissionBody } from "@/crypto";
+import { encodeUtf8 } from "@/encoding";
+import { TOAST_TTL } from "@/vars";
 import { useToast } from "primevue";
 import Toast from "primevue/toast";
-import { computed, watchEffect } from "vue";
-import { ref } from "vue";
-import { useRoute } from "vue-router";
 
-const route = useRoute();
 const toast = useToast();
 
-const linkParts = computed(() => parseShareLinkFragment(route.hash));
-
-const orgName = ref("");
-const description = ref("");
-const contactMethods = ref<Array<ContactMethodCode>>([]);
-const publicPrimaryKey = ref<PublicPrimaryKey>();
+const { formId } = useLink();
+const { orgName, description, contactMethods, publicPrimaryKey } = useForm();
 
 const postSubmission = async (values: FormValues) => {
-  if (!publicPrimaryKey.value) {
+  if (!formId.value || !publicPrimaryKey.value) {
     return;
   }
 
@@ -36,9 +29,7 @@ const postSubmission = async (values: FormValues) => {
     publicPrimaryKey.value,
   );
 
-  const { formId } = linkParts.value;
-
-  api.postSubmission({ formId, encryptedBody });
+  api.postSubmission({ formId: formId.value, encryptedBody });
 
   toast.add({
     severity: "success",
@@ -47,24 +38,17 @@ const postSubmission = async (values: FormValues) => {
     life: TOAST_TTL,
   });
 };
-
-watchEffect(async () => {
-  const { formId } = linkParts.value;
-
-  const formData = await api.getForm({ formId });
-
-  orgName.value = formData.orgName;
-  description.value = formData.description;
-  contactMethods.value = formData.contactMethods;
-  publicPrimaryKey.value = formData.publicPrimaryKey;
-});
 </script>
 
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">{{ orgName }}</h1>
     <p class="text-jusitfy max-w-xl mx-auto">{{ description }}</p>
-    <ResponseForm @submit="postSubmission" :contact-methods="contactMethods" />
+    <ResponseForm
+      @submit="postSubmission"
+      v-if="contactMethods"
+      :contact-methods="contactMethods"
+    />
     <Toast position="bottom-center" />
   </main>
 </template>

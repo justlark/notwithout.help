@@ -4,11 +4,10 @@ import Toast from "primevue/toast";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Button from "primevue/button";
 import type { ContactMethodCode } from "@/vars";
-import { computed, ref, watchEffect } from "vue";
-import { useRoute } from "vue-router";
-import { decodeUtf8, parseSecretLinkFragment } from "@/encoding";
-import { deriveKeys, unsealSubmissionBody, unwrapPrivatePrimaryKey } from "@/crypto";
-import { getAccessToken } from "@/auth";
+import { ref, watchEffect } from "vue";
+import { decodeUtf8 } from "@/encoding";
+import { unsealSubmissionBody } from "@/crypto";
+import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
 
 export interface Submission {
@@ -20,70 +19,51 @@ export interface Submission {
 
 const submissions = ref<Array<Submission>>([]);
 
-const route = useRoute();
-
-const linkParts = computed(() => parseSecretLinkFragment(route.hash));
-
-const formData = computed(async () => await api.getForm({ formId: linkParts.value.formId }));
-
-const derivedKeys = computed(async () => await deriveKeys(linkParts.value.secretLinkKey));
-
-const privatePrimaryKey = computed(async () => {
-  const wrappedPrivatePrimaryKey = await api.getKey({
-    formId: linkParts.value.formId,
-    clientKeyId: linkParts.value.clientKeyId,
-    accessToken: await accessToken.value,
-  });
-
-  const { secretWrappingKey } = await derivedKeys.value;
-
-  return unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey);
-});
-
-const accessToken = computed(async () => {
-  const { privateSigningKey } = await derivedKeys.value;
-
-  return await getAccessToken(
-    linkParts.value.formId,
-    linkParts.value.clientKeyId,
-    privateSigningKey,
-  );
-});
-
-const computedSubmissions = computed(async () => {
-  const submissions = await api.getSubmissions({
-    formId: linkParts.value.formId,
-    accessToken: await accessToken.value,
-  });
-
-  return await Promise.all(
-    submissions.map(async ({ encryptedBody, createdAt }) => {
-      const { publicPrimaryKey } = await formData.value;
-
-      const encodedSubmissionBody = unsealSubmissionBody(
-        encryptedBody,
-        publicPrimaryKey,
-        await privatePrimaryKey.value,
-      );
-
-      const submissionBody: SubmissionBody = JSON.parse(decodeUtf8(encodedSubmissionBody));
-
-      return {
-        name: submissionBody.name,
-        contact: submissionBody.contact,
-        contactMethod: submissionBody.contact_method,
-        createdAt: new Date(createdAt),
-      };
-    }),
-  );
-});
+const { formId } = useSecretLink();
+const { accessToken } = useAccessToken();
+const { privatePrimaryKey } = usePrivatePrimaryKey();
+const { publicPrimaryKey } = useForm();
 
 const deleteForm = async () => {
-  api.deleteForm({ formId: linkParts.value.formId, accessToken: await accessToken.value });
+  if (!formId.value || !accessToken.value) {
+    return;
+  }
+
+  await api.deleteForm({ formId: formId.value, accessToken: accessToken.value });
 };
 
 watchEffect(async () => {
-  submissions.value = await computedSubmissions.value;
+  if (!formId.value || !accessToken.value) {
+    submissions.value = [];
+    return;
+  }
+
+  const encryptedSubmissions = await api.getSubmissions({
+    formId: formId.value,
+    accessToken: accessToken.value,
+  });
+
+  for (const { encryptedBody, createdAt } of encryptedSubmissions) {
+    if (!privatePrimaryKey.value || !publicPrimaryKey.value) {
+      submissions.value = [];
+      return;
+    }
+
+    const encodedSubmissionBody = unsealSubmissionBody(
+      encryptedBody,
+      publicPrimaryKey.value,
+      privatePrimaryKey.value,
+    );
+
+    const submissionBody: SubmissionBody = JSON.parse(decodeUtf8(encodedSubmissionBody));
+
+    submissions.value.push({
+      name: submissionBody.name,
+      contact: submissionBody.contact,
+      contactMethod: submissionBody.contact_method,
+      createdAt: new Date(createdAt),
+    });
+  }
 });
 </script>
 <template>

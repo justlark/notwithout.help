@@ -1,14 +1,22 @@
 import { jwtDecode } from "jwt-decode";
 import {
+  deriveKeys,
   signApiChallengeNonce,
+  unwrapPrivatePrimaryKey,
   type ApiAccessToken,
   type ApiChallengeNonce,
   type ApiChallengeToken,
+  type PrivatePrimaryKey,
   type PrivateSigningKey,
+  type PublicPrimaryKey,
+  type SecretLinkKey,
 } from "./crypto";
 import type { ClientKeyId, FormId } from "./types";
 import api from "./api";
 import { decodeBase64 } from "./encoding";
+import { ref, watchEffect } from "vue";
+import { useRoute } from "vue-router";
+import type { ContactMethodCode } from "./vars";
 
 const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
   const { nonce } = jwtDecode<{ nonce: string }>(challengeToken);
@@ -27,4 +35,99 @@ export const getAccessToken = async (
     challenge,
     signature,
   });
+};
+
+export const useLink = () => {
+  const formId = ref<FormId>();
+
+  const route = useRoute();
+
+  const [, formIdSegment] = route.hash.split("/");
+
+  formId.value = formIdSegment as FormId;
+
+  return { formId };
+};
+
+export const useSecretLink = () => {
+  const formId = ref<FormId>();
+  const clientKeyId = ref<ClientKeyId>();
+  const secretLinkKey = ref<SecretLinkKey>();
+
+  const route = useRoute();
+
+  const [, formIdSegment, clientKeyIdSegment, secretLinkKeySegment] = route.hash.split("/");
+
+  formId.value = formIdSegment as FormId;
+  clientKeyId.value = clientKeyIdSegment as ClientKeyId;
+  secretLinkKey.value = decodeBase64(secretLinkKeySegment) as SecretLinkKey;
+
+  return { formId, clientKeyId, secretLinkKey };
+};
+
+export const useAccessToken = () => {
+  const accessToken = ref<ApiAccessToken>();
+
+  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+
+  watchEffect(async () => {
+    if (!formId.value || !clientKeyId.value || !secretLinkKey.value) {
+      return;
+    }
+
+    const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
+
+    accessToken.value = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
+  });
+
+  return { accessToken };
+};
+
+export const usePrivatePrimaryKey = () => {
+  const privatePrimaryKey = ref<PrivatePrimaryKey>();
+
+  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+  const { accessToken } = useAccessToken();
+
+  watchEffect(async () => {
+    if (!formId.value || !clientKeyId.value || !secretLinkKey.value || !accessToken.value) {
+      return;
+    }
+
+    const { secretWrappingKey } = await deriveKeys(secretLinkKey.value);
+
+    const wrappedPrivatePrimaryKey = await api.getKey({
+      formId: formId.value,
+      clientKeyId: clientKeyId.value,
+      accessToken: accessToken.value,
+    });
+
+    privatePrimaryKey.value = unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey);
+  });
+
+  return { privatePrimaryKey };
+};
+
+export const useForm = () => {
+  const orgName = ref<string>();
+  const description = ref<string>();
+  const contactMethods = ref<Array<ContactMethodCode>>();
+  const publicPrimaryKey = ref<PublicPrimaryKey>();
+
+  const { formId } = useLink();
+
+  watchEffect(async () => {
+    if (!formId.value) {
+      return;
+    }
+
+    const response = await api.getForm({ formId: formId.value });
+
+    orgName.value = response.orgName;
+    description.value = response.description;
+    contactMethods.value = response.contactMethods;
+    publicPrimaryKey.value = response.publicPrimaryKey;
+  });
+
+  return { orgName, description, contactMethods, publicPrimaryKey };
 };
