@@ -18,6 +18,15 @@ import type { ContactMethodCode } from "./vars";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 
+export class HttpError extends Error {
+  public readonly statusCode: number;
+
+  constructor(response: Response) {
+    super(`HTTP error ${response.status}`);
+    this.statusCode = response.status;
+  }
+}
+
 // This is the shape of the object that's serialized, sealed, and sent to the
 // server.
 export interface SubmissionBody {
@@ -39,6 +48,10 @@ export interface GetFormResponse {
 
 export const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
   const response = await fetch(`${API_URL}/forms/${formId}`);
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 
   const { org_name, description, contact_methods, public_primary_key } = await response.json();
 
@@ -86,6 +99,10 @@ export const postForm = async ({
     body: JSON.stringify(requestBody),
   });
 
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
+
   const { form_id, client_key_id } = await response.json();
 
   return {
@@ -100,12 +117,16 @@ export interface DeleteFormParams {
 }
 
 export const deleteForm = async ({ formId, accessToken }: DeleteFormParams) => {
-  await fetch(`${API_URL}/forms/${formId}`, {
+  const response = await fetch(`${API_URL}/forms/${formId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 };
 
 export interface GetChallengeTokenParams {
@@ -120,6 +141,10 @@ export const getChallengeToken = async ({
   const response = await fetch(`${API_URL}/challenges/${formId}/${clientKeyId}`, {
     method: "POST",
   });
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 
   const { challenge } = await response.json();
 
@@ -146,7 +171,7 @@ export const patchKey = async ({
     encrypted_comment: encodeBase64(encryptedComment),
   };
 
-  await fetch(`${API_URL}/keys/${formId}/${clientKeyId}`, {
+  const response = await fetch(`${API_URL}/keys/${formId}/${clientKeyId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -154,6 +179,10 @@ export const patchKey = async ({
     },
     body: JSON.stringify(requestBody),
   });
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 };
 
 export interface GetKeyParams {
@@ -172,6 +201,10 @@ export const getKey = async ({
       Authorization: `Bearer ${accessToken}`,
     },
   });
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 
   const { wrapped_private_primary_key } = await response.json();
 
@@ -197,6 +230,10 @@ export const postAccessToken = async ({ signature, challenge }: PostAccessTokenP
     body: JSON.stringify(requestBody),
   });
 
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
+
   const { token } = await response.json();
 
   return token as ApiAccessToken;
@@ -212,13 +249,17 @@ export const postSubmission = async ({ formId, encryptedBody }: PostSubmissionPa
     encrypted_body: encodeBase64(encryptedBody),
   };
 
-  await fetch(`${API_URL}/submissions/${formId}`, {
+  const response = await fetch(`${API_URL}/submissions/${formId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(requestBody),
   });
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 };
 
 export interface GetSubmissionsParams {
@@ -240,6 +281,10 @@ export const getSubmissions = async ({
       Authorization: `Bearer ${accessToken}`,
     },
   });
+
+  if (!response.ok) {
+    throw new HttpError(response);
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const submissions: Array<any> = await response.json();
