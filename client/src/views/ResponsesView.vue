@@ -4,7 +4,7 @@ import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Button from "primevue/button";
-import { TOAST_TTL, type ContactMethodCode } from "@/vars";
+import { TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
 import { ref, watchEffect } from "vue";
 import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
@@ -56,7 +56,7 @@ const deleteForm = () => {
         severity: "success",
         summary: "Form deleted",
         detail: "The form and all submissions have been permanently deleted.",
-        life: TOAST_TTL,
+        life: TOAST_INFO_TTL,
       });
     },
   });

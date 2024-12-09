@@ -12,11 +12,11 @@ import {
   type SecretLinkKey,
 } from "./crypto";
 import type { ClientKeyId, FormId } from "./types";
-import api from "./api";
+import api, { HttpError } from "./api";
 import { decodeBase64, decodeBase64Url } from "./encoding";
 import { ref, watchEffect, type Ref } from "vue";
 import { useRoute } from "vue-router";
-import type { ContactMethodCode } from "./vars";
+import { type ContactMethodCode } from "./vars";
 
 const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
   const { nonce } = jwtDecode<{ nonce: string }>(challengeToken);
@@ -67,6 +67,7 @@ export const useSecretLink = () => {
 
 export const useAccessToken = () => {
   const accessToken = ref<ApiAccessToken>();
+  const authStatus = ref<"loading" | "authorized" | "unauthorized">("loading");
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
@@ -81,10 +82,17 @@ export const useAccessToken = () => {
 
     const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
 
-    accessToken.value = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
+    try {
+      accessToken.value = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
+      authStatus.value = "authorized";
+    } catch (error) {
+      if (error instanceof HttpError && error.statusCode === 401) {
+        authStatus.value = "unauthorized";
+      }
+    }
   });
 
-  return { accessToken };
+  return { accessToken, authStatus };
 };
 
 export const usePrivatePrimaryKey = (accessToken: Ref<ApiAccessToken | undefined>) => {

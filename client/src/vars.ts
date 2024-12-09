@@ -1,6 +1,7 @@
 import type { AtLeastOne } from "./types";
 
-export const TOAST_TTL = 2000;
+export const TOAST_INFO_TTL = 2000;
+export const TOAST_ERROR_TTL = 3000;
 
 export const CONTACT_METHODS = [
   { name: "Email", code: "email" },

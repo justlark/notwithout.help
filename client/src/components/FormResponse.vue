@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Card from "primevue/card";
 import { formatDateTime } from "@/encoding";
-import { type ContactMethodCode, contactMethodByCode, TOAST_TTL } from "@/vars";
+import { type ContactMethodCode, contactMethodByCode, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
 
@@ -22,7 +22,7 @@ const copyContact = async () => {
     severity: "info",
     summary: "Contact info copied",
     detail: `Copied contact info for ${props.name}.`,
-    life: TOAST_TTL,
+    life: TOAST_INFO_TTL,
   });
 };
 

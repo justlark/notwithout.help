@@ -3,7 +3,7 @@ import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import type { FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
-import { TOAST_TTL } from "@/vars";
+import { TOAST_INFO_TTL } from "@/vars";
 import Toast from "primevue/toast";
 
 const props = defineProps<{
@@ -30,7 +30,7 @@ const copyShareLink = () => {
     severity: "info",
     summary: "Link copied",
     detail: "Share this link to collect responses.",
-    life: TOAST_TTL,
+    life: TOAST_INFO_TTL,
     group: props.toastGroup,
   });
 };

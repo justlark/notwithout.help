@@ -4,7 +4,7 @@ import { useForm, useLink } from "@/auth";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import { sealSubmissionBody } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
-import { TOAST_TTL } from "@/vars";
+import { TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import Toast from "primevue/toast";
 
@@ -35,7 +35,7 @@ const postSubmission = async (values: FormValues) => {
     severity: "success",
     summary: "Response submitted",
     detail: "Your response has been sent to the organizers.",
-    life: TOAST_TTL,
+    life: TOAST_INFO_TTL,
   });
 };
 </script>
