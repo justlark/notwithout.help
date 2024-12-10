@@ -11,6 +11,7 @@ import { unsealSubmissionBody } from "@/crypto";
 import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
+import { loadableRef, returnsError, allDone, isDone } from "@/types";
 
 export interface Submission {
   name: string;
@@ -24,10 +25,10 @@ const submissions = ref<Array<Submission>>([]);
 const toast = useToast();
 const confirm = useConfirm();
 
-const { formId } = useSecretLink();
-const { accessToken } = useAccessToken();
-const { privatePrimaryKey } = usePrivatePrimaryKey(accessToken);
-const { publicPrimaryKey } = useForm();
+const secretLinkParts = useSecretLink();
+const accessToken = useAccessToken();
+const privatePrimaryKey = usePrivatePrimaryKey(loadableRef(accessToken));
+const form = useForm();
 
 const deleteForm = () => {
   confirm.require({
@@ -45,11 +46,13 @@ const deleteForm = () => {
       outlined: true,
     },
     accept: async () => {
-      if (formId.value === undefined || accessToken.value === undefined) {
+      const { formId } = secretLinkParts.value;
+
+      if (!isDone(accessToken)) {
         return;
       }
 
-      await api.deleteForm({ formId: formId.value, accessToken: accessToken.value });
+      await api.deleteForm({ formId: formId, accessToken: accessToken.value.value });
       submissions.value = [];
 
       toast.add({
@@ -66,25 +69,23 @@ watchEffect(async () => {
   submissions.value = [];
 
   // Ensure all of these are tracked by Vue before the first await boundary.
-  if (
-    formId.value === undefined ||
-    accessToken.value === undefined ||
-    privatePrimaryKey.value === undefined ||
-    publicPrimaryKey.value === undefined
-  ) {
+  if (!isDone(accessToken) || !isDone(privatePrimaryKey) || !isDone(form)) {
     return;
   }
 
+  const { formId } = secretLinkParts.value;
+  const { publicPrimaryKey } = form.value.value;
+
   const encryptedSubmissions = await api.getSubmissions({
-    formId: formId.value,
-    accessToken: accessToken.value,
+    formId: formId,
+    accessToken: accessToken.value.value,
   });
 
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
     const encodedSubmissionBody = unsealSubmissionBody(
       encryptedBody,
-      publicPrimaryKey.value,
-      privatePrimaryKey.value,
+      publicPrimaryKey,
+      privatePrimaryKey.value.value,
     );
 
     const submissionBody: SubmissionBody = JSON.parse(decodeUtf8(encodedSubmissionBody));
@@ -101,7 +102,7 @@ watchEffect(async () => {
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">View responses</h1>
-    <div class="xl:w-3/4 mx-auto">
+    <div v-if="allDone(accessToken, privatePrimaryKey, form)" class="xl:w-3/4 mx-auto">
       <div class="flex flex-col gap-8">
         <SecretLinkList class="self-center w-full" />
         <div class="flex flex-col gap-4 items-center">
@@ -142,6 +143,20 @@ watchEffect(async () => {
           />
         </div>
       </div>
+    </div>
+    <div
+      v-else-if="returnsError(['unauthorized', 'not-found'], accessToken, privatePrimaryKey, form)"
+    >
+      <Card>
+        <template #header>
+          <i class="pi pi-exclamation-circle"></i>
+        </template>
+        <template #title>Not found</template>
+        <template #content>
+          Either this is an invalid link, the form has been deleted, or you don't have access to it
+          anymore.
+        </template>
+      </Card>
     </div>
     <Toast position="bottom-center" />
     <ConfirmDialog class="max-w-xl mx-6" />

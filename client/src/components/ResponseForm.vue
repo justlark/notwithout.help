@@ -13,7 +13,7 @@ import { toTypedSchema } from "@vee-validate/zod";
 const FORM_STORAGE_KEY = "form";
 
 const props = defineProps<{
-  contactMethods: Array<ContactMethodCode>;
+  contactMethods: ReadonlyArray<ContactMethodCode>;
 }>();
 
 type Emits = {

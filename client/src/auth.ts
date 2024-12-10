@@ -12,9 +12,9 @@ import {
   type SecretLinkKey,
 } from "./crypto";
 import type { ClientKeyId, FormId, Loadable } from "./types";
-import api, { HttpError } from "./api";
+import api, { ApiError, type ApiErrorKind } from "./api";
 import { decodeBase64, decodeBase64Url } from "./encoding";
-import { ref, watchEffect, readonly, type DeepReadonly, type Ref } from "vue";
+import { ref, watchEffect, readonly, type DeepReadonly, type Ref, type ToRef } from "vue";
 import { useRoute } from "vue-router";
 import { type ContactMethodCode } from "./vars";
 
@@ -90,7 +90,7 @@ export const useSecretLink = (): DeepReadonly<Ref<SecretLinkParts>> => {
 };
 
 export const useAccessToken = () => {
-  const loadable = ref<Loadable<ApiAccessToken, HttpError>>({ state: "loading" });
+  const loadable = ref<Loadable<ApiAccessToken, ApiErrorKind>>({ state: "loading" });
 
   const secretLinkParts = useSecretLink();
 
@@ -105,10 +105,10 @@ export const useAccessToken = () => {
         value: await getAccessToken(formId, clientKeyId, privateSigningKey),
       };
     } catch (error) {
-      if (error instanceof HttpError && error.statusCode === 401) {
+      if (error instanceof ApiError) {
         loadable.value = {
           state: "error",
-          error,
+          error: error.kind,
         };
       }
     }
@@ -118,9 +118,9 @@ export const useAccessToken = () => {
 };
 
 export const usePrivatePrimaryKey = (
-  accessToken: Ref<ApiAccessToken | undefined>,
-): DeepReadonly<Ref<Loadable<PrivatePrimaryKey, HttpError>>> => {
-  const loadable = ref<Loadable<PrivatePrimaryKey, HttpError>>({ state: "loading" });
+  accessToken: ToRef<ApiAccessToken | undefined>,
+): DeepReadonly<Ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>> => {
+  const loadable = ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>({ state: "loading" });
 
   const secretLinkParts = useSecretLink();
 
@@ -133,16 +133,25 @@ export const usePrivatePrimaryKey = (
 
     const { secretWrappingKey } = await deriveKeys(secretLinkKey);
 
-    const wrappedPrivatePrimaryKey = await api.getKey({
-      formId: formId,
-      clientKeyId: clientKeyId,
-      accessToken: accessToken.value,
-    });
+    try {
+      const wrappedPrivatePrimaryKey = await api.getKey({
+        formId: formId,
+        clientKeyId: clientKeyId,
+        accessToken: accessToken.value,
+      });
 
-    loadable.value = {
-      state: "done",
-      value: unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey),
-    };
+      loadable.value = {
+        state: "done",
+        value: unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey),
+      };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        loadable.value = {
+          state: "error",
+          error: error.kind,
+        };
+      }
+    }
   });
 
   return readonly(loadable);
@@ -155,8 +164,8 @@ export interface Form {
   publicPrimaryKey: PublicPrimaryKey;
 }
 
-export const useForm = (): DeepReadonly<Ref<Loadable<Form>>> => {
-  const form = ref<Loadable<Form>>({ state: "loading" });
+export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
+  const form = ref<Loadable<Form, ApiErrorKind>>({ state: "loading" });
 
   const shareLinkParts = useLink();
 
@@ -176,8 +185,8 @@ export const useForm = (): DeepReadonly<Ref<Loadable<Form>>> => {
         },
       };
     } catch (error) {
-      if (error instanceof HttpError && error.statusCode === 404) {
-        form.value = { state: "error", error };
+      if (error instanceof ApiError) {
+        form.value = { state: "error", error: error.kind };
       }
     }
   });

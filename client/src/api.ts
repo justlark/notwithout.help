@@ -18,12 +18,23 @@ import type { ContactMethodCode } from "./vars";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 
-export class HttpError extends Error {
-  public readonly statusCode: number;
+export type ApiErrorKind = "not-found" | "unauthorized" | "content-too-large" | "unexpected";
+
+export class ApiError extends Error {
+  public readonly kind: ApiErrorKind;
 
   constructor(response: Response) {
     super(`HTTP error ${response.status}`);
-    this.statusCode = response.status;
+
+    if (response.status === 404) {
+      this.kind = "not-found";
+    } else if (response.status === 401) {
+      this.kind = "unauthorized";
+    } else if (response.status === 413) {
+      this.kind = "content-too-large";
+    } else {
+      this.kind = "unexpected";
+    }
   }
 }
 
@@ -50,7 +61,7 @@ export const getForm = async ({ formId }: GetFormParams): Promise<GetFormRespons
   const response = await fetch(`${API_URL}/forms/${formId}`);
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 
   const { org_name, description, contact_methods, public_primary_key } = await response.json();
@@ -100,7 +111,7 @@ export const postForm = async ({
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 
   const { form_id, client_key_id } = await response.json();
@@ -125,7 +136,7 @@ export const deleteForm = async ({ formId, accessToken }: DeleteFormParams) => {
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 };
 
@@ -143,7 +154,7 @@ export const getChallengeToken = async ({
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 
   const { challenge } = await response.json();
@@ -181,7 +192,7 @@ export const patchKey = async ({
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 };
 
@@ -203,7 +214,7 @@ export const getKey = async ({
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 
   const { wrapped_private_primary_key } = await response.json();
@@ -231,7 +242,7 @@ export const postAccessToken = async ({ signature, challenge }: PostAccessTokenP
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 
   const { token } = await response.json();
@@ -258,7 +269,7 @@ export const postSubmission = async ({ formId, encryptedBody }: PostSubmissionPa
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 };
 
@@ -283,7 +294,7 @@ export const getSubmissions = async ({
   });
 
   if (!response.ok) {
-    throw new HttpError(response);
+    throw new ApiError(response);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

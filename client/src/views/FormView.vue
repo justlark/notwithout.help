@@ -4,19 +4,23 @@ import { useForm, useLink } from "@/auth";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import { sealSubmissionBody } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
+import { isDone } from "@/types";
 import { TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import Toast from "primevue/toast";
 
 const toast = useToast();
 
-const { formId } = useLink();
-const { orgName, description, contactMethods, publicPrimaryKey } = useForm();
+const shareLinkParts = useLink();
+const form = useForm();
 
 const postSubmission = async (values: FormValues) => {
-  if (formId.value === undefined || publicPrimaryKey.value === undefined) {
+  if (!isDone(form)) {
     return;
   }
+
+  const { formId } = shareLinkParts.value;
+  const { publicPrimaryKey } = form.value.value;
 
   const submissionBody: SubmissionBody = {
     name: values.name,
@@ -26,10 +30,10 @@ const postSubmission = async (values: FormValues) => {
 
   const encryptedBody = sealSubmissionBody(
     encodeUtf8(JSON.stringify(submissionBody)),
-    publicPrimaryKey.value,
+    publicPrimaryKey,
   );
 
-  api.postSubmission({ formId: formId.value, encryptedBody });
+  api.postSubmission({ formId, encryptedBody });
 
   toast.add({
     severity: "success",
@@ -42,13 +46,13 @@ const postSubmission = async (values: FormValues) => {
 
 <template>
   <main aria-labelledby="main-heading">
-    <h1 id="main-heading" class="text-center mb-10">{{ orgName }}</h1>
-    <p class="text-jusitfy max-w-xl mx-auto">{{ description }}</p>
-    <ResponseForm
-      @submit="postSubmission"
-      v-if="contactMethods"
-      :contact-methods="contactMethods"
-    />
+    <div v-if="isDone(form)">
+      <h1 id="main-heading" v-if="isDone(form)" class="text-center mb-10">
+        {{ form.value.orgName }}
+      </h1>
+      <p class="text-jusitfy max-w-xl mx-auto">{{ form.value.description }}</p>
+      <ResponseForm @submit="postSubmission" :contact-methods="form.value.contactMethods" />
+    </div>
     <Toast position="bottom-center" />
   </main>
 </template>
