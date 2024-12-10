@@ -3,6 +3,7 @@ import FormResponse from "@/components/FormResponse.vue";
 import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
+import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
 import { TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
 import { ref, watchEffect } from "vue";
@@ -144,20 +145,11 @@ watchEffect(async () => {
         </div>
       </div>
     </div>
-    <div
+    <ErrorCard
       v-else-if="returnsError(['unauthorized', 'not-found'], accessToken, privatePrimaryKey, form)"
-    >
-      <Card>
-        <template #header>
-          <i class="pi pi-exclamation-circle"></i>
-        </template>
-        <template #title>Not found</template>
-        <template #content>
-          Either this is an invalid link, the form has been deleted, or you don't have access to it
-          anymore.
-        </template>
-      </Card>
-    </div>
+      title="Not found"
+      message="Either this is an invalid link, the form has been deleted, or you don't have access to it anymore."
+    />
     <Toast position="bottom-center" />
     <ConfirmDialog class="max-w-xl mx-6" />
   </main>
