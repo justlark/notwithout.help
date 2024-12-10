@@ -11,10 +11,10 @@ import {
   type PublicPrimaryKey,
   type SecretLinkKey,
 } from "./crypto";
-import type { ClientKeyId, FormId } from "./types";
+import type { ClientKeyId, FormId, Loadable } from "./types";
 import api, { HttpError } from "./api";
 import { decodeBase64, decodeBase64Url } from "./encoding";
-import { ref, watchEffect, type Ref } from "vue";
+import { ref, watchEffect, readonly, type DeepReadonly, type Ref } from "vue";
 import { useRoute } from "vue-router";
 import { type ContactMethodCode } from "./vars";
 
@@ -37,113 +37,150 @@ export const getAccessToken = async (
   });
 };
 
-export const useLink = () => {
-  const formId = ref<FormId>();
+export interface ShareLinkParts {
+  formId: FormId;
+}
 
+export const useLink = (): DeepReadonly<Ref<ShareLinkParts>> => {
   const route = useRoute();
+  const [, formId] = route.hash.split("/");
 
-  const [, formIdSegment] = route.hash.split("/");
+  const parts = ref<ShareLinkParts>({
+    formId: formId as FormId,
+  });
 
-  formId.value = formIdSegment as FormId;
+  watchEffect(() => {
+    const [, formId] = route.hash.split("/");
 
-  return { formId };
+    parts.value = {
+      formId: formId as FormId,
+    };
+  });
+
+  return readonly(parts);
 };
 
-export const useSecretLink = () => {
-  const formId = ref<FormId>();
-  const clientKeyId = ref<ClientKeyId>();
-  const secretLinkKey = ref<SecretLinkKey>();
+export interface SecretLinkParts {
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  secretLinkKey: SecretLinkKey;
+}
 
+export const useSecretLink = (): DeepReadonly<Ref<SecretLinkParts>> => {
   const route = useRoute();
+  const [, formId, clientKeyId, secretLinkKey] = route.hash.split("/");
 
-  const [, formIdSegment, clientKeyIdSegment, secretLinkKeySegment] = route.hash.split("/");
+  const parts = ref<SecretLinkParts>({
+    formId: formId as FormId,
+    clientKeyId: clientKeyId as ClientKeyId,
+    secretLinkKey: decodeBase64Url(secretLinkKey) as SecretLinkKey,
+  });
 
-  formId.value = formIdSegment as FormId;
-  clientKeyId.value = clientKeyIdSegment as ClientKeyId;
-  secretLinkKey.value = decodeBase64Url(secretLinkKeySegment) as SecretLinkKey;
+  watchEffect(() => {
+    const [, formId, clientKeyId, secretLinkKey] = route.hash.split("/");
 
-  return { formId, clientKeyId, secretLinkKey };
+    parts.value = {
+      formId: formId as FormId,
+      clientKeyId: clientKeyId as ClientKeyId,
+      secretLinkKey: decodeBase64Url(secretLinkKey) as SecretLinkKey,
+    };
+  });
+
+  return readonly(parts);
 };
 
 export const useAccessToken = () => {
-  const accessToken = ref<ApiAccessToken>();
-  const authStatus = ref<"loading" | "authorized" | "unauthorized">("loading");
+  const loadable = ref<Loadable<ApiAccessToken, HttpError>>({ state: "loading" });
 
-  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+  const secretLinkParts = useSecretLink();
 
   watchEffect(async () => {
-    if (
-      formId.value === undefined ||
-      clientKeyId.value === undefined ||
-      secretLinkKey.value === undefined
-    ) {
-      return;
-    }
+    const { formId, clientKeyId, secretLinkKey } = secretLinkParts.value;
 
-    const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
+    const { privateSigningKey } = await deriveKeys(secretLinkKey);
 
     try {
-      accessToken.value = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
-      authStatus.value = "authorized";
+      loadable.value = {
+        state: "done",
+        value: await getAccessToken(formId, clientKeyId, privateSigningKey),
+      };
     } catch (error) {
       if (error instanceof HttpError && error.statusCode === 401) {
-        authStatus.value = "unauthorized";
+        loadable.value = {
+          state: "error",
+          error,
+        };
       }
     }
   });
 
-  return { accessToken, authStatus };
+  return readonly(loadable);
 };
 
-export const usePrivatePrimaryKey = (accessToken: Ref<ApiAccessToken | undefined>) => {
-  const privatePrimaryKey = ref<PrivatePrimaryKey>();
+export const usePrivatePrimaryKey = (
+  accessToken: Ref<ApiAccessToken | undefined>,
+): DeepReadonly<Ref<Loadable<PrivatePrimaryKey, HttpError>>> => {
+  const loadable = ref<Loadable<PrivatePrimaryKey, HttpError>>({ state: "loading" });
 
-  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+  const secretLinkParts = useSecretLink();
 
   watchEffect(async () => {
-    if (
-      formId.value === undefined ||
-      clientKeyId.value === undefined ||
-      secretLinkKey.value === undefined ||
-      accessToken.value === undefined
-    ) {
+    if (accessToken.value === undefined) {
       return;
     }
 
-    const { secretWrappingKey } = await deriveKeys(secretLinkKey.value);
+    const { formId, clientKeyId, secretLinkKey } = secretLinkParts.value;
+
+    const { secretWrappingKey } = await deriveKeys(secretLinkKey);
 
     const wrappedPrivatePrimaryKey = await api.getKey({
-      formId: formId.value,
-      clientKeyId: clientKeyId.value,
+      formId: formId,
+      clientKeyId: clientKeyId,
       accessToken: accessToken.value,
     });
 
-    privatePrimaryKey.value = unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey);
+    loadable.value = {
+      state: "done",
+      value: unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey),
+    };
   });
 
-  return { privatePrimaryKey };
+  return readonly(loadable);
 };
 
-export const useForm = () => {
-  const orgName = ref<string>();
-  const description = ref<string>();
-  const contactMethods = ref<Array<ContactMethodCode>>();
-  const publicPrimaryKey = ref<PublicPrimaryKey>();
+export interface Form {
+  orgName: string;
+  description: string;
+  contactMethods: Array<ContactMethodCode>;
+  publicPrimaryKey: PublicPrimaryKey;
+}
 
-  const { formId } = useLink();
+export const useForm = (): DeepReadonly<Ref<Loadable<Form>>> => {
+  const form = ref<Loadable<Form>>({ state: "loading" });
+
+  const shareLinkParts = useLink();
 
   watchEffect(async () => {
-    if (formId.value === undefined) {
-      return;
+    const { formId } = shareLinkParts.value;
+
+    try {
+      const response = await api.getForm({ formId });
+
+      form.value = {
+        state: "done",
+        value: {
+          orgName: response.orgName,
+          description: response.description,
+          contactMethods: response.contactMethods,
+          publicPrimaryKey: response.publicPrimaryKey,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpError && error.statusCode === 404) {
+        form.value = { state: "error", error };
+      }
     }
-
-    const response = await api.getForm({ formId: formId.value });
-
-    orgName.value = response.orgName;
-    description.value = response.description;
-    contactMethods.value = response.contactMethods;
-    publicPrimaryKey.value = response.publicPrimaryKey;
   });
 
-  return { orgName, description, contactMethods, publicPrimaryKey };
+  return form;
 };
