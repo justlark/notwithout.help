@@ -13,7 +13,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div class="flex gap-8 items-center justify-between">
+  <div class="flex gap-4 sm:gap-8 items-center justify-between">
     <div class="flex gap-4 items-center">
       <i
         class="!hidden md:!inline pi pi-key text-green-500 dark:text-green-200"
@@ -21,7 +21,7 @@ const props = defineProps<{
         aria-hidden="true"
       ></i>
       <div class="flex flex-col">
-        <span class="flex gap-2 items-baseline">
+        <span class="flex gap-2 items-center">
           <i class="pi pi-key md:!hidden text-green-500 dark:text-green-200" aria-hidden="true"></i>
           <span>{{ props.comment }}</span>
           <Tag class="text-xs" v-if="props.isAdmin" value="admin" severity="warn" rounded />
@@ -37,7 +37,14 @@ const props = defineProps<{
         </span>
       </div>
     </div>
-    <Button label="Revoke" icon="pi pi-times" severity="danger" size="small" variant="outlined" />
+    <Button
+      class="shrink-0"
+      label="Revoke"
+      icon="pi pi-times"
+      severity="danger"
+      size="small"
+      variant="outlined"
+    />
   </div>
 </template>
 
