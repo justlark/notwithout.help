@@ -8,11 +8,14 @@ import { TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
-import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
 import { useRouter } from "vue-router";
+import useSecretLink from "@/composables/useSecretLink";
+import useAccessToken from "@/composables/useAccessToken";
+import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
+import useForm from "@/composables/useForm";
 
 export interface Submission {
   name: string;

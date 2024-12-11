@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import api, { type SubmissionBody } from "@/api";
-import { useForm, useLink } from "@/auth";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
+import useForm from "@/composables/useForm";
+import useLink from "@/composables/useLink";
 import { sealSubmissionBody } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
 import { isDone } from "@/types";

@@ -12,8 +12,8 @@ import {
   wrapPrivatePrimaryKey,
   type SecretLinkKey,
 } from "@/crypto";
-import { getAccessToken } from "@/auth";
 import { encodeUtf8 } from "@/encoding";
+import { getAccessToken } from "@/composables/useAccessToken";
 
 const INITIAL_KEY_COMMENT = "Original";
 

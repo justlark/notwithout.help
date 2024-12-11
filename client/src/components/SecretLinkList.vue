@@ -6,7 +6,6 @@ import SplitButton from "primevue/splitbutton";
 import { isDone, type FormId } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api from "@/api";
-import { useAccessToken, usePrivatePrimaryKey } from "@/auth";
 import {
   decryptKeyComment,
   deriveKeys,
@@ -14,6 +13,8 @@ import {
   type SecretWrappingKey,
 } from "@/crypto";
 import { decodeUtf8 } from "@/encoding";
+import useAccessToken from "@/composables/useAccessToken";
+import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 
 interface SecretKeyInfo {
   comment: string;
