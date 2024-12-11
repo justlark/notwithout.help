@@ -2,14 +2,15 @@ import {
   type ApiAccessToken,
   type ApiChallengeSignature,
   type ApiChallengeToken,
+  type ClientKeyId,
   type EncryptedKeyComment,
   type EncryptedSubmissionBody,
+  type FormId,
   type PublicPrimaryKey,
   type PublicSigningKey,
   type WrappedPrivatePrimaryKey,
 } from "./crypto";
 import { decodeBase64, encodeBase64 } from "./encoding";
-import type { ClientKeyId, FormId } from "./types";
 import type { ContactMethodCode } from "./vars";
 
 //

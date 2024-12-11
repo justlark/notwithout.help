@@ -3,12 +3,13 @@ import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
-import { isDone, type FormId } from "@/types";
+import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api from "@/api";
 import {
   decryptKeyComment,
   deriveKeys,
+  type FormId,
   type SecretLinkKey,
   type SecretWrappingKey,
 } from "@/crypto";

@@ -2,7 +2,6 @@
 import { computed, ref } from "vue";
 import FormAdmonitions from "@/components/FormAdmonitions.vue";
 import FormBuilder, { type FormValues } from "@/components/FormBuilder.vue";
-import type { ClientKeyId, FormId } from "@/types";
 import api from "@/api";
 import {
   deriveKeys,
@@ -10,6 +9,8 @@ import {
   generatePrimaryKeypair,
   generateSecretLinkKey,
   wrapPrivatePrimaryKey,
+  type ClientKeyId,
+  type FormId,
   type SecretLinkKey,
 } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
@@ -46,8 +47,8 @@ const submitForm = async (values: FormValues) => {
   secretLinkKey.value = newSecretLinkKey;
 
   const accessToken = await getAccessToken(
-    formId.value,
-    clientKeyId.value,
+    response.formId,
+    response.clientKeyId,
     derivedKeys.privateSigningKey,
   );
 

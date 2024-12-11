@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { ClientKeyId, FormId } from "@/types";
-import { type SecretLinkKey } from "@/crypto";
+import { type ClientKeyId, type FormId, type SecretLinkKey } from "@/crypto";
 import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 

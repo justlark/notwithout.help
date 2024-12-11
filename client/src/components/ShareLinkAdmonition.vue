@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
-import type { FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_INFO_TTL } from "@/vars";
+import type { FormId } from "@/crypto";
 
 const props = defineProps<{
   formId: FormId | undefined;

@@ -5,6 +5,9 @@ import type { Newtype } from "./types";
 await _sodium.ready;
 export const sodium = _sodium;
 
+export type FormId = Newtype<string, { readonly __tag: unique symbol }>;
+export type ClientKeyId = Newtype<string, { readonly __tag: unique symbol }>;
+
 export type ApiAccessToken = Newtype<string, { readonly __tag: unique symbol }>;
 export type ApiChallengeToken = Newtype<string, { readonly __tag: unique symbol }>;
 export type ApiChallengeNonce = Newtype<Uint8Array, { readonly __tag: unique symbol }>;

@@ -4,9 +4,11 @@ import {
   type ApiAccessToken,
   type ApiChallengeNonce,
   type ApiChallengeToken,
+  type ClientKeyId,
+  type FormId,
   type PrivateSigningKey,
 } from "@/crypto";
-import { type ClientKeyId, type FormId, type Loadable } from "@/types";
+import { type Loadable } from "@/types";
 import api, { ApiError, type ApiErrorKind } from "@/api";
 import { ref, watchEffect, readonly, computed } from "vue";
 import { decodeBase64 } from "@/encoding";

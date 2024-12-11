@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
-import type { ClientKeyId, FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_INFO_TTL } from "@/vars";
-import { type SecretLinkKey } from "@/crypto";
+import { type ClientKeyId, type FormId, type SecretLinkKey } from "@/crypto";
 import { encodeBase64Url } from "@/encoding";
 
 const props = defineProps<{

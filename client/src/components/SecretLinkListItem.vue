@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormId } from "@/types";
+import type { FormId } from "@/crypto";
 import { formatDateTime } from "@/encoding";
 import Button from "primevue/button";
 import Tag from "primevue/tag";

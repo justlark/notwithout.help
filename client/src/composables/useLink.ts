@@ -1,4 +1,4 @@
-import type { FormId } from "@/types";
+import type { FormId } from "@/crypto";
 import { readonly, ref, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useRoute } from "vue-router";
 

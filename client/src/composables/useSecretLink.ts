@@ -1,6 +1,5 @@
-import type { SecretLinkKey } from "@/crypto";
+import type { ClientKeyId, FormId, SecretLinkKey } from "@/crypto";
 import { decodeBase64Url } from "@/encoding";
-import type { ClientKeyId, FormId } from "@/types";
 import { readonly, ref, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useRoute } from "vue-router";
 
