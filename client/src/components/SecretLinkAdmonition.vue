@@ -2,9 +2,8 @@
 import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import { useToast } from "primevue/usetoast";
-import { TOAST_INFO_TTL } from "@/vars";
+import { newSecretLink, TOAST_INFO_TTL } from "@/vars";
 import { type ClientKeyId, type FormId, type SecretLinkKey } from "@/crypto";
-import { encodeBase64Url } from "@/encoding";
 
 const props = defineProps<{
   formId: FormId | undefined;
@@ -12,16 +11,12 @@ const props = defineProps<{
   secretLinkKey: SecretLinkKey | undefined;
 }>();
 
-const origin = computed(() => window.location.origin);
-
 const secretLink = computed(() => {
   if (!props.formId || !props.clientKeyId || !props.secretLinkKey) {
     return undefined;
   }
 
-  return new URL(
-    `${origin.value}/view/#/${props.formId}/${props.clientKeyId}/${encodeBase64Url(props.secretLinkKey)}`,
-  );
+  return new URL(newSecretLink(props.formId, props.clientKeyId, props.secretLinkKey));
 });
 
 const toast = useToast();

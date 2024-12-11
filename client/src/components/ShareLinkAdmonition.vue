@@ -2,21 +2,19 @@
 import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import { useToast } from "primevue/usetoast";
-import { TOAST_INFO_TTL } from "@/vars";
+import { newShareLink, TOAST_INFO_TTL } from "@/vars";
 import type { FormId } from "@/crypto";
 
 const props = defineProps<{
   formId: FormId | undefined;
 }>();
 
-const origin = computed(() => window.location.origin);
-
 const shareLink = computed(() => {
   if (!props.formId) {
     return undefined;
   }
 
-  return new URL(`${origin.value}/share/#/${props.formId}`);
+  return new URL(newShareLink(props.formId));
 });
 
 const toast = useToast();

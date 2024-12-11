@@ -17,11 +17,11 @@ import {
   type FormId,
   type SecretLinkKey,
 } from "@/crypto";
-import { decodeUtf8, encodeBase64Url, encodeUtf8 } from "@/encoding";
+import { decodeUtf8, encodeUtf8 } from "@/encoding";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import { useToast } from "primevue";
-import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
+import { newSecretLink, TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import useForm from "@/composables/useForm";
 
 interface SecretKeyInfo {
@@ -40,15 +40,15 @@ const secretKeys = ref<Array<SecretKeyInfo>>([]);
 const count = computed(() => secretKeys.value.length);
 
 const newLinkComment = ref("");
-const newSecretLink = ref<string>();
+const newSecretLinkHref = ref<string>();
 const newSecretLinkModalIsVisible = computed<boolean>({
   get() {
-    return newSecretLink.value !== undefined;
+    return newSecretLinkHref.value !== undefined;
   },
 
   set(value) {
     if (!value) {
-      newSecretLink.value = undefined;
+      newSecretLinkHref.value = undefined;
     }
   },
 });
@@ -127,8 +127,7 @@ const createSecretLink = async () => {
     accessedAt: undefined,
   });
 
-  // TODO: Deduplicate logic for formatting secret links.
-  newSecretLink.value = `${window.location.origin}/view/#/${props.formId}/${newClientKeyId}/${encodeBase64Url(newSecretLinkKey)}`;
+  newSecretLinkHref.value = newSecretLink(props.formId, newClientKeyId, newSecretLinkKey);
   newLinkComment.value = "";
 };
 
@@ -137,8 +136,8 @@ const createSecretAdminLink = () => {
 };
 
 const copyNewSecretLink = async () => {
-  if (newSecretLink.value) {
-    await navigator.clipboard.writeText(newSecretLink.value);
+  if (newSecretLinkHref.value) {
+    await navigator.clipboard.writeText(newSecretLinkHref.value);
   }
 
   toast.add({
@@ -214,7 +213,7 @@ const secretLinkActions = [
   </section>
   <Dialog v-model:visible="newSecretLinkModalIsVisible" modal header="New secret link">
     <div class="flex gap-8 items-center justify-between max-w-xl">
-      <a :href="newSecretLink" target="_blank" class="break-all">{{ newSecretLink }}</a>
+      <a :href="newSecretLinkHref" target="_blank" class="break-all">{{ newSecretLinkHref }}</a>
       <Button @click="copyNewSecretLink" label="Copy" icon="pi pi-clipboard" class="min-w-24" />
     </div>
   </Dialog>
