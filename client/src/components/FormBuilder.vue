@@ -79,7 +79,7 @@ const resetForm = () => {
   <form @submit="submitForm" class="max-w-xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
       <label for="title-input" class="flex gap-2">
-        Title
+        Name
         <span class="required-marker">*</span>
       </label>
       <InputText
