@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
+import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
+import Dialog from "primevue/dialog";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api from "@/api";
@@ -15,11 +17,11 @@ import {
   type FormId,
   type SecretLinkKey,
 } from "@/crypto";
-import { decodeUtf8, encodeUtf8 } from "@/encoding";
+import { decodeUtf8, encodeBase64Url, encodeUtf8 } from "@/encoding";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import { useToast } from "primevue";
-import { TOAST_ERROR_TTL } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import useForm from "@/composables/useForm";
 
 interface SecretKeyInfo {
@@ -38,6 +40,18 @@ const secretKeys = ref<Array<SecretKeyInfo>>([]);
 const count = computed(() => secretKeys.value.length);
 
 const newLinkComment = ref("");
+const newSecretLink = ref<string>();
+const newSecretLinkModalIsVisible = computed<boolean>({
+  get() {
+    return newSecretLink.value !== undefined;
+  },
+
+  set(value) {
+    if (!value) {
+      newSecretLink.value = undefined;
+    }
+  },
+});
 
 const form = useForm();
 const accessToken = useAccessToken();
@@ -86,14 +100,17 @@ const createSecretLink = async () => {
     derivedKeys.secretWrappingKey,
   );
 
+  let newClientKeyId;
   try {
-    await api.postKey({
+    const { clientKeyId } = await api.postKey({
       formId: props.formId,
       publicSigningKey: derivedKeys.publicSigningKey,
       wrappedPrivatePrimaryKey,
       encryptedComment,
       accessToken: accessToken.value.value,
     });
+
+    newClientKeyId = clientKeyId;
   } catch {
     toast.add({
       severity: "error",
@@ -107,14 +124,29 @@ const createSecretLink = async () => {
 
   secretKeys.value.push({
     comment: newLinkComment.value,
-    accessedAt: new Date(),
+    accessedAt: undefined,
   });
 
+  // TODO: Deduplicate logic for formatting secret links.
+  newSecretLink.value = `${window.location.origin}/view/#/${props.formId}/${newClientKeyId}/${encodeBase64Url(newSecretLinkKey)}`;
   newLinkComment.value = "";
 };
 
 const createSecretAdminLink = () => {
   // TODO: Implement this.
+};
+
+const copyNewSecretLink = async () => {
+  if (newSecretLink.value) {
+    await navigator.clipboard.writeText(newSecretLink.value);
+  }
+
+  toast.add({
+    severity: "warn",
+    summary: "Secret link copied",
+    detail: "Be careful who you share this link with.",
+    life: TOAST_INFO_TTL,
+  });
 };
 
 const secretLinkActions = [
@@ -150,9 +182,9 @@ const secretLinkActions = [
             v-for="(secretKey, index) in secretKeys"
             :key="index"
             :comment="secretKey.comment"
-            :formId="props.formId"
-            :accessedAt="secretKey.accessedAt"
-            :isAdmin="false"
+            :form-id="props.formId"
+            :accessed-at="secretKey.accessedAt"
+            :is-admin="false"
           />
         </div>
         <div class="flex flex-col gap-2">
@@ -180,6 +212,12 @@ const secretLinkActions = [
       </div>
     </Panel>
   </section>
+  <Dialog v-model:visible="newSecretLinkModalIsVisible" modal header="New secret link">
+    <div class="flex gap-8 items-center justify-between max-w-xl">
+      <a :href="newSecretLink" target="_blank" class="break-all">{{ newSecretLink }}</a>
+      <Button @click="copyNewSecretLink" label="Copy" icon="pi pi-clipboard" class="min-w-24" />
+    </div>
+  </Dialog>
 </template>
 
 <style scoped></style>
