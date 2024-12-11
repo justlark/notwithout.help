@@ -7,7 +7,7 @@ import Tag from "primevue/tag";
 const props = defineProps<{
   comment: string;
   formId: FormId;
-  accessedAt: Date;
+  accessedAt: Date | undefined;
   isAdmin: boolean;
 }>();
 </script>
@@ -27,10 +27,13 @@ const props = defineProps<{
           <Tag class="text-xs" v-if="props.isAdmin" value="admin" severity="warn" rounded />
         </span>
         <span class="text-muted-color">
-          last used
-          <time class="text-nowrap" datetime="props.accessedAt.toISOString()">
-            {{ formatDateTime(props.accessedAt) }}
-          </time>
+          <span v-if="props.accessedAt">
+            last used
+            <time class="text-nowrap" datetime="props.accessedAt.toISOString()">
+              {{ formatDateTime(props.accessedAt) }}
+            </time>
+          </span>
+          <span v-else>never used</span>
         </span>
       </div>
     </div>

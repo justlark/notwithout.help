@@ -197,6 +197,51 @@ export const patchKey = async ({
   }
 };
 
+export interface PostKeyParams {
+  formId: FormId;
+  publicSigningKey: PublicSigningKey;
+  wrappedPrivatePrimaryKey: WrappedPrivatePrimaryKey;
+  encryptedComment: EncryptedKeyComment;
+  accessToken: ApiAccessToken;
+}
+
+export interface PostKeyResponse {
+  clientKeyId: ClientKeyId;
+}
+
+export const postKey = async ({
+  formId,
+  publicSigningKey,
+  wrappedPrivatePrimaryKey,
+  encryptedComment,
+  accessToken,
+}: PostKeyParams) => {
+  const requestBody = {
+    public_signing_key: encodeBase64(publicSigningKey),
+    wrapped_private_primary_key: encodeBase64(wrappedPrivatePrimaryKey),
+    encrypted_comment: encodeBase64(encryptedComment),
+  };
+
+  const response = await fetch(`${API_URL}/keys/${formId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response);
+  }
+
+  const { client_key_id } = await response.json();
+
+  return {
+    clientKeyId: client_key_id as ClientKeyId,
+  };
+};
+
 export interface GetKeyParams {
   formId: FormId;
   clientKeyId: ClientKeyId;
@@ -231,7 +276,7 @@ export interface ListKeysParams {
 export interface ListKeysResponse {
   clientKeyId: ClientKeyId;
   encryptedComment: EncryptedKeyComment;
-  accessedAt: Date;
+  accessedAt: Date | undefined;
 }
 
 export const listKeys = async ({
@@ -254,7 +299,7 @@ export const listKeys = async ({
   return keys.map(({ client_key_id, encrypted_comment, accessed_at }) => ({
     clientKeyId: client_key_id,
     encryptedComment: decodeBase64(encrypted_comment) as EncryptedKeyComment,
-    accessedAt: new Date(accessed_at),
+    accessedAt: accessed_at ? new Date(accessed_at) : undefined,
   }));
 };
 
@@ -350,6 +395,7 @@ export default {
   getKey,
   listKeys,
   patchKey,
+  postKey,
   postAccessToken,
   postSubmission,
   getSubmissions,

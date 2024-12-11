@@ -6,21 +6,33 @@ import SplitButton from "primevue/splitbutton";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api from "@/api";
-import { unsealKeyComment, type FormId, type SecretLinkKey } from "@/crypto";
-import { decodeUtf8 } from "@/encoding";
+import {
+  deriveKeys,
+  generateSecretLinkKey,
+  sealKeyComment,
+  unsealKeyComment,
+  wrapPrivatePrimaryKey,
+  type FormId,
+  type SecretLinkKey,
+} from "@/crypto";
+import { decodeUtf8, encodeUtf8 } from "@/encoding";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
+import { useToast } from "primevue";
+import { TOAST_ERROR_TTL } from "@/vars";
 import useForm from "@/composables/useForm";
 
 interface SecretKeyInfo {
   comment: string;
-  accessedAt: Date;
+  accessedAt: Date | undefined;
 }
 
 const props = defineProps<{
   formId: FormId;
   secretLinkKey: SecretLinkKey;
 }>();
+
+const toast = useToast();
 
 const secretKeys = ref<Array<SecretKeyInfo>>([]);
 const count = computed(() => secretKeys.value.length);
@@ -30,22 +42,6 @@ const newLinkComment = ref("");
 const form = useForm();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
-
-const createSecretLink = () => {
-  // TODO: Implement this.
-};
-
-const createSecretAdminLink = () => {
-  // TODO: Implement this.
-};
-
-const secretLinkActions = [
-  {
-    label: "Admin",
-    icon: "pi pi-shield",
-    command: createSecretAdminLink,
-  },
-];
 
 watchEffect(async () => {
   secretKeys.value = [];
@@ -64,9 +60,70 @@ watchEffect(async () => {
         privatePrimaryKey.value.value,
       ),
     ),
-    accessedAt: new Date(key.accessedAt),
+    accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
   }));
 });
+
+const createSecretLink = async () => {
+  if (
+    !newLinkComment.value ||
+    !isDone(accessToken) ||
+    !isDone(form) ||
+    !isDone(privatePrimaryKey)
+  ) {
+    return;
+  }
+
+  const newSecretLinkKey = generateSecretLinkKey();
+  const derivedKeys = await deriveKeys(newSecretLinkKey);
+
+  const encryptedComment = sealKeyComment(
+    encodeUtf8(newLinkComment.value),
+    form.value.value.publicPrimaryKey,
+  );
+  const wrappedPrivatePrimaryKey = wrapPrivatePrimaryKey(
+    privatePrimaryKey.value.value,
+    derivedKeys.secretWrappingKey,
+  );
+
+  try {
+    await api.postKey({
+      formId: props.formId,
+      publicSigningKey: derivedKeys.publicSigningKey,
+      wrappedPrivatePrimaryKey,
+      encryptedComment,
+      accessToken: accessToken.value.value,
+    });
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Failed to create secret link",
+      detail: "Something unexpected happened.",
+      life: TOAST_ERROR_TTL,
+    });
+
+    return;
+  }
+
+  secretKeys.value.push({
+    comment: newLinkComment.value,
+    accessedAt: new Date(),
+  });
+
+  newLinkComment.value = "";
+};
+
+const createSecretAdminLink = () => {
+  // TODO: Implement this.
+};
+
+const secretLinkActions = [
+  {
+    label: "Admin",
+    icon: "pi pi-shield",
+    command: createSecretAdminLink,
+  },
+];
 </script>
 
 <template>
@@ -115,6 +172,7 @@ watchEffect(async () => {
               :button-props="{ 'aria-label': 'Create' }"
               :menu-button-props="{ 'aria-label': 'More options' }"
               :model="secretLinkActions"
+              :disabled="!newLinkComment"
               size="small"
             />
           </span>
