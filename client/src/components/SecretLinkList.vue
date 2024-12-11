@@ -6,16 +6,11 @@ import SplitButton from "primevue/splitbutton";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api from "@/api";
-import {
-  decryptKeyComment,
-  deriveKeys,
-  type FormId,
-  type SecretLinkKey,
-  type SecretWrappingKey,
-} from "@/crypto";
+import { unsealKeyComment, type FormId, type SecretLinkKey } from "@/crypto";
 import { decodeUtf8 } from "@/encoding";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
+import useForm from "@/composables/useForm";
 
 interface SecretKeyInfo {
   comment: string;
@@ -32,8 +27,7 @@ const count = computed(() => secretKeys.value.length);
 
 const newLinkComment = ref("");
 
-const secretWrappingKey = ref<SecretWrappingKey>();
-
+const form = useForm();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
 
@@ -54,20 +48,22 @@ const secretLinkActions = [
 ];
 
 watchEffect(async () => {
-  secretWrappingKey.value = (await deriveKeys(props.secretLinkKey)).secretWrappingKey;
-});
-
-watchEffect(async () => {
   secretKeys.value = [];
 
-  if (!isDone(accessToken) || !isDone(privatePrimaryKey) || secretWrappingKey.value === undefined) {
+  if (!isDone(accessToken) || !isDone(form) || !isDone(privatePrimaryKey)) {
     return;
   }
 
   const keys = await api.listKeys({ formId: props.formId, accessToken: accessToken.value.value });
 
   secretKeys.value = keys.map((key) => ({
-    comment: decodeUtf8(decryptKeyComment(key.encryptedComment, secretWrappingKey.value!)),
+    comment: decodeUtf8(
+      unsealKeyComment(
+        key.encryptedComment,
+        form.value.value.publicPrimaryKey,
+        privatePrimaryKey.value.value,
+      ),
+    ),
     accessedAt: new Date(key.accessedAt),
   }));
 });

@@ -5,7 +5,7 @@ import FormBuilder, { type FormValues } from "@/components/FormBuilder.vue";
 import api, { ApiError } from "@/api";
 import {
   deriveKeys,
-  encryptKeyComment,
+  sealKeyComment,
   generatePrimaryKeypair,
   generateSecretLinkKey,
   wrapPrivatePrimaryKey,
@@ -78,9 +78,9 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
     derivedKeys.privateSigningKey,
   );
 
-  const encryptedComment = encryptKeyComment(
+  const encryptedComment = sealKeyComment(
     encodeUtf8(INITIAL_KEY_COMMENT),
-    derivedKeys.secretWrappingKey,
+    newPrimaryKeypair.public,
   );
   const wrappedPrivatePrimaryKey = wrapPrivatePrimaryKey(
     newPrimaryKeypair.private,

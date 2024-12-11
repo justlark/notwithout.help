@@ -3,7 +3,7 @@
 **Author**: Lark (they/it)\
 **Contact**: <lark@lark.gay>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 5 Dec 2024
+**Last Updated**: 11 Dec 2024
 
 This document is an informal overview of how [Not Without
 Help](https://notwithout.help) mitigates security risks.
@@ -104,7 +104,7 @@ To generate a new **Secret Link**:
    from the **Secret Link Key**.
 5. The client uses the new **Secret Wrapping Key** to encrypt the **Private
    Primary Key** and generate a new **Wrapped Private Primary Key**.
-6. A user-provided comment for the key is encrypted with the **Secret Wrapping
+6. A user-provided comment for the key is encrypted with the **Public Primary
    Key**.
 7. The client sends the new **Wrapped Private Primary Key**, **Public Signing
    Key**, and the encrypted comment to the server via an authenticated
@@ -239,14 +239,11 @@ validates to authorize the request. The server validates:
 
 ## Algorithms
 
-- **Submissions** are encrypted with the **Public Primary Key** using
+- **Submissions** and **Secret Link** comments are encrypted with the **Public
+  Primary Key** using
   [libsodium](https://doc.libsodium.org/public-key_cryptography/sealed_boxes)
   via `crypto_box_seal`.
 - The **Private Primary Key** is encrypted with the **Secret Wrapping Key**
-  using
-  [libsodium](https://doc.libsodium.org/secret-key_cryptography/secretbox) via
-  `crypto_secretbox_easy`.
-- Comments on **Secret Links** are encrypted with the **Secret Wrapping Key**
   using
   [libsodium](https://doc.libsodium.org/secret-key_cryptography/secretbox) via
   `crypto_secretbox_easy`.

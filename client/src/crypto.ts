@@ -134,15 +134,16 @@ export const unwrapPrivatePrimaryKey = (
 ): PrivatePrimaryKey =>
   decryptSecretbox(wrappedPrivatePrimaryKey, secretWrappingKey) as PrivatePrimaryKey;
 
-export const encryptKeyComment = (
+export const sealKeyComment = (
   comment: Uint8Array,
-  secretWrappingKey: SecretWrappingKey,
-): EncryptedKeyComment => encryptSecretbox(comment, secretWrappingKey) as EncryptedKeyComment;
+  publicPrimaryKey: PublicPrimaryKey,
+): EncryptedKeyComment => sealBox(comment, publicPrimaryKey) as EncryptedKeyComment;
 
-export const decryptKeyComment = (
+export const unsealKeyComment = (
   comment: EncryptedKeyComment,
-  secretWrappingKey: SecretWrappingKey,
-): Uint8Array => decryptSecretbox(comment, secretWrappingKey);
+  publicPrimaryKey: PublicPrimaryKey,
+  privatePrimaryKey: PrivatePrimaryKey,
+): Uint8Array => unsealBox(comment, publicPrimaryKey, privatePrimaryKey) as Uint8Array;
 
 export const sealSubmissionBody = (
   body: Uint8Array,
