@@ -20,7 +20,7 @@ const isNotFound = computed(() => {
   return returnsError("not-found", form);
 });
 
-const postSubmission = async (values: FormValues) => {
+const postSubmission = async (values: FormValues, resetForm: () => void) => {
   if (!isDone(form)) {
     return;
   }
@@ -73,6 +73,8 @@ const postSubmission = async (values: FormValues) => {
     detail: "Your response has been sent to the organizers.",
     life: TOAST_INFO_TTL,
   });
+
+  resetForm();
 };
 </script>
 

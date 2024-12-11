@@ -17,7 +17,7 @@ const props = defineProps<{
 }>();
 
 type Emits = {
-  (eventName: "submit", values: FormValues): void;
+  (eventName: "submit", values: FormValues, resetForm: () => void): void;
 };
 
 const emit = defineEmits<Emits>();
@@ -60,8 +60,7 @@ watch(values, () => {
 });
 
 const submitForm = handleSubmit((values) => {
-  emit("submit", values);
-  resetForm();
+  emit("submit", values, resetForm);
 });
 
 const resetForm = () => {

@@ -33,7 +33,7 @@ const formSubmitted = computed(
     secretLinkKey.value !== undefined,
 );
 
-const submitForm = async (values: FormValues) => {
+const submitForm = async (values: FormValues, resetForm: () => void) => {
   const newSecretLinkKey = generateSecretLinkKey();
   const newPrimaryKeypair = generatePrimaryKeypair();
   const derivedKeys = await deriveKeys(newSecretLinkKey);
@@ -103,6 +103,8 @@ const submitForm = async (values: FormValues) => {
       life: TOAST_ERROR_TTL,
     });
   }
+
+  resetForm();
 };
 </script>
 
