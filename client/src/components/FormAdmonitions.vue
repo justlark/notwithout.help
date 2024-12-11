@@ -4,20 +4,40 @@ import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 
 const props = defineProps<{
-  formId: FormId | undefined;
-  clientKeyId: ClientKeyId | undefined;
-  secretLinkKey: SecretLinkKey | undefined;
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  secretLinkKey: SecretLinkKey;
 }>();
 </script>
 
 <template>
   <div class="max-w-xl mx-auto flex flex-col gap-8">
-    <ShareLinkAdmonition :formId="props.formId" />
-    <SecretLinkAdmonition
-      :formId="props.formId"
-      :clientKeyId="props.clientKeyId"
-      :secretLinkKey="props.secretLinkKey"
-    />
+    <Card>
+      <template #title>
+        <span class="flex gap-3 items-center">
+          <i class="pi pi-share-alt"></i>
+          <strong>Share this link</strong>
+        </span>
+      </template>
+      <template #content>
+        <ShareLinkAdmonition :formId="props.formId" />
+      </template>
+    </Card>
+    <Card>
+      <template #title>
+        <span class="flex gap-3 items-center">
+          <i class="pi pi-lock"></i>
+          <strong>Keep this link secret</strong>
+        </span>
+      </template>
+      <template #content>
+        <SecretLinkAdmonition
+          :formId="props.formId"
+          :clientKeyId="props.clientKeyId"
+          :secretLinkKey="props.secretLinkKey"
+        />
+      </template>
+    </Card>
   </div>
 </template>
 

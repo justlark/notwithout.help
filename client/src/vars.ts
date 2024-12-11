@@ -5,13 +5,17 @@ import type { AtLeastOne } from "./types";
 export const TOAST_INFO_TTL = 2000;
 export const TOAST_ERROR_TTL = 3000;
 
-export const newShareLink = (formId: FormId) => `${window.location.origin}/share/#/${formId}`;
+export const newShareLink = (formId: FormId) =>
+  new URL(`${window.location.origin}/share/#/${formId}`);
 
 export const newSecretLink = (
   formId: FormId,
   clientKeyId: ClientKeyId,
   secretLinkKey: SecretLinkKey,
-) => `${window.location.origin}/view/#/${formId}/${clientKeyId}/${encodeBase64Url(secretLinkKey)}`;
+) =>
+  new URL(
+    `${window.location.origin}/view/#/${formId}/${clientKeyId}/${encodeBase64Url(secretLinkKey)}`,
+  );
 
 export const CONTACT_METHODS = [
   { name: "Email", code: "email" },

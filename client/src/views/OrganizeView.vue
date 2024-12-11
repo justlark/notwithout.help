@@ -113,7 +113,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
     <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>
     <FormBuilder v-if="!formSubmitted" @submit="submitForm" />
     <FormAdmonitions
-      v-if="formSubmitted"
+      v-if="formId !== undefined && clientKeyId !== undefined && secretLinkKey !== undefined"
       :formId="formId"
       :clientKeyId="clientKeyId"
       :secretLinkKey="secretLinkKey"

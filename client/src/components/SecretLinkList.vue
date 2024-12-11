@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
-import Button from "primevue/button";
+import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
 import Dialog from "primevue/dialog";
@@ -14,6 +14,7 @@ import {
   sealKeyComment,
   unsealKeyComment,
   wrapPrivatePrimaryKey,
+  type ClientKeyId,
   type FormId,
   type SecretLinkKey,
 } from "@/crypto";
@@ -21,7 +22,7 @@ import { decodeUtf8, encodeUtf8 } from "@/encoding";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import { useToast } from "primevue";
-import { newSecretLink, TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
+import { TOAST_ERROR_TTL } from "@/vars";
 import useForm from "@/composables/useForm";
 
 interface SecretKeyInfo {
@@ -39,16 +40,16 @@ const toast = useToast();
 const secretKeys = ref<Array<SecretKeyInfo>>([]);
 const count = computed(() => secretKeys.value.length);
 
-const newLinkComment = ref("");
-const newSecretLinkHref = ref<string>();
+const newSecretLinkComment = ref("");
+const newSecretLinkParts = ref<{ clientKeyId: ClientKeyId; secretLinkKey: SecretLinkKey }>();
 const newSecretLinkModalIsVisible = computed<boolean>({
   get() {
-    return newSecretLinkHref.value !== undefined;
+    return newSecretLinkParts.value !== undefined;
   },
 
   set(value) {
     if (!value) {
-      newSecretLinkHref.value = undefined;
+      newSecretLinkParts.value = undefined;
     }
   },
 });
@@ -80,7 +81,7 @@ watchEffect(async () => {
 
 const createSecretLink = async () => {
   if (
-    !newLinkComment.value ||
+    !newSecretLinkComment.value ||
     !isDone(accessToken) ||
     !isDone(form) ||
     !isDone(privatePrimaryKey)
@@ -92,7 +93,7 @@ const createSecretLink = async () => {
   const derivedKeys = await deriveKeys(newSecretLinkKey);
 
   const encryptedComment = sealKeyComment(
-    encodeUtf8(newLinkComment.value),
+    encodeUtf8(newSecretLinkComment.value),
     form.value.value.publicPrimaryKey,
   );
   const wrappedPrivatePrimaryKey = wrapPrivatePrimaryKey(
@@ -123,29 +124,20 @@ const createSecretLink = async () => {
   }
 
   secretKeys.value.push({
-    comment: newLinkComment.value,
+    comment: newSecretLinkComment.value,
     accessedAt: undefined,
   });
 
-  newSecretLinkHref.value = newSecretLink(props.formId, newClientKeyId, newSecretLinkKey);
-  newLinkComment.value = "";
+  newSecretLinkParts.value = {
+    clientKeyId: newClientKeyId,
+    secretLinkKey: newSecretLinkKey,
+  };
+
+  newSecretLinkComment.value = "";
 };
 
 const createSecretAdminLink = () => {
   // TODO: Implement this.
-};
-
-const copyNewSecretLink = async () => {
-  if (newSecretLinkHref.value) {
-    await navigator.clipboard.writeText(newSecretLinkHref.value);
-  }
-
-  toast.add({
-    severity: "warn",
-    summary: "Secret link copied",
-    detail: "Be careful who you share this link with.",
-    life: TOAST_INFO_TTL,
-  });
 };
 
 const secretLinkActions = [
@@ -192,7 +184,7 @@ const secretLinkActions = [
             <InputText
               id="new-link-comment"
               class="grow"
-              v-model="newLinkComment"
+              v-model="newSecretLinkComment"
               type="text"
               placeholder="Who are you sharing this link with?"
               size="small"
@@ -203,7 +195,7 @@ const secretLinkActions = [
               :button-props="{ 'aria-label': 'Create' }"
               :menu-button-props="{ 'aria-label': 'More options' }"
               :model="secretLinkActions"
-              :disabled="!newLinkComment"
+              :disabled="!newSecretLinkComment"
               size="small"
             />
           </span>
@@ -211,11 +203,19 @@ const secretLinkActions = [
       </div>
     </Panel>
   </section>
-  <Dialog v-model:visible="newSecretLinkModalIsVisible" modal header="New secret link">
-    <div class="flex gap-8 items-center justify-between max-w-xl">
-      <a :href="newSecretLinkHref" target="_blank" class="break-all">{{ newSecretLinkHref }}</a>
-      <Button @click="copyNewSecretLink" label="Copy" icon="pi pi-clipboard" class="min-w-24" />
-    </div>
+  <Dialog class="p-2" v-model:visible="newSecretLinkModalIsVisible" modal>
+    <template #header>
+      <span class="flex gap-3 items-center">
+        <i class="pi pi-lock"></i>
+        <strong>Keep this link secret</strong>
+      </span>
+    </template>
+    <SecretLinkAdmonition
+      v-if="newSecretLinkParts"
+      :form-id="props.formId"
+      :client-key-id="newSecretLinkParts.clientKeyId"
+      :secret-link-key="newSecretLinkParts.secretLinkKey"
+    />
   </Dialog>
 </template>
 

@@ -6,18 +6,14 @@ import { newSecretLink, TOAST_INFO_TTL } from "@/vars";
 import { type ClientKeyId, type FormId, type SecretLinkKey } from "@/crypto";
 
 const props = defineProps<{
-  formId: FormId | undefined;
-  clientKeyId: ClientKeyId | undefined;
-  secretLinkKey: SecretLinkKey | undefined;
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  secretLinkKey: SecretLinkKey;
 }>();
 
-const secretLink = computed(() => {
-  if (!props.formId || !props.clientKeyId || !props.secretLinkKey) {
-    return undefined;
-  }
-
-  return new URL(newSecretLink(props.formId, props.clientKeyId, props.secretLinkKey));
-});
+const secretLink = computed(() =>
+  newSecretLink(props.formId, props.clientKeyId, props.secretLinkKey),
+);
 
 const toast = useToast();
 
@@ -35,26 +31,17 @@ const copySecretLink = () => {
 
 <template>
   <div class="max-w-xl mx-auto flex flex-col gap-8">
-    <LinkAdmonition v-if="secretLink" :link="secretLink" @click="copySecretLink">
-      <template #title>
-        <span class="flex gap-3 items-center">
-          <i class="pi pi-lock"></i>
-          <strong>Keep this link secret</strong>
-        </span>
-      </template>
-
-      <template #details>
-        <ul>
-          <li>Use this link to view responses to your survey.</li>
-          <li>
-            This link is like a password. <strong>Anyone</strong> with this link can access your
-            survey responses.
-          </li>
-          <li>
-            Copy this link down in a safe place, because it will disappear when you leave this page.
-          </li>
-        </ul>
-      </template>
+    <LinkAdmonition :link="secretLink" @click="copySecretLink">
+      <ul>
+        <li>Use this link to view responses to your survey.</li>
+        <li>
+          This link is like a password. <strong>Anyone</strong> with this link can access your
+          survey responses.
+        </li>
+        <li>
+          Copy this link down in a safe place, because it will disappear when you leave this page.
+        </li>
+      </ul>
     </LinkAdmonition>
   </div>
 </template>
