@@ -88,6 +88,7 @@ const resetForm = () => {
         v-bind="titleAttrs"
         type="text"
         size="large"
+        placeholder="My Organization"
         aria-describedby="title-help"
       />
       <Message v-if="errors.title" severity="error" size="small" variant="simple">
@@ -108,6 +109,7 @@ const resetForm = () => {
         v-model="description"
         v-bind="descriptionAttrs"
         auto-resize
+        placeholder="We're a group advocating for…"
         aria-describedby="description-help"
       />
       <Message v-if="errors.description" severity="error" size="small" variant="simple">
@@ -130,7 +132,7 @@ const resetForm = () => {
         :options="[...CONTACT_METHODS]"
         option-label="name"
         option-value="code"
-        placeholder="Select contact methods"
+        placeholder="Email, SMS, Signal, etc."
         display="chip"
         size="large"
         aria-describedby="contact-help"
@@ -157,8 +159,7 @@ const resetForm = () => {
         {{ errors.expirationDate }}
       </Message>
       <Message id="date-help" size="small" severity="secondary" variant="simple">
-        Specify an optional expiration date for the form. All submissions will be permanently
-        deleted after this date.
+        All submissions will automatically be permanently deleted after this date.
       </Message>
     </div>
 
