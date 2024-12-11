@@ -48,6 +48,13 @@ const postSubmission = async (values: FormValues) => {
         detail: "This group is no longer accepting responses.",
         life: TOAST_ERROR_TTL,
       });
+    } else if (error instanceof ApiError && error.kind === "content-too-large") {
+      toast.add({
+        severity: "error",
+        summary: "Failed to submit response",
+        detail: "Your response is too large. Cut down the number of characters and try again.",
+        life: TOAST_ERROR_TTL,
+      });
     } else {
       toast.add({
         severity: "error",

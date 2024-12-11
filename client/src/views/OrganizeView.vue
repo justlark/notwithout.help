@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import FormAdmonitions from "@/components/FormAdmonitions.vue";
 import FormBuilder, { type FormValues } from "@/components/FormBuilder.vue";
-import api from "@/api";
+import api, { ApiError } from "@/api";
 import {
   deriveKeys,
   encryptKeyComment,
@@ -15,12 +15,16 @@ import {
 } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
 import { getAccessToken } from "@/composables/useAccessToken";
+import { useToast } from "primevue";
+import { TOAST_ERROR_TTL } from "@/vars";
 
 const INITIAL_KEY_COMMENT = "Original";
 
 const formId = ref<FormId>();
 const clientKeyId = ref<ClientKeyId>();
 const secretLinkKey = ref<SecretLinkKey>();
+
+const toast = useToast();
 
 const formSubmitted = computed(
   () =>
@@ -34,13 +38,35 @@ const submitForm = async (values: FormValues) => {
   const newPrimaryKeypair = generatePrimaryKeypair();
   const derivedKeys = await deriveKeys(newSecretLinkKey);
 
-  const response = await api.postForm({
-    publicPrimaryKey: newPrimaryKeypair.public,
-    publicSigningKey: derivedKeys.publicSigningKey,
-    orgName: values.title,
-    description: values.description,
-    contactMethods: values.contactMethods,
-  });
+  let response;
+
+  try {
+    response = await api.postForm({
+      publicPrimaryKey: newPrimaryKeypair.public,
+      publicSigningKey: derivedKeys.publicSigningKey,
+      orgName: values.title,
+      description: values.description,
+      contactMethods: values.contactMethods,
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.kind === "content-too-large") {
+      toast.add({
+        severity: "error",
+        summary: "Failed to create group",
+        detail: "Your form is too large. Cut down the number of characters and try again.",
+        life: TOAST_ERROR_TTL,
+      });
+    } else {
+      toast.add({
+        severity: "error",
+        summary: "Failed to create group",
+        detail: "Something unexpected happened.",
+        life: TOAST_ERROR_TTL,
+      });
+    }
+
+    return;
+  }
 
   formId.value = response.formId;
   clientKeyId.value = response.clientKeyId;
@@ -61,13 +87,22 @@ const submitForm = async (values: FormValues) => {
     derivedKeys.secretWrappingKey,
   );
 
-  await api.patchKey({
-    formId: formId.value,
-    clientKeyId: clientKeyId.value,
-    wrappedPrivatePrimaryKey,
-    encryptedComment,
-    accessToken,
-  });
+  try {
+    await api.patchKey({
+      formId: formId.value,
+      clientKeyId: clientKeyId.value,
+      wrappedPrivatePrimaryKey,
+      encryptedComment,
+      accessToken,
+    });
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Failed to create group",
+      detail: "Something unexpected happened.",
+      life: TOAST_ERROR_TTL,
+    });
+  }
 };
 </script>
 
