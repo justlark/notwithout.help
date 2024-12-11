@@ -11,7 +11,7 @@ import { unsealSubmissionBody } from "@/crypto";
 import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
-import { loadableRef, returnsError, isDone, allDone } from "@/types";
+import { returnsError, isDone, allDone } from "@/types";
 import { useRouter } from "vue-router";
 
 export interface Submission {
@@ -29,7 +29,7 @@ const toast = useToast();
 
 const { formId, secretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
-const privatePrimaryKey = usePrivatePrimaryKey(loadableRef(accessToken));
+const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
 
 const isNotFound = computed(() => {

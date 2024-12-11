@@ -3,7 +3,7 @@ import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
-import { isDone, loadableRef, type FormId } from "@/types";
+import { isDone, type FormId } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api from "@/api";
 import { useAccessToken, usePrivatePrimaryKey } from "@/auth";
@@ -33,7 +33,7 @@ const newLinkComment = ref("");
 const secretWrappingKey = ref<SecretWrappingKey>();
 
 const accessToken = useAccessToken();
-const privatePrimaryKey = usePrivatePrimaryKey(loadableRef(accessToken));
+const privatePrimaryKey = usePrivatePrimaryKey();
 
 const createSecretLink = () => {
   // TODO: Implement this.

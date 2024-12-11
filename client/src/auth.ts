@@ -11,10 +11,10 @@ import {
   type PublicPrimaryKey,
   type SecretLinkKey,
 } from "./crypto";
-import type { ClientKeyId, FormId, Loadable } from "./types";
+import { type ClientKeyId, type FormId, type Loadable, type Newtype } from "./types";
 import api, { ApiError, type ApiErrorKind } from "./api";
 import { decodeBase64, decodeBase64Url } from "./encoding";
-import { ref, watchEffect, readonly, type DeepReadonly, type Ref, type ToRef } from "vue";
+import { ref, watchEffect, readonly, type DeepReadonly, type Ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import { type ContactMethodCode } from "./vars";
 
@@ -87,24 +87,46 @@ export const useSecretLink = (): SecretLinkParts => {
   };
 };
 
+const accessTokenCache = ref(new Map<string, ApiAccessToken>());
+const isLoadingAccessToken = ref(false);
+
 export const useAccessToken = () => {
   const loadable = ref<Loadable<ApiAccessToken, ApiErrorKind>>({ state: "loading" });
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
+  const cacheKey = computed(() => `${formId.value}/${clientKeyId.value}`);
+
   watchEffect(async () => {
-    // Touch these before the first await boundary to make sure they're
-    // tracked.
-    const formIdValue = formId.value;
-    const clientKeyIdValue = clientKeyId.value;
-    const secretLinkKeyValue = secretLinkKey.value;
+    if (isLoadingAccessToken.value || loadable.value.state === "done") {
+      return;
+    }
 
-    const { privateSigningKey } = await deriveKeys(secretLinkKeyValue);
+    const cachedAccessToken = accessTokenCache.value.get(cacheKey.value);
 
-    try {
+    if (cachedAccessToken !== undefined) {
+      console.log("using cached access token");
       loadable.value = {
         state: "done",
-        value: await getAccessToken(formIdValue, clientKeyIdValue, privateSigningKey),
+        value: cachedAccessToken,
+      };
+
+      return;
+    }
+
+    isLoadingAccessToken.value = true;
+
+    const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
+
+    try {
+      console.log("getting new access token");
+      const accessToken = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
+
+      accessTokenCache.value.set(cacheKey.value, accessToken);
+
+      loadable.value = {
+        state: "done",
+        value: accessToken,
       };
     } catch (error) {
       if (error instanceof ApiError) {
@@ -114,20 +136,23 @@ export const useAccessToken = () => {
         };
       }
     }
+
+    isLoadingAccessToken.value = false;
   });
 
   return readonly(loadable);
 };
 
-export const usePrivatePrimaryKey = (
-  accessToken: ToRef<ApiAccessToken | undefined>,
-): DeepReadonly<Ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>> => {
+export const usePrivatePrimaryKey = (): DeepReadonly<
+  Ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>
+> => {
   const loadable = ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>({ state: "loading" });
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+  const accessToken = useAccessToken();
 
   watchEffect(async () => {
-    if (accessToken.value === undefined) {
+    if (accessToken.value.state !== "done") {
       return;
     }
 
@@ -135,15 +160,14 @@ export const usePrivatePrimaryKey = (
     // tracked.
     const formIdValue = formId.value;
     const clientKeyIdValue = clientKeyId.value;
-    const secretLinkKeyValue = secretLinkKey.value;
 
-    const { secretWrappingKey } = await deriveKeys(secretLinkKeyValue);
+    const { secretWrappingKey } = await deriveKeys(secretLinkKey.value);
 
     try {
       const wrappedPrivatePrimaryKey = await api.getKey({
         formId: formIdValue,
         clientKeyId: clientKeyIdValue,
-        accessToken: accessToken.value,
+        accessToken: accessToken.value.value,
       });
 
       loadable.value = {
