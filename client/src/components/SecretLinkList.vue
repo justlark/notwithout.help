@@ -3,15 +3,37 @@ import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
-import type { ClientKeyId, FormId } from "@/types";
-import { ref } from "vue";
+import { isDone, loadableRef, type FormId } from "@/types";
+import { computed, ref, watchEffect } from "vue";
+import api from "@/api";
+import { useAccessToken, usePrivatePrimaryKey } from "@/auth";
+import {
+  decryptKeyComment,
+  deriveKeys,
+  type SecretLinkKey,
+  type SecretWrappingKey,
+} from "@/crypto";
+import { decodeUtf8 } from "@/encoding";
 
-// TODO: These are placeholders.
-const mockFormId = "" as FormId;
-const mockClientKeyId = "" as ClientKeyId;
-const count = ref(4);
+interface SecretKeyInfo {
+  comment: string;
+  accessedAt: Date;
+}
+
+const props = defineProps<{
+  formId: FormId;
+  secretLinkKey: SecretLinkKey;
+}>();
+
+const secretKeys = ref<Array<SecretKeyInfo>>([]);
+const count = computed(() => secretKeys.value.length);
 
 const newLinkComment = ref("");
+
+const secretWrappingKey = ref<SecretWrappingKey>();
+
+const accessToken = useAccessToken();
+const privatePrimaryKey = usePrivatePrimaryKey(loadableRef(accessToken));
 
 const createSecretLink = () => {
   // TODO: Implement this.
@@ -28,10 +50,29 @@ const secretLinkActions = [
     command: createSecretAdminLink,
   },
 ];
+
+watchEffect(async () => {
+  secretWrappingKey.value = (await deriveKeys(props.secretLinkKey)).secretWrappingKey;
+});
+
+watchEffect(async () => {
+  secretKeys.value = [];
+
+  if (!isDone(accessToken) || !isDone(privatePrimaryKey) || secretWrappingKey.value === undefined) {
+    return;
+  }
+
+  const keys = await api.listKeys({ formId: props.formId, accessToken: accessToken.value.value });
+
+  secretKeys.value = keys.map((key) => ({
+    comment: decodeUtf8(decryptKeyComment(key.encryptedComment, secretWrappingKey.value!)),
+    accessedAt: new Date(key.accessedAt),
+  }));
+});
 </script>
 
 <template>
-  <section aria-labelledby="secret-links-list-heading">
+  <section v-if="count > 0" aria-labelledby="secret-links-list-heading">
     <Panel
       toggleable
       collapsed
@@ -51,31 +92,11 @@ const secretLinkActions = [
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <SecretLinkListItem
-            comment="Lark"
-            :formId="mockFormId"
-            :clientKeyId="mockClientKeyId"
-            :accessedAt="new Date()"
-            :isAdmin="true"
-          />
-          <SecretLinkListItem
-            comment="Avery"
-            :formId="mockFormId"
-            :clientKeyId="mockClientKeyId"
-            :accessedAt="new Date()"
-            :isAdmin="false"
-          />
-          <SecretLinkListItem
-            comment="Kai"
-            :formId="mockFormId"
-            :clientKeyId="mockClientKeyId"
-            :accessedAt="new Date()"
-            :isAdmin="false"
-          />
-          <SecretLinkListItem
-            comment="Ash"
-            :formId="mockFormId"
-            :clientKeyId="mockClientKeyId"
-            :accessedAt="new Date()"
+            v-for="(secretKey, index) in secretKeys"
+            :key="index"
+            :comment="secretKey.comment"
+            :formId="props.formId"
+            :accessedAt="secretKey.accessedAt"
             :isAdmin="false"
           />
         </div>

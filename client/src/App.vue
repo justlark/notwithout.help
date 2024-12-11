@@ -15,7 +15,7 @@ const titleLead = computed(() => randomTitleLead());
 
   <RouterView />
 
-  <Toast position="bottom-center" />
+  <Toast class="max-w-[90vw]" position="bottom-center" />
 </template>
 
 <style scoped></style>

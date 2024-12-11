@@ -38,71 +38,73 @@ export const getAccessToken = async (
 };
 
 export interface ShareLinkParts {
-  formId: FormId;
+  formId: DeepReadonly<Ref<FormId>>;
 }
 
-export const useLink = (): DeepReadonly<Ref<ShareLinkParts>> => {
+export const useLink = (): ShareLinkParts => {
   const route = useRoute();
-  const [, formId] = route.hash.split("/");
+  const [, formIdPart] = route.hash.split("/");
 
-  const parts = ref<ShareLinkParts>({
-    formId: formId as FormId,
-  });
+  const formId = ref(formIdPart as FormId);
 
   watchEffect(() => {
-    const [, formId] = route.hash.split("/");
+    const [, formIdPart] = route.hash.split("/");
 
-    parts.value = {
-      formId: formId as FormId,
-    };
+    formId.value = formIdPart as FormId;
   });
 
-  return readonly(parts);
+  return {
+    formId: readonly(formId),
+  };
 };
 
 export interface SecretLinkParts {
-  formId: FormId;
-  clientKeyId: ClientKeyId;
-  secretLinkKey: SecretLinkKey;
+  formId: DeepReadonly<Ref<FormId>>;
+  clientKeyId: DeepReadonly<Ref<ClientKeyId>>;
+  secretLinkKey: DeepReadonly<Ref<SecretLinkKey>>;
 }
 
-export const useSecretLink = (): DeepReadonly<Ref<SecretLinkParts>> => {
+export const useSecretLink = (): SecretLinkParts => {
   const route = useRoute();
-  const [, formId, clientKeyId, secretLinkKey] = route.hash.split("/");
+  const [, formIdPart, clientKeyIdPart, secretLinkKeyPart] = route.hash.split("/");
 
-  const parts = ref<SecretLinkParts>({
-    formId: formId as FormId,
-    clientKeyId: clientKeyId as ClientKeyId,
-    secretLinkKey: decodeBase64Url(secretLinkKey) as SecretLinkKey,
-  });
+  const formId = ref(formIdPart as FormId);
+  const clientKeyId = ref(clientKeyIdPart as ClientKeyId);
+  const secretLinkKey = ref(decodeBase64Url(secretLinkKeyPart) as SecretLinkKey);
 
   watchEffect(() => {
-    const [, formId, clientKeyId, secretLinkKey] = route.hash.split("/");
+    const [, formIdPart, clientKeyIdPart, secretLinkKeyPart] = route.hash.split("/");
 
-    parts.value = {
-      formId: formId as FormId,
-      clientKeyId: clientKeyId as ClientKeyId,
-      secretLinkKey: decodeBase64Url(secretLinkKey) as SecretLinkKey,
-    };
+    formId.value = formIdPart as FormId;
+    clientKeyId.value = clientKeyIdPart as ClientKeyId;
+    secretLinkKey.value = decodeBase64Url(secretLinkKeyPart) as SecretLinkKey;
   });
 
-  return readonly(parts);
+  return {
+    formId: readonly(formId),
+    clientKeyId: readonly(clientKeyId),
+    secretLinkKey: readonly(secretLinkKey),
+  };
 };
 
 export const useAccessToken = () => {
   const loadable = ref<Loadable<ApiAccessToken, ApiErrorKind>>({ state: "loading" });
 
-  const secretLinkParts = useSecretLink();
+  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
   watchEffect(async () => {
-    const { formId, clientKeyId, secretLinkKey } = secretLinkParts.value;
+    // Touch these before the first await boundary to make sure they're
+    // tracked.
+    const formIdValue = formId.value;
+    const clientKeyIdValue = clientKeyId.value;
+    const secretLinkKeyValue = secretLinkKey.value;
 
-    const { privateSigningKey } = await deriveKeys(secretLinkKey);
+    const { privateSigningKey } = await deriveKeys(secretLinkKeyValue);
 
     try {
       loadable.value = {
         state: "done",
-        value: await getAccessToken(formId, clientKeyId, privateSigningKey),
+        value: await getAccessToken(formIdValue, clientKeyIdValue, privateSigningKey),
       };
     } catch (error) {
       if (error instanceof ApiError) {
@@ -122,21 +124,25 @@ export const usePrivatePrimaryKey = (
 ): DeepReadonly<Ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>> => {
   const loadable = ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>({ state: "loading" });
 
-  const secretLinkParts = useSecretLink();
+  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
   watchEffect(async () => {
     if (accessToken.value === undefined) {
       return;
     }
 
-    const { formId, clientKeyId, secretLinkKey } = secretLinkParts.value;
+    // Touch these before the first await boundary to make sure they're
+    // tracked.
+    const formIdValue = formId.value;
+    const clientKeyIdValue = clientKeyId.value;
+    const secretLinkKeyValue = secretLinkKey.value;
 
-    const { secretWrappingKey } = await deriveKeys(secretLinkKey);
+    const { secretWrappingKey } = await deriveKeys(secretLinkKeyValue);
 
     try {
       const wrappedPrivatePrimaryKey = await api.getKey({
-        formId: formId,
-        clientKeyId: clientKeyId,
+        formId: formIdValue,
+        clientKeyId: clientKeyIdValue,
         accessToken: accessToken.value,
       });
 
@@ -167,13 +173,11 @@ export interface Form {
 export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
   const form = ref<Loadable<Form, ApiErrorKind>>({ state: "loading" });
 
-  const shareLinkParts = useLink();
+  const { formId } = useLink();
 
   watchEffect(async () => {
-    const { formId } = shareLinkParts.value;
-
     try {
-      const response = await api.getForm({ formId });
+      const response = await api.getForm({ formId: formId.value });
 
       form.value = {
         state: "done",

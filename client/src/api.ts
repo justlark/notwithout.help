@@ -222,6 +222,41 @@ export const getKey = async ({
   return decodeBase64(wrapped_private_primary_key) as WrappedPrivatePrimaryKey;
 };
 
+export interface ListKeysParams {
+  formId: FormId;
+  accessToken: ApiAccessToken;
+}
+
+export interface ListKeysResponse {
+  clientKeyId: ClientKeyId;
+  encryptedComment: EncryptedKeyComment;
+  accessedAt: Date;
+}
+
+export const listKeys = async ({
+  formId,
+  accessToken,
+}: ListKeysParams): Promise<Array<ListKeysResponse>> => {
+  const response = await fetch(`${API_URL}/keys/${formId}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const keys: Array<any> = await response.json();
+
+  return keys.map(({ client_key_id, encrypted_comment, accessed_at }) => ({
+    clientKeyId: client_key_id,
+    encryptedComment: decodeBase64(encrypted_comment) as EncryptedKeyComment,
+    accessedAt: new Date(accessed_at),
+  }));
+};
+
 export interface PostAccessTokenParams {
   signature: ApiChallengeSignature;
   challenge: ApiChallengeToken;
@@ -312,6 +347,7 @@ export default {
   deleteForm,
   getChallengeToken,
   getKey,
+  listKeys,
   patchKey,
   postAccessToken,
   postSubmission,

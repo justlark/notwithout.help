@@ -10,7 +10,7 @@ import { useToast } from "primevue";
 
 const toast = useToast();
 
-const shareLinkParts = useLink();
+const { formId } = useLink();
 const form = useForm();
 
 const postSubmission = async (values: FormValues) => {
@@ -18,7 +18,6 @@ const postSubmission = async (values: FormValues) => {
     return;
   }
 
-  const { formId } = shareLinkParts.value;
   const { publicPrimaryKey } = form.value.value;
 
   const submissionBody: SubmissionBody = {
@@ -32,7 +31,7 @@ const postSubmission = async (values: FormValues) => {
     publicPrimaryKey,
   );
 
-  api.postSubmission({ formId, encryptedBody });
+  await api.postSubmission({ formId: formId.value, encryptedBody });
 
   toast.add({
     severity: "success",

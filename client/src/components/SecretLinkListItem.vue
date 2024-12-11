@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ClientKeyId, FormId } from "@/types";
+import type { FormId } from "@/types";
 import { formatDateTime } from "@/encoding";
 import Button from "primevue/button";
 import Tag from "primevue/tag";
@@ -7,7 +7,6 @@ import Tag from "primevue/tag";
 const props = defineProps<{
   comment: string;
   formId: FormId;
-  clientKeyId: ClientKeyId;
   accessedAt: Date;
   isAdmin: boolean;
 }>();

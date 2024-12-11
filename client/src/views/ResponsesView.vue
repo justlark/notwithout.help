@@ -11,7 +11,7 @@ import { unsealSubmissionBody } from "@/crypto";
 import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
-import { loadableRef, returnsError, isDone } from "@/types";
+import { loadableRef, returnsError, isDone, allDone } from "@/types";
 import { useRouter } from "vue-router";
 
 export interface Submission {
@@ -27,7 +27,7 @@ const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
 
-const secretLinkParts = useSecretLink();
+const { formId, secretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey(loadableRef(accessToken));
 const form = useForm();
@@ -35,6 +35,7 @@ const form = useForm();
 const isNotFound = computed(() => {
   return returnsError(["unauthorized", "not-found"], accessToken, privatePrimaryKey, form);
 });
+const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 
 const deleteForm = () => {
   confirm.require({
@@ -52,13 +53,11 @@ const deleteForm = () => {
       outlined: true,
     },
     accept: async () => {
-      const { formId } = secretLinkParts.value;
-
       if (!isDone(accessToken)) {
         return;
       }
 
-      await api.deleteForm({ formId: formId, accessToken: accessToken.value.value });
+      await api.deleteForm({ formId: formId.value, accessToken: accessToken.value.value });
 
       submissions.value = [];
 
@@ -82,11 +81,10 @@ watchEffect(async () => {
     return;
   }
 
-  const { formId } = secretLinkParts.value;
   const { publicPrimaryKey } = form.value.value;
 
   const encryptedSubmissions = await api.getSubmissions({
-    formId: formId,
+    formId: formId.value,
     accessToken: accessToken.value.value,
   });
 
@@ -116,45 +114,54 @@ watchEffect(async () => {
       title="Not found"
       message="Either this is an invalid link, the form has been deleted, or you don't have access to it anymore."
     />
-    <div v-else class="xl:w-3/4 mx-auto">
-      <div class="flex flex-col gap-8">
-        <SecretLinkList class="self-center w-full" />
-        <div class="flex flex-col gap-4 items-center">
-          <FormResponse
-            v-for="(submission, index) in submissions"
-            :key="index"
-            :index="index.toString()"
-            class="w-full"
-            :name="submission.name"
-            :contact="submission.contact"
-            :contactMethod="submission.contactMethod"
-            :createdAt="submission.createdAt"
+    <div v-else>
+      <div class="xl:w-3/4 mx-auto">
+        <div class="flex flex-col gap-8">
+          <SecretLinkList
+            :form-id="formId"
+            :secret-link-key="secretLinkKey"
+            class="self-center w-full"
           />
+          <div class="flex flex-col gap-4 items-center">
+            <FormResponse
+              v-for="(submission, index) in submissions"
+              :key="index"
+              :index="index.toString()"
+              class="w-full"
+              :name="submission.name"
+              :contact="submission.contact"
+              :contactMethod="submission.contactMethod"
+              :createdAt="submission.createdAt"
+            />
+          </div>
         </div>
-      </div>
-      <div class="xl:sticky bottom-6">
-        <div
-          class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
-        >
-          <Button
-            class="!justify-start"
-            label="Export"
-            severity="secondary"
-            icon="pi pi-download"
-          />
-          <Button
-            class="!justify-start"
-            label="Edit"
-            severity="secondary"
-            icon="pi pi-pen-to-square"
-          />
-          <Button
-            @click="deleteForm"
-            class="!justify-start"
-            label="Delete"
-            severity="danger"
-            icon="pi pi-trash"
-          />
+        <div class="xl:sticky bottom-6">
+          <div
+            class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
+          >
+            <Button
+              v-if="submissions.length > 0"
+              class="!justify-start"
+              label="Export"
+              severity="secondary"
+              icon="pi pi-download"
+            />
+            <Button
+              v-if="isLoaded"
+              class="!justify-start"
+              label="Edit"
+              severity="secondary"
+              icon="pi pi-pen-to-square"
+            />
+            <Button
+              v-if="isLoaded"
+              @click="deleteForm"
+              class="!justify-start"
+              label="Delete"
+              severity="danger"
+              icon="pi pi-trash"
+            />
+          </div>
         </div>
       </div>
     </div>
