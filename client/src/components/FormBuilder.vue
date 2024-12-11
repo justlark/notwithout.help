@@ -94,7 +94,7 @@ const resetForm = () => {
         {{ errors.title }}
       </Message>
       <Message id="title-help" size="small" severity="secondary" variant="simple">
-        A title for your form. Include the name of your group or organization.
+        The name of the group or organization you're recruiting for.
       </Message>
     </div>
 

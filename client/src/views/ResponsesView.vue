@@ -108,7 +108,8 @@ watchEffect(async () => {
 </script>
 <template>
   <main aria-labelledby="main-heading">
-    <h1 id="main-heading" class="text-center mb-10">View responses</h1>
+    <h1 id="main-heading" class="text-center mb-6">View responses</h1>
+    <h2 v-if="form.state === 'done'" class="text-center mb-10">{{ form.value.orgName }}</h2>
     <ErrorCard
       v-if="isNotFound"
       title="Not found"
