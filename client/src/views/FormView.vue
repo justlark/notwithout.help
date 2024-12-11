@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import api, { type SubmissionBody } from "@/api";
+import api, { ApiError, type SubmissionBody } from "@/api";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import ErrorCard from "@/components/ErrorCard.vue";
 import useForm from "@/composables/useForm";
@@ -7,7 +7,7 @@ import useLink from "@/composables/useLink";
 import { sealSubmissionBody } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
 import { isDone, returnsError } from "@/types";
-import { TOAST_INFO_TTL } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
 
@@ -38,7 +38,27 @@ const postSubmission = async (values: FormValues) => {
     publicPrimaryKey,
   );
 
-  await api.postSubmission({ formId: formId.value, encryptedBody });
+  try {
+    await api.postSubmission({ formId: formId.value, encryptedBody });
+  } catch (error) {
+    if (error instanceof ApiError && error.kind === "not-found") {
+      toast.add({
+        severity: "error",
+        summary: "Failed to submit response",
+        detail: "This group is no longer accepting responses.",
+        life: TOAST_ERROR_TTL,
+      });
+    } else {
+      toast.add({
+        severity: "error",
+        summary: "Failed to submit response",
+        detail: "Something unexpected happened.",
+        life: TOAST_ERROR_TTL,
+      });
+    }
+
+    return;
+  }
 
   toast.add({
     severity: "success",
