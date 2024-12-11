@@ -4,7 +4,6 @@ import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import type { ClientKeyId, FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_INFO_TTL } from "@/vars";
-import Toast from "primevue/toast";
 import { type SecretLinkKey } from "@/crypto";
 import { encodeBase64Url } from "@/encoding";
 
@@ -12,7 +11,6 @@ const props = defineProps<{
   formId: FormId | undefined;
   clientKeyId: ClientKeyId | undefined;
   secretLinkKey: SecretLinkKey | undefined;
-  toastGroup: string;
 }>();
 
 const origin = computed(() => window.location.origin);
@@ -30,14 +28,13 @@ const secretLink = computed(() => {
 const toast = useToast();
 
 const copySecretLink = () => {
-  toast.removeGroup(props.toastGroup);
+  toast.removeAllGroups();
 
   toast.add({
     severity: "warn",
     summary: "Secret link copied",
     detail: "Be careful who you share this link with.",
     life: TOAST_INFO_TTL,
-    group: props.toastGroup,
   });
 };
 </script>
@@ -65,7 +62,6 @@ const copySecretLink = () => {
         </ul>
       </template>
     </LinkAdmonition>
-    <Toast position="bottom-center" :group="props.toastGroup" />
   </div>
 </template>
 

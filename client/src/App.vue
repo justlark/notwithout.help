@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
+import Toast from "primevue/toast";
 import { randomTitleLead } from "./vars";
 import { computed } from "vue";
 
@@ -13,6 +14,8 @@ const titleLead = computed(() => randomTitleLead());
   </header>
 
   <RouterView />
+
+  <Toast position="bottom-center" />
 </template>
 
 <style scoped></style>

@@ -7,7 +7,6 @@ import { encodeUtf8 } from "@/encoding";
 import { isDone } from "@/types";
 import { TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
-import Toast from "primevue/toast";
 
 const toast = useToast();
 
@@ -53,7 +52,6 @@ const postSubmission = async (values: FormValues) => {
       <p class="text-jusitfy max-w-xl mx-auto">{{ form.value.description }}</p>
       <ResponseForm @submit="postSubmission" :contact-methods="form.value.contactMethods" />
     </div>
-    <Toast position="bottom-center" />
   </main>
 </template>
 

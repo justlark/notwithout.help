@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import FormResponse from "@/components/FormResponse.vue";
-import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { type ContactMethodCode } from "@/vars";
+import { TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
 import { useAccessToken, useForm, usePrivatePrimaryKey, useSecretLink } from "@/auth";
 import api, { type SubmissionBody } from "@/api";
-import { useConfirm } from "primevue";
+import { useConfirm, useToast } from "primevue";
 import { loadableRef, returnsError, isDone } from "@/types";
 import { useRouter } from "vue-router";
 
@@ -26,6 +25,7 @@ const submissions = ref<Array<Submission>>([]);
 
 const router = useRouter();
 const confirm = useConfirm();
+const toast = useToast();
 
 const secretLinkParts = useSecretLink();
 const accessToken = useAccessToken();
@@ -61,6 +61,13 @@ const deleteForm = () => {
       await api.deleteForm({ formId: formId, accessToken: accessToken.value.value });
 
       submissions.value = [];
+
+      toast.add({
+        severity: "success",
+        summary: "Form deleted",
+        detail: "Your form and all responses have been permanently deleted.",
+        life: TOAST_INFO_TTL,
+      });
 
       router.push({ path: "/" });
     },
@@ -151,7 +158,6 @@ watchEffect(async () => {
         </div>
       </div>
     </div>
-    <Toast position="bottom-center" />
     <ConfirmDialog class="max-w-xl mx-6" />
   </main>
 </template>

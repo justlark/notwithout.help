@@ -4,11 +4,9 @@ import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import type { FormId } from "@/types";
 import { useToast } from "primevue/usetoast";
 import { TOAST_INFO_TTL } from "@/vars";
-import Toast from "primevue/toast";
 
 const props = defineProps<{
   formId: FormId | undefined;
-  toastGroup: string;
 }>();
 
 const origin = computed(() => window.location.origin);
@@ -24,14 +22,13 @@ const shareLink = computed(() => {
 const toast = useToast();
 
 const copyShareLink = () => {
-  toast.removeGroup(props.toastGroup);
+  toast.removeAllGroups();
 
   toast.add({
     severity: "info",
     summary: "Link copied",
     detail: "Share this link to collect responses.",
     life: TOAST_INFO_TTL,
-    group: props.toastGroup,
   });
 };
 </script>
@@ -58,7 +55,6 @@ const copyShareLink = () => {
         </ul>
       </template>
     </LinkAdmonition>
-    <Toast position="bottom-center" :group="props.toastGroup" />
   </div>
 </template>
 
