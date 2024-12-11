@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import api, { type SubmissionBody } from "@/api";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
+import ErrorCard from "@/components/ErrorCard.vue";
 import useForm from "@/composables/useForm";
 import useLink from "@/composables/useLink";
 import { sealSubmissionBody } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
-import { isDone } from "@/types";
+import { isDone, returnsError } from "@/types";
 import { TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
+import { computed } from "vue";
 
 const toast = useToast();
 
 const { formId } = useLink();
 const form = useForm();
+
+const isNotFound = computed(() => {
+  return returnsError("not-found", form);
+});
 
 const postSubmission = async (values: FormValues) => {
   if (!isDone(form)) {
@@ -45,7 +51,12 @@ const postSubmission = async (values: FormValues) => {
 
 <template>
   <main aria-labelledby="main-heading">
-    <div v-if="isDone(form)">
+    <ErrorCard
+      v-if="isNotFound"
+      title="Not found"
+      message="Either this is an invalid link, or the group is no longer accepting responses."
+    />
+    <div v-else-if="isDone(form)">
       <h1 id="main-heading" v-if="isDone(form)" class="text-center mb-10">
         {{ form.value.orgName }}
       </h1>

@@ -112,13 +112,16 @@ watchEffect(async () => {
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-6">View responses</h1>
-    <h2 v-if="form.state === 'done'" class="text-center mb-10">{{ form.value.orgName }}</h2>
+
     <ErrorCard
       v-if="isNotFound"
       title="Not found"
-      message="Either this is an invalid link, the form has been deleted, or you don't have access to it anymore."
+      message="Either this is an invalid link, the group has been deleted, or you don't have access to it anymore."
     />
+
     <div v-else>
+      <h2 v-if="isDone(form)" class="text-center mb-10">{{ form.value.orgName }}</h2>
+
       <div class="xl:w-3/4 mx-auto">
         <div class="flex flex-col gap-8">
           <SecretLinkList
