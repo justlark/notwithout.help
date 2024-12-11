@@ -15,6 +15,8 @@ import { decodeBase64 } from "@/encoding";
 import { jwtDecode } from "jwt-decode";
 import { useSecretLink } from "./useSecretLink";
 
+// TODO: What happens if the access token expires before the user reloads the
+// page?
 const accessTokenCache = ref(new Map<string, ApiAccessToken>());
 const isLoadingAccessToken = ref(false);
 
@@ -52,7 +54,6 @@ export const useAccessToken = () => {
     const cachedAccessToken = accessTokenCache.value.get(cacheKey.value);
 
     if (cachedAccessToken !== undefined) {
-      console.log("using cached access token");
       loadable.value = {
         state: "done",
         value: cachedAccessToken,
@@ -66,7 +67,6 @@ export const useAccessToken = () => {
     const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
 
     try {
-      console.log("getting new access token");
       const accessToken = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
 
       accessTokenCache.value.set(cacheKey.value, accessToken);
