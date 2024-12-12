@@ -106,10 +106,16 @@ const revokeSecretLink = async () => {
         aria-hidden="true"
       ></i>
       <div class="flex flex-col">
-        <span class="flex gap-2 items-center">
+        <span class="flex flex-wrap gap-2 justify-start items-center">
           <i class="pi pi-key md:!hidden text-green-500 dark:text-green-200" aria-hidden="true"></i>
           <span>{{ props.comment }}</span>
-          <Tag class="text-xs" v-if="props.isAdmin" value="admin" severity="warn" rounded />
+          <Tag
+            class="text-xs text-nowrap"
+            v-if="!props.isAdmin"
+            value="read-only"
+            severity="warn"
+            rounded
+          />
         </span>
         <span class="text-muted-color">
           <span v-if="props.accessedAt">

@@ -82,7 +82,7 @@ watchEffect(async () => {
   }));
 });
 
-const createSecretLink = async () => {
+const createSecretLink = async (isAdmin: boolean) => {
   if (
     !newSecretLinkComment.value ||
     !isDone(accessToken) ||
@@ -140,19 +140,15 @@ const createSecretLink = async () => {
   newSecretLinkComment.value = "";
 };
 
-const createSecretAdminLink = () => {
-  // TODO: Implement this.
-};
-
 const removeSecretLinkFromList = (index: number) => {
   secretKeys.value.splice(index, 1);
 };
 
 const secretLinkActions = [
   {
-    label: "Admin",
-    icon: "pi pi-shield",
-    command: createSecretAdminLink,
+    label: "Read-only",
+    icon: "pi pi-tag",
+    command: async () => createSecretLink(false),
   },
 ];
 </script>
@@ -208,7 +204,7 @@ const secretLinkActions = [
             />
             <SplitButton
               class="self-end"
-              @click="createSecretLink"
+              @click="createSecretLink(true)"
               icon="pi pi-plus"
               :button-props="{ 'aria-label': 'Create' }"
               :menu-button-props="{ 'aria-label': 'More options' }"
@@ -221,7 +217,7 @@ const secretLinkActions = [
       </div>
     </Panel>
   </section>
-  <Dialog class="p-2" v-model:visible="newSecretLinkModalIsVisible" modal>
+  <Dialog class="p-2 mx-4" v-model:visible="newSecretLinkModalIsVisible" modal>
     <template #header>
       <span class="flex gap-3 items-center">
         <i class="pi pi-lock"></i>
