@@ -1,15 +1,91 @@
 <script setup lang="ts">
-import type { FormId } from "@/crypto";
+import api from "@/api";
+import useAccessToken from "@/composables/useAccessToken";
+import type { ClientKeyId, FormId } from "@/crypto";
 import { formatDateTime } from "@/encoding";
+import { isDone } from "@/types";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
+import { useConfirm, useToast } from "primevue";
 import Button from "primevue/button";
 import Tag from "primevue/tag";
 
 const props = defineProps<{
   comment: string;
   formId: FormId;
+  clientKeyId: ClientKeyId;
+  activeClientKeyId: ClientKeyId;
   accessedAt: Date | undefined;
   isAdmin: boolean;
+  count: number;
 }>();
+
+const toast = useToast();
+const confirm = useConfirm();
+const accessToken = useAccessToken();
+
+const doRevoke = async () => {
+  if (!isDone(accessToken)) {
+    return;
+  }
+
+  try {
+    await api.deleteKey({
+      formId: props.formId,
+      clientKeyId: props.clientKeyId,
+      accessToken: accessToken.value.value,
+    });
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Failed to revoke secret link",
+      detail: "Something unexpected happened.",
+      life: TOAST_ERROR_TTL,
+    });
+
+    return;
+  }
+
+  toast.add({
+    severity: "success",
+    summary: "Secret link revoked",
+    detail: "That link can no longer be used to access this page.",
+    life: TOAST_INFO_TTL,
+  });
+};
+
+const revokeSecretLink = async () => {
+  const isAttemptingToRevokeActiveLink = props.clientKeyId === props.activeClientKeyId;
+  const isAttemptingToRevokeOnlyLink = props.count === 1;
+
+  if (isAttemptingToRevokeOnlyLink) {
+    toast.add({
+      severity: "error",
+      summary: "Cannot revoke only remaining secret link",
+      detail: "Without any secret links, you would be locked out of this page!",
+      life: TOAST_ERROR_TTL,
+    });
+
+    return;
+  }
+
+  confirm.require({
+    header: "Revoke this secret link?",
+    message: isAttemptingToRevokeActiveLink
+      ? "You are about to revoke the secret link you are currently using to access this page! Are you sure you want to do this? You will be locked out of this page unless someone with access generates a new secret link for you."
+      : "Are you sure you want to permanently revoke this secret link? Once revoked, nobody will be able to use it to access this page.",
+    icon: isAttemptingToRevokeActiveLink ? "pi pi-exclamation-triangle" : "pi pi-info-circle",
+    acceptProps: {
+      label: "Revoke",
+      severity: "danger",
+    },
+    rejectProps: {
+      label: "Cancel",
+      severity: "secondary",
+      outlined: true,
+    },
+    accept: doRevoke,
+  });
+};
 </script>
 
 <template>
@@ -44,6 +120,7 @@ const props = defineProps<{
       severity="danger"
       size="small"
       variant="outlined"
+      @click="revokeSecretLink"
     />
   </div>
 </template>

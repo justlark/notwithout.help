@@ -303,6 +303,25 @@ export const listKeys = async ({
   }));
 };
 
+export interface DeleteKeyParams {
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  accessToken: ApiAccessToken;
+}
+
+export const deleteKey = async ({ formId, clientKeyId, accessToken }: DeleteKeyParams) => {
+  const response = await fetch(`${API_URL}/keys/${formId}/${clientKeyId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response);
+  }
+};
+
 export interface PostAccessTokenParams {
   signature: ApiChallengeSignature;
   challenge: ApiChallengeToken;
@@ -396,6 +415,7 @@ export default {
   listKeys,
   patchKey,
   postKey,
+  deleteKey,
   postAccessToken,
   postSubmission,
   getSubmissions,

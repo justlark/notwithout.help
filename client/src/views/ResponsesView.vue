@@ -30,7 +30,7 @@ const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
 
-const { formId, secretLinkKey } = useSecretLink();
+const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
@@ -126,6 +126,7 @@ watchEffect(async () => {
         <div class="flex flex-col gap-8">
           <SecretLinkList
             :form-id="formId"
+            :client-key-id="clientKeyId"
             :secret-link-key="secretLinkKey"
             class="self-center w-full"
           />

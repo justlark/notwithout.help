@@ -27,11 +27,13 @@ import useForm from "@/composables/useForm";
 
 interface SecretKeyInfo {
   comment: string;
+  clientKeyId: ClientKeyId;
   accessedAt: Date | undefined;
 }
 
 const props = defineProps<{
   formId: FormId;
+  clientKeyId: ClientKeyId;
   secretLinkKey: SecretLinkKey;
 }>();
 
@@ -75,6 +77,7 @@ watchEffect(async () => {
         privatePrimaryKey.value.value,
       ),
     ),
+    clientKeyId: key.clientKeyId,
     accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
   }));
 });
@@ -125,6 +128,7 @@ const createSecretLink = async () => {
 
   secretKeys.value.push({
     comment: newSecretLinkComment.value,
+    clientKeyId: newClientKeyId,
     accessedAt: undefined,
   });
 
@@ -174,8 +178,11 @@ const secretLinkActions = [
             :key="index"
             :comment="secretKey.comment"
             :form-id="props.formId"
+            :client-key-id="secretKey.clientKeyId"
+            :active-client-key-id="props.clientKeyId"
             :accessed-at="secretKey.accessedAt"
             :is-admin="false"
+            :count="count"
           />
         </div>
         <div class="flex flex-col gap-2">
