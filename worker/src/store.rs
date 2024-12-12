@@ -231,7 +231,8 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
-            is_admin: bool,
+            // There seems to be a bug deserializing bools in the Workers API.
+            is_admin: u32,
             accessed_at: Option<String>,
         }
 
@@ -243,7 +244,7 @@ impl Store {
                 public_signing_key: row.public_signing_key,
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
-                is_admin: row.is_admin,
+                is_admin: row.is_admin != 0,
                 accessed_at: row
                     .accessed_at
                     .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
@@ -285,7 +286,8 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
-            is_admin: bool,
+            // There seems to be a bug deserializing bools in the Workers API.
+            is_admin: u32,
             accessed_at: Option<String>,
         }
 
@@ -298,7 +300,7 @@ impl Store {
                     public_signing_key: row.public_signing_key,
                     wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
-                    is_admin: row.is_admin,
+                    is_admin: row.is_admin != 0,
                     accessed_at: row
                         .accessed_at
                         .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))

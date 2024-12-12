@@ -207,7 +207,10 @@ async fn request_access_token(
     let validated_challenge = ApiChallengeResponse::from(body)
         .validate(store)
         .await
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
+        .map_err(|err| {
+            console_error!("{}", err);
+            StatusCode::UNAUTHORIZED
+        })?;
 
     let ephemeral_server_key = store
         .get_ephemeral_server_key(&validated_challenge.server_key_id())
