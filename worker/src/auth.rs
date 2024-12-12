@@ -59,6 +59,46 @@ fn new_jwt_validation() -> jwt::Validation {
     validation
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AuthErrorType {
+    Unauthorized,
+    Forbidden,
+}
+
+#[derive(Debug, Clone)]
+pub struct AuthError {
+    kind: AuthErrorType,
+    message: String,
+}
+
+impl std::error::Error for AuthError {}
+
+impl AuthError {
+    pub fn kind(&self) -> AuthErrorType {
+        self.kind
+    }
+
+    pub fn unauthorized(message: impl Into<String>) -> Self {
+        Self {
+            kind: AuthErrorType::Unauthorized,
+            message: message.into(),
+        }
+    }
+
+    pub fn forbidden(message: impl Into<String>) -> Self {
+        Self {
+            kind: AuthErrorType::Forbidden,
+            message: message.into(),
+        }
+    }
+}
+
+impl fmt::Display for AuthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum ApiTokenType {
@@ -128,51 +168,90 @@ impl SignedApiAccessToken {
         self,
         store: &'a UnauthenticatedStore,
         form_id: &'a FormId,
-    ) -> anyhow::Result<&'a Store> {
+    ) -> Result<&'a Store, AuthError> {
+        self.validate_inner(store, form_id, false).await
+    }
+
+    pub async fn validate_admin<'a>(
+        self,
+        store: &'a UnauthenticatedStore,
+        form_id: &'a FormId,
+    ) -> Result<&'a Store, AuthError> {
+        self.validate_inner(store, form_id, true).await
+    }
+
+    pub async fn validate_inner<'a>(
+        self,
+        store: &'a UnauthenticatedStore,
+        form_id: &'a FormId,
+        needs_admin: bool,
+    ) -> Result<&'a Store, AuthError> {
         let store = store.without_authenticating();
 
-        let header = jwt::decode_header(&self.0)?;
+        let header =
+            jwt::decode_header(&self.0).map_err(|err| AuthError::unauthorized(err.to_string()))?;
 
         let server_key_id = header
             .kid
-            .ok_or_else(|| anyhow::anyhow!("Access token is missing the `kid` claim."))?
-            .parse()?;
+            .ok_or_else(|| AuthError::unauthorized("Access token is missing the `kid` claim."))?
+            .parse()
+            .map_err(|_| AuthError::unauthorized("Could not parse header key ID."))?;
 
         let ephemeral_server_key = store
             .get_ephemeral_server_key(&server_key_id)
-            .await?
+            .await
+            .map_err(|err| AuthError::unauthorized(err.to_string()))?
             .ok_or_else(|| {
-                anyhow::anyhow!("Ephemeral server key for access token `kid` does not exist.")
+                AuthError::unauthorized(
+                    "Ephemeral server key for access token `kid` does not exist.",
+                )
             })?;
 
         let token_claims = jwt::decode::<ApiAccessTokenClaims>(
             &self.0,
             &ephemeral_server_key.decoding_key(),
             &new_jwt_validation(),
-        )?
+        )
+        .map_err(|err| AuthError::unauthorized(err.to_string()))?
         .claims;
 
         // If we don't do this check, there would be nothing stopping a user from authenticating
         // with a challenge token, since they're also signed by the ephemeral server key.
         if token_claims.token_type != ApiTokenType::Access {
-            bail!("Attempted to use a challenge token as an access token.");
+            return Err(AuthError::unauthorized(
+                "Attempted to use a challenge token as an access token.",
+            ));
         }
 
         if &token_claims.sub.form_id != form_id {
-            bail!("Form ID in access token `sub` does not match the form being accessed.");
+            return Err(AuthError::forbidden(
+                "Form ID in access token `sub` does not match the form being accessed.",
+            ));
         }
 
         let client_keys = store
             .get_client_keys(&token_claims.sub.form_id, &token_claims.sub.client_key_id)
-            .await?;
+            .await
+            .map_err(|err| AuthError::unauthorized(err.to_string()))?;
 
-        if client_keys.is_none() {
-            bail!("Client key in access token `sub` does not exist or has been revoked.");
+        match client_keys {
+            Some(keys) if needs_admin && !keys.is_admin => {
+                return Err(AuthError::forbidden(
+                    "This access token does not have the required permissions.",
+                ));
+            }
+            None => {
+                return Err(AuthError::unauthorized(
+                    "Client key in access token `sub` does not exist or has been revoked.",
+                ));
+            }
+            _ => {}
         }
 
         store
             .log_access(form_id, &token_claims.sub.client_key_id)
-            .await?;
+            .await
+            .map_err(|err| AuthError::unauthorized(err.to_string()))?;
 
         Ok(store)
     }

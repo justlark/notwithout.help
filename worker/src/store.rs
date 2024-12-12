@@ -211,6 +211,7 @@ impl Store {
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
                 keys.encrypted_comment,
+                keys.is_admin,
                 (
                     SELECT MAX(access_log.accessed_at)
                     FROM access_log
@@ -230,6 +231,8 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
+            is_admin: bool,
+            accessed_at: Option<String>,
         }
 
         let row = stmt.first::<Row>(None).await?;
@@ -240,7 +243,12 @@ impl Store {
                 public_signing_key: row.public_signing_key,
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
-                accessed_at: None,
+                is_admin: row.is_admin,
+                accessed_at: row
+                    .accessed_at
+                    .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
+                    .transpose()?
+                    .map(|dt| dt.and_utc()),
             })
         })
         .transpose()
@@ -256,6 +264,7 @@ impl Store {
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
                 keys.encrypted_comment,
+                keys.is_admin,
                 (
                     SELECT MAX(access_log.accessed_at)
                     FROM access_log
@@ -276,6 +285,7 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
+            is_admin: bool,
             accessed_at: Option<String>,
         }
 
@@ -288,6 +298,7 @@ impl Store {
                     public_signing_key: row.public_signing_key,
                     wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
+                    is_admin: row.is_admin,
                     accessed_at: row
                         .accessed_at
                         .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
@@ -305,6 +316,7 @@ impl Store {
         public_signing_key: &PublicSigningKey,
         wrapped_private_primary_key: Option<&WrappedPrivatePrimaryKey>,
         encrypted_comment: &EncryptedKeyComment,
+        is_admin: bool,
     ) -> anyhow::Result<Option<ClientKeyId>> {
         let stmt = query!(
             &self.db,
@@ -314,7 +326,8 @@ impl Store {
                 key_index,
                 public_signing_key,
                 wrapped_private_primary_key,
-                encrypted_comment
+                encrypted_comment,
+                is_admin
             )
             SELECT
                 forms.id,
@@ -330,7 +343,8 @@ impl Store {
                 ),
                 ?2,
                 ?3,
-                ?4
+                ?4,
+                ?5
             FROM forms
             WHERE forms.form_id = ?1
             RETURNING keys.key_index;
@@ -339,6 +353,7 @@ impl Store {
             public_signing_key,
             wrapped_private_primary_key,
             encrypted_comment,
+            is_admin,
         )?;
 
         Ok(stmt.first::<ClientKeyId>(Some("key_index")).await?)

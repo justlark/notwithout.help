@@ -72,6 +72,7 @@ pub struct GetKeyResponse {
 pub struct ListKeysResponse {
     pub client_key_id: ClientKeyId,
     pub encrypted_comment: EncryptedKeyComment,
+    pub is_admin: bool,
     pub accessed_at: Option<String>,
 }
 
@@ -80,6 +81,7 @@ impl From<ClientKeys> for ListKeysResponse {
         Self {
             client_key_id: keys.id,
             encrypted_comment: keys.encrypted_comment,
+            is_admin: keys.is_admin,
             accessed_at: keys.accessed_at.map(|dt| dt.to_rfc3339()),
         }
     }
@@ -90,6 +92,7 @@ pub struct PostKeyRequest {
     pub public_signing_key: PublicSigningKey,
     pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
     pub encrypted_comment: EncryptedKeyComment,
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Serialize)]

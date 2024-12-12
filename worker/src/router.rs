@@ -17,7 +17,10 @@ use crate::{
         PostKeyRequest, PostKeyResponse, PostSubmissionRequest, PostTokenRequest,
         PostTokenResponse,
     },
-    auth::{auth_layer, ApiChallenge, ApiChallengeResponse, SignedApiAccessToken},
+    auth::{
+        auth_layer, ApiChallenge, ApiChallengeResponse, AuthError, AuthErrorType,
+        SignedApiAccessToken,
+    },
     config,
     cors::cors_layer,
     keys::{ApiChallengeNonce, EphemeralServerKey},
@@ -29,13 +32,16 @@ use crate::{
 };
 
 fn internal_err(err: anyhow::Error) -> ErrorResponse {
-    console_error!("Error: {:?}", err);
+    console_error!("Error: {}", err);
     StatusCode::INTERNAL_SERVER_ERROR.into()
 }
 
-fn auth_err(err: anyhow::Error) -> ErrorResponse {
-    console_error!("Error: {:?}", err);
-    StatusCode::UNAUTHORIZED.into()
+fn auth_err(err: AuthError) -> ErrorResponse {
+    console_error!("Error: {}", err);
+    match err.kind() {
+        AuthErrorType::Unauthorized => StatusCode::UNAUTHORIZED.into(),
+        AuthErrorType::Forbidden => StatusCode::FORBIDDEN.into(),
+    }
 }
 
 #[derive(Debug)]
@@ -94,6 +100,7 @@ async fn publish_form(
             &form.public_signing_key,
             None,
             &EncryptedKeyComment::default(),
+            true,
         )
         .await
         .map_err(internal_err)?
@@ -200,7 +207,7 @@ async fn request_access_token(
     let validated_challenge = ApiChallengeResponse::from(body)
         .validate(store)
         .await
-        .map_err(auth_err)?;
+        .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     let ephemeral_server_key = store
         .get_ephemeral_server_key(&validated_challenge.server_key_id())
@@ -244,7 +251,7 @@ async fn delete_form(
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate_admin(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
@@ -282,7 +289,7 @@ async fn list_keys(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate_admin(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
@@ -302,7 +309,7 @@ async fn add_key(
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate_admin(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
@@ -312,6 +319,7 @@ async fn add_key(
             &body.public_signing_key,
             Some(&body.wrapped_private_primary_key),
             &body.encrypted_comment,
+            body.is_admin,
         )
         .await
         .map_err(internal_err)?
@@ -330,7 +338,7 @@ async fn update_key(
     Json(body): Json<PatchKeyRequest>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate_admin(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
@@ -354,7 +362,7 @@ async fn delete_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate_admin(&state.store, &form_id)
         .await
         .map_err(auth_err)?;
 
