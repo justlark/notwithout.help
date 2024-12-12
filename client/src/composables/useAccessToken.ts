@@ -89,6 +89,8 @@ export const useAccessToken = () => {
         state: "error",
         error: "unauthorized",
       };
+
+      return;
     }
 
     try {
