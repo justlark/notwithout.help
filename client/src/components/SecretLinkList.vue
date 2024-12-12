@@ -188,8 +188,9 @@ const secretLinkActions = [
         </span>
       </template>
       <p>
-        This is a list of links that can be used to access this page. Create new secret links to
-        grant access to your fellow organizers, and revoke them at any time.
+        Create a new secret link for each person you want to give access to this page, and revoke
+        them at any time. Create read-only links to restrict the ability to make changes or create
+        new secret links.
       </p>
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
