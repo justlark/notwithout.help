@@ -15,7 +15,7 @@ const copyLink = async () => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex gap-8 items-center justify-between">
+    <div class="flex flex-col sm:flex-row gap-x-8 gap-y-4 items-center justify-between">
       <a :href="props.link.href" target="_blank" class="break-all">{{ props.link.href }}</a>
       <Button @click="copyLink" label="Copy" icon="pi pi-clipboard" class="min-w-24" />
     </div>
