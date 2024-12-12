@@ -59,7 +59,7 @@ export const useAccessToken = () => {
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
-  const cacheKey = computed(() => `${formId.value}/${clientKeyId.value}`);
+  const cacheKey = computed(() => `${formId.value}/${clientKeyId.value}/${secretLinkKey.value}`);
 
   watchEffect(async () => {
     const cachedAccessToken = accessTokenCache.value.get(cacheKey.value);
@@ -79,7 +79,17 @@ export const useAccessToken = () => {
 
     accessTokenHasStartedLoading.value.set(cacheKey.value, true);
 
-    const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
+    let privateSigningKey;
+
+    try {
+      const { privateSigningKey: key } = await deriveKeys(secretLinkKey.value);
+      privateSigningKey = key;
+    } catch {
+      loadable.value = {
+        state: "error",
+        error: "unauthorized",
+      };
+    }
 
     try {
       const accessToken = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);

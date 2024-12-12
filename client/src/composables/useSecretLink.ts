@@ -15,14 +15,29 @@ export const useSecretLink = (): SecretLinkParts => {
 
   const formId = ref(formIdPart as FormId);
   const clientKeyId = ref(clientKeyIdPart as ClientKeyId);
-  const secretLinkKey = ref(decodeBase64Url(secretLinkKeyPart) as SecretLinkKey);
+
+  let secretLinkKey;
+
+  try {
+    secretLinkKey = ref(decodeBase64Url(secretLinkKeyPart) as SecretLinkKey);
+  } catch {
+    // If the secret link key isn't a valid base64Url string, return an empty
+    // array and the error will be handled by he downstream code that attempts
+    // to derive keys from it.
+    secretLinkKey = ref(new Uint8Array() as SecretLinkKey);
+  }
 
   watchEffect(() => {
     const [, formIdPart, clientKeyIdPart, secretLinkKeyPart] = route.hash.split("/");
 
     formId.value = formIdPart as FormId;
     clientKeyId.value = clientKeyIdPart as ClientKeyId;
-    secretLinkKey.value = decodeBase64Url(secretLinkKeyPart) as SecretLinkKey;
+
+    try {
+      secretLinkKey.value = decodeBase64Url(secretLinkKeyPart) as SecretLinkKey;
+    } catch {
+      secretLinkKey.value = new Uint8Array() as SecretLinkKey;
+    }
   });
 
   return {

@@ -23,8 +23,18 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
     // tracked.
     const formIdValue = formId.value;
     const clientKeyIdValue = clientKeyId.value;
+    let secretWrappingKey;
 
-    const { secretWrappingKey } = await deriveKeys(secretLinkKey.value);
+    try {
+      const { secretWrappingKey: key } = await deriveKeys(secretLinkKey.value);
+      secretWrappingKey = key;
+    } catch {
+      loadable.value = {
+        state: "error",
+        error: "unauthorized",
+      };
+      return;
+    }
 
     try {
       const wrappedPrivatePrimaryKey = await api.getKey({
