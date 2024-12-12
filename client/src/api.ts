@@ -90,6 +90,7 @@ export interface PostFormParams {
   orgName: string;
   description: string;
   contactMethods: Array<ContactMethodCode>;
+  expirationDate: Date | undefined;
 }
 
 export interface PostFormResponse {
@@ -103,6 +104,7 @@ export const postForm = async ({
   orgName,
   description,
   contactMethods,
+  expirationDate,
 }: PostFormParams): Promise<PostFormResponse> => {
   const requestBody = {
     public_primary_key: encodeBase64(publicPrimaryKey),
@@ -110,6 +112,7 @@ export const postForm = async ({
     org_name: orgName,
     description: description,
     contact_methods: contactMethods,
+    expires_at: expirationDate?.toISOString(),
   };
 
   const response = await fetch(`${API_URL}/forms`, {

@@ -47,6 +47,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       orgName: values.title,
       description: values.description,
       contactMethods: values.contactMethods,
+      expirationDate: values.expirationDate,
     });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "content-too-large") {
