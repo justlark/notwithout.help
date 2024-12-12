@@ -46,6 +46,8 @@ export class ApiError extends Error {
   }
 }
 
+export type AccessRole = "read" | "admin";
+
 // This is the shape of the object that's serialized, sealed, and sent to the
 // server.
 export interface SubmissionBody {
@@ -209,7 +211,7 @@ export interface PostKeyParams {
   publicSigningKey: PublicSigningKey;
   wrappedPrivatePrimaryKey: WrappedPrivatePrimaryKey;
   encryptedComment: EncryptedKeyComment;
-  isAdmin: boolean;
+  role: AccessRole;
   accessToken: ApiAccessToken;
 }
 
@@ -222,14 +224,14 @@ export const postKey = async ({
   publicSigningKey,
   wrappedPrivatePrimaryKey,
   encryptedComment,
-  isAdmin,
+  role,
   accessToken,
 }: PostKeyParams) => {
   const requestBody = {
     public_signing_key: encodeBase64(publicSigningKey),
     wrapped_private_primary_key: encodeBase64(wrappedPrivatePrimaryKey),
     encrypted_comment: encodeBase64(encryptedComment),
-    is_admin: isAdmin,
+    role: role,
   };
 
   const response = await fetch(`${API_URL}/keys/${formId}`, {
@@ -286,7 +288,7 @@ export interface ListKeysParams {
 export interface ListKeysResponse {
   clientKeyId: ClientKeyId;
   encryptedComment: EncryptedKeyComment;
-  isAdmin: boolean;
+  role: AccessRole;
   accessedAt: Date | undefined;
 }
 
@@ -307,10 +309,10 @@ export const listKeys = async ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const keys: Array<any> = await response.json();
 
-  return keys.map(({ client_key_id, encrypted_comment, is_admin, accessed_at }) => ({
+  return keys.map(({ client_key_id, encrypted_comment, role, accessed_at }) => ({
     clientKeyId: client_key_id,
     encryptedComment: decodeBase64(encrypted_comment) as EncryptedKeyComment,
-    isAdmin: is_admin,
+    role: role,
     accessedAt: accessed_at ? new Date(accessed_at) : undefined,
   }));
 };

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import api from "@/api";
+import api, { type AccessRole } from "@/api";
 import useAccessToken from "@/composables/useAccessToken";
 import type { ClientKeyId, FormId } from "@/crypto";
 import { formatDateTime } from "@/encoding";
@@ -8,6 +8,7 @@ import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useConfirm, useToast } from "primevue";
 import Button from "primevue/button";
 import Tag from "primevue/tag";
+import { computed } from "vue";
 
 const props = defineProps<{
   index: number;
@@ -16,7 +17,7 @@ const props = defineProps<{
   clientKeyId: ClientKeyId;
   activeClientKeyId: ClientKeyId;
   accessedAt: Date | undefined;
-  isAdmin: boolean;
+  role: AccessRole;
   count: number;
 }>();
 
@@ -29,6 +30,8 @@ const emit = defineEmits<Emits>();
 const toast = useToast();
 const confirm = useConfirm();
 const accessToken = useAccessToken();
+
+const isReadOnly = computed(() => props.role === "read");
 
 const doRevoke = async () => {
   if (!isDone(accessToken)) {
@@ -111,7 +114,7 @@ const revokeSecretLink = async () => {
           <span>{{ props.comment }}</span>
           <Tag
             class="text-xs text-nowrap"
-            v-if="!props.isAdmin"
+            v-if="isReadOnly"
             value="read-only"
             severity="warn"
             rounded

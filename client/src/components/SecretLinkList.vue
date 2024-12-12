@@ -7,7 +7,7 @@ import SplitButton from "primevue/splitbutton";
 import Dialog from "primevue/dialog";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
-import api, { ApiError } from "@/api";
+import api, { ApiError, type AccessRole } from "@/api";
 import {
   deriveKeys,
   generateSecretLinkKey,
@@ -28,7 +28,7 @@ import useForm from "@/composables/useForm";
 interface SecretKeyInfo {
   comment: string;
   clientKeyId: ClientKeyId;
-  isAdmin: boolean;
+  role: AccessRole;
   accessedAt: Date | undefined;
 }
 
@@ -78,7 +78,7 @@ watchEffect(async () => {
           privatePrimaryKey.value.value,
         ),
       ),
-      isAdmin: key.isAdmin,
+      role: key.role,
       clientKeyId: key.clientKeyId,
       accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
     }));
@@ -100,7 +100,7 @@ watchEffect(async () => {
   }
 });
 
-const createSecretLink = async (isAdmin: boolean) => {
+const createSecretLink = async (role: AccessRole) => {
   if (
     !newSecretLinkComment.value ||
     !isDone(accessToken) ||
@@ -129,7 +129,7 @@ const createSecretLink = async (isAdmin: boolean) => {
       publicSigningKey: derivedKeys.publicSigningKey,
       wrappedPrivatePrimaryKey,
       encryptedComment,
-      isAdmin,
+      role,
       accessToken: accessToken.value.value,
     });
 
@@ -147,7 +147,7 @@ const createSecretLink = async (isAdmin: boolean) => {
 
   secretKeys.value.push({
     comment: newSecretLinkComment.value,
-    isAdmin,
+    role,
     clientKeyId: newClientKeyId,
     accessedAt: undefined,
   });
@@ -168,7 +168,7 @@ const secretLinkActions = [
   {
     label: "Read-only",
     icon: "pi pi-tag",
-    command: async () => createSecretLink(false),
+    command: async () => createSecretLink("read"),
   },
 ];
 </script>
@@ -206,7 +206,7 @@ const secretLinkActions = [
             :client-key-id="secretKey.clientKeyId"
             :active-client-key-id="props.clientKeyId"
             :accessed-at="secretKey.accessedAt"
-            :is-admin="secretKey.isAdmin"
+            :role="secretKey.role"
             :count="count"
             @revoke="removeSecretLinkFromList"
           />
@@ -224,7 +224,7 @@ const secretLinkActions = [
             />
             <SplitButton
               class="self-end"
-              @click="createSecretLink(true)"
+              @click="createSecretLink('admin')"
               icon="pi pi-plus"
               :button-props="{ 'aria-label': 'Create' }"
               :menu-button-props="{ 'aria-label': 'More options' }"
