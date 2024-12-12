@@ -144,6 +144,10 @@ const createSecretAdminLink = () => {
   // TODO: Implement this.
 };
 
+const removeSecretLinkFromList = (index: number) => {
+  secretKeys.value.splice(index, 1);
+};
+
 const secretLinkActions = [
   {
     label: "Admin",
@@ -176,6 +180,7 @@ const secretLinkActions = [
           <SecretLinkListItem
             v-for="(secretKey, index) in secretKeys"
             :key="index"
+            :index="index"
             :comment="secretKey.comment"
             :form-id="props.formId"
             :client-key-id="secretKey.clientKeyId"
@@ -183,6 +188,7 @@ const secretLinkActions = [
             :accessed-at="secretKey.accessedAt"
             :is-admin="false"
             :count="count"
+            @revoke="removeSecretLinkFromList"
           />
         </div>
         <div class="flex flex-col gap-2">

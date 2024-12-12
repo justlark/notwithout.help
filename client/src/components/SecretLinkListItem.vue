@@ -10,6 +10,7 @@ import Button from "primevue/button";
 import Tag from "primevue/tag";
 
 const props = defineProps<{
+  index: number;
   comment: string;
   formId: FormId;
   clientKeyId: ClientKeyId;
@@ -18,6 +19,12 @@ const props = defineProps<{
   isAdmin: boolean;
   count: number;
 }>();
+
+type Emits = {
+  (eventName: "revoke", index: number): void;
+};
+
+const emit = defineEmits<Emits>();
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -51,6 +58,8 @@ const doRevoke = async () => {
     detail: "That link can no longer be used to access this page.",
     life: TOAST_INFO_TTL,
   });
+
+  emit("revoke", props.index);
 };
 
 const revokeSecretLink = async () => {
