@@ -11,6 +11,7 @@ export interface Form {
   description: string;
   contactMethods: Array<ContactMethodCode>;
   publicPrimaryKey: PublicPrimaryKey;
+  expirationDate: Date | undefined;
 }
 
 export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
@@ -29,6 +30,7 @@ export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
           description: response.description,
           contactMethods: response.contactMethods,
           publicPrimaryKey: response.publicPrimaryKey,
+          expirationDate: response.expirationDate,
         },
       };
     } catch (error) {

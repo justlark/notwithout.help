@@ -6,7 +6,7 @@ import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
-import { decodeUtf8 } from "@/encoding";
+import { decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
@@ -169,8 +169,13 @@ watchEffect(async () => {
     />
 
     <div v-else>
-      <h2 v-if="isDone(form)" class="text-center mb-10">{{ form.value.orgName }}</h2>
-
+      <div v-if="isDone(form)" class="text-center flex flex-col gap-2 mb-8">
+        <h2>{{ form.value.orgName }}</h2>
+        <span v-if="form.value.expirationDate" class="text-muted-color">
+          <i class="pi pi-calendar"></i>
+          Expires on <time>{{ formatDate(form.value.expirationDate) }}</time>
+        </span>
+      </div>
       <div class="xl:w-3/4 mx-auto">
         <div class="flex flex-col gap-8">
           <SecretLinkList
@@ -190,10 +195,10 @@ watchEffect(async () => {
               :contactMethod="submission.contactMethod"
               :createdAt="submission.createdAt"
             />
-            <div v-if="noSubmissions" class="flex gap-5 items-center text-center text-muted-color">
-              <i class="pi pi-info-circle !text-5xl"></i>
+            <div v-if="noSubmissions" class="flex gap-5 items-center text-muted-color">
+              <i class="pi pi-info-circle !text-4xl"></i>
               <div class="flex flex-col gap-1">
-                <span class="text-3xl">No responses yet</span>
+                <span class="text-2xl">No responses yet</span>
                 <span>Refresh the page to check again.</span>
               </div>
             </div>

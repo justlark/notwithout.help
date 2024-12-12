@@ -65,6 +65,7 @@ export interface GetFormResponse {
   description: string;
   contactMethods: Array<ContactMethodCode>;
   publicPrimaryKey: PublicPrimaryKey;
+  expirationDate: Date | undefined;
 }
 
 export const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
@@ -74,13 +75,15 @@ export const getForm = async ({ formId }: GetFormParams): Promise<GetFormRespons
     throw new ApiError(response);
   }
 
-  const { org_name, description, contact_methods, public_primary_key } = await response.json();
+  const { org_name, description, contact_methods, public_primary_key, expires_at } =
+    await response.json();
 
   return {
     orgName: org_name,
     description,
     contactMethods: contact_methods,
     publicPrimaryKey: decodeBase64(public_primary_key) as PublicPrimaryKey,
+    expirationDate: expires_at ? new Date(expires_at) : undefined,
   };
 };
 

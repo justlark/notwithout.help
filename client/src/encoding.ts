@@ -32,3 +32,9 @@ const localeDateTimeFormat = new Intl.DateTimeFormat(undefined, {
 });
 
 export const formatDateTime = (date: Date): string => localeDateTimeFormat.format(date);
+
+const localeDateFormat = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+});
+
+export const formatDate = (date: Date): string => localeDateFormat.format(date);
