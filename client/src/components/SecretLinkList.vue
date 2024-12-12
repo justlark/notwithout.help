@@ -197,7 +197,7 @@ const secretLinkActions = [
         </div>
         <div class="flex flex-col gap-2">
           <label for="new-link-comment" class="text-sm">Create a new secret link</label>
-          <span class="flex gap-8 justify-between">
+          <span class="flex flex-col sm:flex-row gap-x-8 gap-y-2 justify-between">
             <InputText
               id="new-link-comment"
               class="grow"
@@ -207,6 +207,7 @@ const secretLinkActions = [
               size="small"
             />
             <SplitButton
+              class="self-end"
               @click="createSecretLink"
               icon="pi pi-plus"
               :button-props="{ 'aria-label': 'Create' }"
