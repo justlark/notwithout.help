@@ -50,7 +50,7 @@ const doDelete = async () => {
   } catch {
     toast.add({
       severity: "error",
-      summary: "Failed to delete form",
+      summary: "Failed to delete group",
       detail: "Something unexpected happened.",
       life: TOAST_ERROR_TTL,
     });
@@ -62,8 +62,8 @@ const doDelete = async () => {
 
   toast.add({
     severity: "success",
-    summary: "Form deleted",
-    detail: "Your form and all responses have been permanently deleted.",
+    summary: "Group deleted",
+    detail: "Your group and all responses have been permanently deleted.",
     life: TOAST_INFO_TTL,
   });
 
@@ -72,10 +72,10 @@ const doDelete = async () => {
 
 const deleteForm = () => {
   confirm.require({
-    header: "Delete this form?",
+    header: "Delete this group?",
     message:
-      "Do you want to permanently delete this form and all submissions? Make sure you export your data first; this cannot be undone.",
-    icon: "pi pi-info-circle",
+      "Do you want to permanently delete this group and all submissions? Make sure you export your data first; this cannot be undone.",
+    icon: "pi pi-exclamation-triangle",
     acceptProps: {
       label: "Delete",
       severity: "danger",

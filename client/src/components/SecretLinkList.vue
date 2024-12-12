@@ -175,6 +175,10 @@ const secretLinkActions = [
           <h1 id="secret-links-list-heading" class="text-lg mb-0">Secret links ({{ count }})</h1>
         </span>
       </template>
+      <p>
+        This is a list of links that can be used to access this page. Create new secret links to
+        grant access to your fellow organizers, and revoke them at any time.
+      </p>
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <SecretLinkListItem
