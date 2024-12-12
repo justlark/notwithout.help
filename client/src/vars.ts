@@ -2,8 +2,8 @@ import type { ClientKeyId, FormId, SecretLinkKey } from "./crypto";
 import { encodeBase64Url } from "./encoding";
 import type { AtLeastOne } from "./types";
 
-export const TOAST_INFO_TTL = 2000;
-export const TOAST_ERROR_TTL = 3000;
+export const TOAST_INFO_TTL = 2500;
+export const TOAST_ERROR_TTL = 3500;
 
 export const newShareLink = (formId: FormId) =>
   new URL(`${window.location.origin}/share/#/${formId}`);
