@@ -32,6 +32,8 @@ const confirm = useConfirm();
 const accessToken = useAccessToken();
 
 const isReadOnly = computed(() => props.role === "read");
+const isCurrentUser = computed(() => props.clientKeyId === props.activeClientKeyId);
+const isOnlyRemainingLink = computed(() => props.count === 1);
 
 const doRevoke = async () => {
   if (!isDone(accessToken)) {
@@ -68,10 +70,7 @@ const doRevoke = async () => {
 };
 
 const revokeSecretLink = async () => {
-  const isAttemptingToRevokeActiveLink = props.clientKeyId === props.activeClientKeyId;
-  const isAttemptingToRevokeOnlyLink = props.count === 1;
-
-  if (isAttemptingToRevokeOnlyLink) {
+  if (isOnlyRemainingLink.value) {
     toast.add({
       severity: "error",
       summary: "Cannot revoke only remaining secret link",
@@ -84,10 +83,10 @@ const revokeSecretLink = async () => {
 
   confirm.require({
     header: "Revoke this secret link?",
-    message: isAttemptingToRevokeActiveLink
+    message: isCurrentUser.value
       ? "You are about to revoke the secret link you are currently using to access this page! Are you sure you want to do this? You will be locked out of this page unless someone with access generates a new secret link for you."
       : "Are you sure you want to permanently revoke this secret link? Once revoked, nobody will be able to use it to access this page.",
-    icon: isAttemptingToRevokeActiveLink ? "pi pi-exclamation-triangle" : "pi pi-info-circle",
+    icon: isCurrentUser.value ? "pi pi-exclamation-triangle" : "pi pi-info-circle",
     acceptProps: {
       label: "Revoke",
       severity: "danger",
@@ -114,6 +113,13 @@ const revokeSecretLink = async () => {
         <span class="flex flex-wrap gap-2 justify-start items-center">
           <i class="pi pi-key md:!hidden text-green-500 dark:text-green-200" aria-hidden="true"></i>
           <span>{{ props.comment }}</span>
+          <Tag
+            class="text-xs text-nowrap"
+            v-if="isCurrentUser"
+            value="me"
+            severity="info"
+            rounded
+          />
           <Tag
             class="text-xs text-nowrap"
             v-if="isReadOnly"
