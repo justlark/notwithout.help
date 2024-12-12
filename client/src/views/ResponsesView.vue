@@ -158,7 +158,6 @@ watchEffect(async () => {
             :form-id="formId"
             :client-key-id="clientKeyId"
             :secret-link-key="secretLinkKey"
-            class="self-center w-full"
           />
           <div class="flex flex-col gap-4 items-center">
             <FormResponse
