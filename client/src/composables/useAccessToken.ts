@@ -9,7 +9,7 @@ import {
   type PrivateSigningKey,
 } from "@/crypto";
 import { type Loadable } from "@/types";
-import api, { ApiError, type ApiErrorKind } from "@/api";
+import api, { ApiError, type AccessRole, type ApiErrorKind } from "@/api";
 import { ref, readonly, computed, watchEffect } from "vue";
 import { decodeBase64 } from "@/encoding";
 import { jwtDecode } from "jwt-decode";
@@ -40,6 +40,18 @@ const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
   return decodeBase64(nonce) as ApiChallengeNonce;
 };
 
+const extractRole = (accessToken: ApiAccessToken): AccessRole => {
+  const { role } = jwtDecode<{ role: AccessRole }>(accessToken);
+  return role;
+};
+
+export interface AccessTokenParts {
+  token: ApiAccessToken;
+  // The access role is enforced server-side; this just allows us to
+  // conditionally render components.
+  role: AccessRole;
+}
+
 export const getAccessToken = async (
   formId: FormId,
   clientKeyId: ClientKeyId,
@@ -55,7 +67,7 @@ export const getAccessToken = async (
 };
 
 export const useAccessToken = () => {
-  const loadable = ref<Loadable<ApiAccessToken, ApiErrorKind>>({ state: "loading" });
+  const loadable = ref<Loadable<AccessTokenParts, ApiErrorKind>>({ state: "loading" });
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
@@ -67,7 +79,10 @@ export const useAccessToken = () => {
     if (cachedAccessToken !== undefined) {
       loadable.value = {
         state: "done",
-        value: cachedAccessToken,
+        value: {
+          token: cachedAccessToken,
+          role: extractRole(cachedAccessToken),
+        },
       };
 
       return;
@@ -100,7 +115,10 @@ export const useAccessToken = () => {
 
       loadable.value = {
         state: "done",
-        value: accessToken,
+        value: {
+          token: accessToken,
+          role: extractRole(accessToken),
+        },
       };
     } catch (error) {
       if (error instanceof ApiError) {

@@ -45,14 +45,17 @@ const isNotFound = computed(() => {
   );
 });
 const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
+const isReadOnly = computed(() => !isDone(accessToken) || accessToken.value.value.role === "read");
 
 const doDelete = async () => {
   if (!isDone(accessToken)) {
     return;
   }
 
+  const { token } = accessToken.value.value;
+
   try {
-    await api.deleteForm({ formId: formId.value, accessToken: accessToken.value.value });
+    await api.deleteForm({ formId: formId.value, accessToken: token });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "forbidden") {
       toast.add({
@@ -112,11 +115,12 @@ watchEffect(async () => {
     return;
   }
 
+  const { token } = accessToken.value.value;
   const { publicPrimaryKey } = form.value.value;
 
   const encryptedSubmissions = await api.getSubmissions({
     formId: formId.value,
-    accessToken: accessToken.value.value,
+    accessToken: token,
   });
 
   noSubmissions.value = encryptedSubmissions.length === 0;
@@ -155,6 +159,7 @@ watchEffect(async () => {
       <div class="xl:w-3/4 mx-auto">
         <div class="flex flex-col gap-8">
           <SecretLinkList
+            v-if="!isReadOnly"
             :form-id="formId"
             :client-key-id="clientKeyId"
             :secret-link-key="secretLinkKey"
@@ -191,14 +196,14 @@ watchEffect(async () => {
               icon="pi pi-download"
             />
             <Button
-              v-if="isLoaded"
+              v-if="isLoaded && !isReadOnly"
               class="!justify-start"
               label="Edit"
               severity="secondary"
               icon="pi pi-pen-to-square"
             />
             <Button
-              v-if="isLoaded"
+              v-if="isLoaded && !isReadOnly"
               @click="deleteForm"
               class="!justify-start"
               label="Delete"

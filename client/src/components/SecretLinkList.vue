@@ -7,7 +7,7 @@ import SplitButton from "primevue/splitbutton";
 import Dialog from "primevue/dialog";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
-import api, { ApiError, type AccessRole } from "@/api";
+import api, { type AccessRole } from "@/api";
 import {
   deriveKeys,
   generateSecretLinkKey,
@@ -68,8 +68,10 @@ watchEffect(async () => {
     return;
   }
 
+  const { token } = accessToken.value.value;
+
   try {
-    const keys = await api.listKeys({ formId: props.formId, accessToken: accessToken.value.value });
+    const keys = await api.listKeys({ formId: props.formId, accessToken: token });
     secretKeys.value = keys.map((key) => ({
       comment: decodeUtf8(
         unsealKeyComment(
@@ -82,21 +84,13 @@ watchEffect(async () => {
       clientKeyId: key.clientKeyId,
       accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
     }));
-  } catch (error) {
-    // Users need admin permission to list keys. If they don't have this permission, we don't show
-    // them. No need for an error toast.
-    if (error instanceof ApiError && error.kind === "forbidden") {
-      secretKeys.value = [];
-    } else {
-      toast.add({
-        severity: "error",
-        summary: "Failed to list secret links",
-        detail: "Something unexpected happened.",
-        life: TOAST_ERROR_TTL,
-      });
-
-      return;
-    }
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Failed to list secret links",
+      detail: "Something unexpected happened.",
+      life: TOAST_ERROR_TTL,
+    });
   }
 });
 
@@ -109,6 +103,8 @@ const createSecretLink = async (role: AccessRole) => {
   ) {
     return;
   }
+
+  const { token } = accessToken.value.value;
 
   const newSecretLinkKey = generateSecretLinkKey();
   const derivedKeys = await deriveKeys(newSecretLinkKey);
@@ -130,7 +126,7 @@ const createSecretLink = async (role: AccessRole) => {
       wrappedPrivatePrimaryKey,
       encryptedComment,
       role,
-      accessToken: accessToken.value.value,
+      accessToken: token,
     });
 
     newClientKeyId = clientKeyId;

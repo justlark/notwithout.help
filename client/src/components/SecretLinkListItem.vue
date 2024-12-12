@@ -38,11 +38,13 @@ const doRevoke = async () => {
     return;
   }
 
+  const { token } = accessToken.value.value;
+
   try {
     await api.deleteKey({
       formId: props.formId,
       clientKeyId: props.clientKeyId,
-      accessToken: accessToken.value.value,
+      accessToken: token,
     });
   } catch {
     toast.add({

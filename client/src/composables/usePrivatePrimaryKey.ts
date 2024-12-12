@@ -19,6 +19,8 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
       return;
     }
 
+    const { token } = accessToken.value.value;
+
     // Touch these before the first await boundary to make sure they're
     // tracked.
     const formIdValue = formId.value;
@@ -40,7 +42,7 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
       const wrappedPrivatePrimaryKey = await api.getKey({
         formId: formIdValue,
         clientKeyId: clientKeyIdValue,
-        accessToken: accessToken.value.value,
+        accessToken: token,
       });
 
       loadable.value = {
