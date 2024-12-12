@@ -10,15 +10,30 @@ import {
 } from "@/crypto";
 import { type Loadable } from "@/types";
 import api, { ApiError, type ApiErrorKind } from "@/api";
-import { ref, watchEffect, readonly, computed } from "vue";
+import { ref, readonly, computed, watchEffect } from "vue";
 import { decodeBase64 } from "@/encoding";
 import { jwtDecode } from "jwt-decode";
 import { useSecretLink } from "./useSecretLink";
 
+// We cache access tokens to avoid going through the auth flow more than once
+// per page load.
+//
+// Remember: The URL fragment (and therefore the form ID, client key ID, and
+// secret link key) can change without reloading the page.
+//
 // TODO: What happens if the access token expires before the user reloads the
 // page?
 const accessTokenCache = ref(new Map<string, ApiAccessToken>());
-const isLoadingAccessToken = ref(false);
+
+// Keep track of whether we've started loading a given access token to ensure
+// this hook doesn't run more than once concurrently. We want to make sure we
+// don't go through the auth flow more than once per page load.
+//
+// Once this value is set to `true` for a given (form ID, client key ID) pair,
+// it will stay `true` for the lifetime of the page load, because and invalid
+// secret link is unlikely to ever become valid in the future; revoked secret
+// links cannot be re-enabled.
+const accessTokenHasStartedLoading = ref(new Map<string, boolean>());
 
 const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
   const { nonce } = jwtDecode<{ nonce: string }>(challengeToken);
@@ -47,10 +62,6 @@ export const useAccessToken = () => {
   const cacheKey = computed(() => `${formId.value}/${clientKeyId.value}`);
 
   watchEffect(async () => {
-    if (isLoadingAccessToken.value || loadable.value.state === "done") {
-      return;
-    }
-
     const cachedAccessToken = accessTokenCache.value.get(cacheKey.value);
 
     if (cachedAccessToken !== undefined) {
@@ -62,7 +73,11 @@ export const useAccessToken = () => {
       return;
     }
 
-    isLoadingAccessToken.value = true;
+    if (accessTokenHasStartedLoading.value.get(cacheKey.value)) {
+      return;
+    }
+
+    accessTokenHasStartedLoading.value.set(cacheKey.value, true);
 
     const { privateSigningKey } = await deriveKeys(secretLinkKey.value);
 
@@ -83,8 +98,6 @@ export const useAccessToken = () => {
         };
       }
     }
-
-    isLoadingAccessToken.value = false;
   });
 
   return readonly(loadable);

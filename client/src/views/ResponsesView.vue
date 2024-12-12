@@ -37,7 +37,12 @@ const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
 
 const isNotFound = computed(() => {
-  return returnsError(["unauthorized", "not-found"], accessToken, privatePrimaryKey, form);
+  return returnsError(
+    ["unauthorized", "forbidden", "not-found"],
+    accessToken,
+    privatePrimaryKey,
+    form,
+  );
 });
 const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 

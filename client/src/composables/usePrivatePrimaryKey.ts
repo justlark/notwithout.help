@@ -1,6 +1,6 @@
 import type { ApiErrorKind } from "@/api";
 import { deriveKeys, unwrapPrivatePrimaryKey, type PrivatePrimaryKey } from "@/crypto";
-import type { Loadable } from "@/types";
+import { isDone, type Loadable } from "@/types";
 import { ref, readonly, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useSecretLink } from "./useSecretLink";
 import { useAccessToken } from "./useAccessToken";
@@ -15,7 +15,7 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
   const accessToken = useAccessToken();
 
   watchEffect(async () => {
-    if (accessToken.value.state !== "done") {
+    if (!isDone(accessToken)) {
       return;
     }
 
