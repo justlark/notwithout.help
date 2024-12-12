@@ -4,7 +4,8 @@ CREATE TABLE "forms" (
   "form_id" text NOT NULL UNIQUE,
   "template" text NOT NULL,
   "public_primary_key" text NOT NULL,
-  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP
+  "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "expires_at" text
 );
 
 CREATE TABLE "submissions" (

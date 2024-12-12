@@ -1,6 +1,6 @@
 use std::fmt;
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use secrecy::ExposeSecret;
 use serde::Deserialize;
 use worker::{d1::D1Database, kv::KvStore, query};
@@ -70,7 +70,10 @@ impl Store {
         let stmt = query!(
             &self.db,
             "
-            SELECT template, public_primary_key
+            SELECT
+                template,
+                public_primary_key,
+                expires_at
             FROM forms
             WHERE form_id = ?1;
             ",
@@ -81,6 +84,7 @@ impl Store {
         struct Row {
             template: String,
             public_primary_key: PublicPrimaryKey,
+            expires_at: Option<String>,
         }
 
         stmt.first::<Row>(None)
@@ -89,6 +93,11 @@ impl Store {
                 Ok(FormData {
                     template: serde_json::from_str::<FormTemplate>(&raw.template)?,
                     public_primary_key: raw.public_primary_key,
+                    expires_at: raw
+                        .expires_at
+                        .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
+                        .transpose()?
+                        .map(|dt| dt.and_utc()),
                 })
             })
             .transpose()
@@ -100,16 +109,18 @@ impl Store {
         form_id: &FormId,
         template: &FormTemplate,
         public_primary_key: &PublicPrimaryKey,
+        expires_at: Option<DateTime<Utc>>,
     ) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,
             "
-            INSERT INTO forms (form_id, template, public_primary_key)
-            VALUES (?1, ?2, ?3);
+            INSERT INTO forms (form_id, template, public_primary_key, expires_at)
+            VALUES (?1, ?2, ?3, ?4);
             ",
             form_id,
             serde_json::to_string(&template)?,
             public_primary_key,
+            expires_at.map(|dt| dt.format(SQLITE_DATETIME_FORMAT).to_string()),
         )?;
 
         stmt.run().await?.meta()?;

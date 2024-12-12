@@ -8,6 +8,7 @@ use axum::{
     routing::{delete, get, patch, post},
     Router,
 };
+use chrono::DateTime;
 use worker::console_error;
 
 use crate::{
@@ -90,7 +91,19 @@ async fn publish_form(
     let form_id = FormId::new();
 
     store
-        .put_form_template(&form_id, &template, &form.public_primary_key)
+        .put_form_template(
+            &form_id,
+            &template,
+            &form.public_primary_key,
+            match form.expires_at {
+                Some(expires_at) => Some(
+                    DateTime::parse_from_rfc3339(&expires_at)
+                        .map_err(|err| internal_err(err.into()))?
+                        .to_utc(),
+                ),
+                None => None,
+            },
+        )
         .await
         .map_err(internal_err)?;
 

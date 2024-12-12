@@ -15,6 +15,7 @@ pub struct GetFormResponse {
     pub description: String,
     pub contact_methods: Vec<String>,
     pub public_primary_key: PublicPrimaryKey,
+    pub expires_at: Option<String>,
 }
 
 impl From<FormData> for GetFormResponse {
@@ -24,6 +25,7 @@ impl From<FormData> for GetFormResponse {
             description: data.template.description,
             contact_methods: data.template.contact_methods,
             public_primary_key: data.public_primary_key,
+            expires_at: data.expires_at.map(|dt| dt.to_rfc3339()),
         }
     }
 }
@@ -35,6 +37,7 @@ pub struct PostFormRequest {
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
+    pub expires_at: Option<String>,
 }
 
 #[derive(Debug, Serialize)]

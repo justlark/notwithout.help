@@ -203,10 +203,11 @@ pub struct FormTemplate {
     pub contact_methods: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct FormData {
     pub template: FormTemplate,
     pub public_primary_key: PublicPrimaryKey,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug)]
