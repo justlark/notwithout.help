@@ -25,6 +25,7 @@ export interface Submission {
 }
 
 const submissions = ref<Array<Submission>>([]);
+const noSubmissions = ref(false);
 
 const router = useRouter();
 const confirm = useConfirm();
@@ -113,6 +114,8 @@ watchEffect(async () => {
     accessToken: accessToken.value.value,
   });
 
+  noSubmissions.value = encryptedSubmissions.length === 0;
+
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
     const encodedSubmissionBody = unsealSubmissionBody(
       encryptedBody,
@@ -163,6 +166,13 @@ watchEffect(async () => {
               :contactMethod="submission.contactMethod"
               :createdAt="submission.createdAt"
             />
+            <div v-if="noSubmissions" class="flex gap-5 items-center text-center text-muted-color">
+              <i class="pi pi-info-circle !text-5xl"></i>
+              <div class="flex flex-col gap-1">
+                <span class="text-3xl">No responses yet</span>
+                <span>Refresh the page to check again.</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="xl:sticky bottom-6">
