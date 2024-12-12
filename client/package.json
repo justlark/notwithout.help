@@ -16,6 +16,7 @@
     "@noble/ed25519": "^2.1.0",
     "@primevue/themes": "^4.2.4",
     "@vee-validate/zod": "^4.14.7",
+    "csv-stringify": "^6.5.2",
     "install": "^0.13.0",
     "jwt-decode": "^4.0.0",
     "libsodium": "^0.7.15",

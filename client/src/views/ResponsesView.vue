@@ -16,6 +16,7 @@ import useSecretLink from "@/composables/useSecretLink";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import useForm from "@/composables/useForm";
+import { stringify as toCsv } from "csv-stringify/browser/esm/sync";
 
 export interface Submission {
   name: string;
@@ -46,6 +47,20 @@ const isNotFound = computed(() => {
 });
 const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 const isReadOnly = computed(() => !isDone(accessToken) || accessToken.value.value.role === "read");
+
+const csvFileObjectUrl = computed(() => {
+  const headers = ["Name", "Contact", "Contact method", "Submitted at"];
+  const data = submissions.value.map((submission) => [
+    submission.name,
+    submission.contact,
+    submission.contactMethod,
+    submission.createdAt.toISOString(),
+  ]);
+  const rows = [headers, ...data];
+  const csv = toCsv(rows);
+  const blob = new Blob([csv], { type: "text/csv" });
+  return URL.createObjectURL(blob);
+});
 
 const doDelete = async () => {
   if (!isDone(accessToken)) {
@@ -191,6 +206,9 @@ watchEffect(async () => {
             <Button
               v-if="submissions.length > 0"
               class="!justify-start"
+              as="a"
+              :href="csvFileObjectUrl"
+              download="responses.csv"
               label="Export"
               severity="secondary"
               icon="pi pi-download"
