@@ -71,6 +71,24 @@ pub struct AuthError {
     message: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AccessRole {
+    #[serde(rename = "admin")]
+    Admin,
+    #[serde(rename = "read")]
+    Read,
+}
+
+impl AccessRole {
+    // Whether the permissions granted by this role include the permissions granted by `other`.
+    pub fn includes(self, other: Self) -> bool {
+        match self {
+            Self::Admin => true,
+            Self::Read => other == Self::Read,
+        }
+    }
+}
+
 impl std::error::Error for AuthError {}
 
 impl AuthError {
@@ -152,6 +170,7 @@ impl<'de> Deserialize<'de> for ApiTokenJwtSub {
 struct ApiAccessTokenClaims {
     #[serde(rename = "type")]
     token_type: ApiTokenType,
+    role: AccessRole,
     sub: ApiTokenJwtSub,
     aud: String,
     iss: String,
@@ -168,23 +187,7 @@ impl SignedApiAccessToken {
         self,
         store: &'a UnauthenticatedStore,
         form_id: &'a FormId,
-    ) -> Result<&'a Store, AuthError> {
-        self.validate_inner(store, form_id, false).await
-    }
-
-    pub async fn validate_admin<'a>(
-        self,
-        store: &'a UnauthenticatedStore,
-        form_id: &'a FormId,
-    ) -> Result<&'a Store, AuthError> {
-        self.validate_inner(store, form_id, true).await
-    }
-
-    pub async fn validate_inner<'a>(
-        self,
-        store: &'a UnauthenticatedStore,
-        form_id: &'a FormId,
-        needs_admin: bool,
+        needs_role: AccessRole,
     ) -> Result<&'a Store, AuthError> {
         let store = store.without_authenticating();
 
@@ -235,7 +238,7 @@ impl SignedApiAccessToken {
             .map_err(|err| AuthError::unauthorized(err.to_string()))?;
 
         match client_keys {
-            Some(keys) if needs_admin && !keys.is_admin => {
+            Some(keys) if !keys.role.includes(needs_role) => {
                 return Err(AuthError::forbidden(
                     "This access token does not have the required permissions.",
                 ));
@@ -374,34 +377,45 @@ pub struct ApiChallengeResponse {
 }
 
 impl ApiChallengeResponse {
-    pub async fn validate(&self, store: &Store) -> anyhow::Result<ValidatedApiChallenge> {
+    pub async fn validate(&self, store: &Store) -> anyhow::Result<ValidatedApiChallengeResponse> {
         let challenge = self.challenge.validate(store).await?.0;
 
         let client_keys = store
             .get_client_keys(&challenge.form_id, &challenge.client_key_id)
             .await?;
 
-        let public_signing_key = client_keys
-            .as_ref()
-            .map(|keys| &keys.public_signing_key)
-            .ok_or_else(|| {
-                anyhow!("Public signing key for this challenge does not exist or has been revoked.")
-            })?;
+        let client_keys = client_keys.ok_or_else(|| {
+            anyhow!("Client key for this challenge does not exist or has been revoked.")
+        })?;
 
-        public_signing_key.verify(&challenge.nonce, &self.signature)?;
+        client_keys
+            .public_signing_key
+            .verify(&challenge.nonce, &self.signature)?;
 
-        Ok(ValidatedApiChallenge(challenge))
+        Ok(ValidatedApiChallengeResponse {
+            challenge,
+            role: client_keys.role,
+        })
     }
 }
 
-// This wrapper is a defensive measure to ensure we don't accidentally generate an access token
+//
+// These wrappers are a defensive measure to ensure we don't accidentally generate an access token
 // from anything but a valid API challenge response.
+//
+
 #[derive(Debug, Clone)]
 pub struct ValidatedApiChallenge(ApiChallenge);
 
-impl ValidatedApiChallenge {
+#[derive(Debug, Clone)]
+pub struct ValidatedApiChallengeResponse {
+    challenge: ApiChallenge,
+    role: AccessRole,
+}
+
+impl ValidatedApiChallengeResponse {
     pub fn server_key_id(&self) -> ServerKeyId {
-        self.0.server_key_id.clone()
+        self.challenge.server_key_id.clone()
     }
 
     pub fn into_access_token(
@@ -409,7 +423,7 @@ impl ValidatedApiChallenge {
         key: &jwt::EncodingKey,
         exp: Duration,
     ) -> anyhow::Result<SignedApiAccessToken> {
-        let challenge = self.0;
+        let challenge = self.challenge;
 
         let mut header = jwt::Header::new(JWT_ALGORITHM);
         header.kid = Some(challenge.server_key_id.to_string());
@@ -418,6 +432,7 @@ impl ValidatedApiChallenge {
 
         let claims = ApiAccessTokenClaims {
             token_type: ApiTokenType::Access,
+            role: self.role,
             sub: ApiTokenJwtSub {
                 form_id: challenge.form_id.clone(),
                 client_key_id: challenge.client_key_id,

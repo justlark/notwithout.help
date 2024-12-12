@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    auth::{ApiChallengeResponse, SignedApiAccessToken, SignedApiChallenge},
+    auth::{AccessRole, ApiChallengeResponse, SignedApiAccessToken, SignedApiChallenge},
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormData, FormId,
@@ -72,7 +72,7 @@ pub struct GetKeyResponse {
 pub struct ListKeysResponse {
     pub client_key_id: ClientKeyId,
     pub encrypted_comment: EncryptedKeyComment,
-    pub is_admin: bool,
+    pub role: AccessRole,
     pub accessed_at: Option<String>,
 }
 
@@ -81,7 +81,7 @@ impl From<ClientKeys> for ListKeysResponse {
         Self {
             client_key_id: keys.id,
             encrypted_comment: keys.encrypted_comment,
-            is_admin: keys.is_admin,
+            role: keys.role,
             accessed_at: keys.accessed_at.map(|dt| dt.to_rfc3339()),
         }
     }
@@ -92,7 +92,7 @@ pub struct PostKeyRequest {
     pub public_signing_key: PublicSigningKey,
     pub wrapped_private_primary_key: WrappedPrivatePrimaryKey,
     pub encrypted_comment: EncryptedKeyComment,
-    pub is_admin: bool,
+    pub role: AccessRole,
 }
 
 #[derive(Debug, Serialize)]

@@ -22,7 +22,7 @@ CREATE TABLE "keys" (
   "public_signing_key" text NOT NULL,
   "wrapped_private_primary_key" text,
   "encrypted_comment" text NOT NULL,
-  "is_admin" integer NOT NULL,
+  "role" text NOT NULL,
   "created_at" text NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE ("form", "key_index")
 );

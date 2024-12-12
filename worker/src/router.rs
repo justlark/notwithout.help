@@ -18,7 +18,7 @@ use crate::{
         PostTokenResponse,
     },
     auth::{
-        auth_layer, ApiChallenge, ApiChallengeResponse, AuthError, AuthErrorType,
+        auth_layer, AccessRole, ApiChallenge, ApiChallengeResponse, AuthError, AuthErrorType,
         SignedApiAccessToken,
     },
     config,
@@ -100,7 +100,8 @@ async fn publish_form(
             &form.public_signing_key,
             None,
             &EncryptedKeyComment::default(),
-            true,
+            // The initial secret link will always have admin access.
+            AccessRole::Admin,
         )
         .await
         .map_err(internal_err)?
@@ -235,7 +236,7 @@ async fn list_form_submissions(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListSubmissionsResponse>>, ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Read)
         .await
         .map_err(auth_err)?;
 
@@ -254,7 +255,7 @@ async fn delete_form(
     Path(form_id): Path<FormId>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate_admin(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Admin)
         .await
         .map_err(auth_err)?;
 
@@ -270,7 +271,7 @@ async fn get_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<Json<GetKeyResponse>, ErrorResponse> {
     let store = token
-        .validate(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Read)
         .await
         .map_err(auth_err)?;
 
@@ -292,7 +293,7 @@ async fn list_keys(
     Path(form_id): Path<FormId>,
 ) -> Result<Json<Vec<ListKeysResponse>>, ErrorResponse> {
     let store = token
-        .validate_admin(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Admin)
         .await
         .map_err(auth_err)?;
 
@@ -312,7 +313,7 @@ async fn add_key(
     Json(body): Json<PostKeyRequest>,
 ) -> Result<(StatusCode, Json<PostKeyResponse>), ErrorResponse> {
     let store = token
-        .validate_admin(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Admin)
         .await
         .map_err(auth_err)?;
 
@@ -322,7 +323,7 @@ async fn add_key(
             &body.public_signing_key,
             Some(&body.wrapped_private_primary_key),
             &body.encrypted_comment,
-            body.is_admin,
+            body.role,
         )
         .await
         .map_err(internal_err)?
@@ -341,7 +342,7 @@ async fn update_key(
     Json(body): Json<PatchKeyRequest>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate_admin(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Admin)
         .await
         .map_err(auth_err)?;
 
@@ -365,7 +366,7 @@ async fn delete_key(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
 ) -> Result<NoContent, ErrorResponse> {
     let store = token
-        .validate_admin(&state.store, &form_id)
+        .validate(&state.store, &form_id, AccessRole::Admin)
         .await
         .map_err(auth_err)?;
 

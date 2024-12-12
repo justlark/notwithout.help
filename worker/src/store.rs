@@ -6,6 +6,7 @@ use serde::Deserialize;
 use worker::{d1::D1Database, kv::KvStore, query};
 
 use crate::{
+    auth::AccessRole,
     config,
     keys::{EphemeralServerKey, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
@@ -211,7 +212,7 @@ impl Store {
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
                 keys.encrypted_comment,
-                keys.is_admin,
+                keys.role,
                 (
                     SELECT MAX(access_log.accessed_at)
                     FROM access_log
@@ -231,8 +232,7 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
-            // There seems to be a bug deserializing bools in the Workers API.
-            is_admin: u32,
+            role: AccessRole,
             accessed_at: Option<String>,
         }
 
@@ -244,7 +244,7 @@ impl Store {
                 public_signing_key: row.public_signing_key,
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
-                is_admin: row.is_admin != 0,
+                role: row.role,
                 accessed_at: row
                     .accessed_at
                     .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
@@ -265,7 +265,7 @@ impl Store {
                 keys.public_signing_key,
                 keys.wrapped_private_primary_key,
                 keys.encrypted_comment,
-                keys.is_admin,
+                keys.role,
                 (
                     SELECT MAX(access_log.accessed_at)
                     FROM access_log
@@ -286,8 +286,7 @@ impl Store {
             public_signing_key: PublicSigningKey,
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
-            // There seems to be a bug deserializing bools in the Workers API.
-            is_admin: u32,
+            role: AccessRole,
             accessed_at: Option<String>,
         }
 
@@ -300,7 +299,7 @@ impl Store {
                     public_signing_key: row.public_signing_key,
                     wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
-                    is_admin: row.is_admin != 0,
+                    role: row.role,
                     accessed_at: row
                         .accessed_at
                         .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
@@ -318,7 +317,7 @@ impl Store {
         public_signing_key: &PublicSigningKey,
         wrapped_private_primary_key: Option<&WrappedPrivatePrimaryKey>,
         encrypted_comment: &EncryptedKeyComment,
-        is_admin: bool,
+        role: AccessRole,
     ) -> anyhow::Result<Option<ClientKeyId>> {
         let stmt = query!(
             &self.db,
@@ -329,7 +328,7 @@ impl Store {
                 public_signing_key,
                 wrapped_private_primary_key,
                 encrypted_comment,
-                is_admin
+                role
             )
             SELECT
                 forms.id,
@@ -355,7 +354,7 @@ impl Store {
             public_signing_key,
             wrapped_private_primary_key,
             encrypted_comment,
-            is_admin,
+            role,
         )?;
 
         Ok(stmt.first::<ClientKeyId>(Some("key_index")).await?)

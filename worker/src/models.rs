@@ -5,7 +5,10 @@ use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::keys::{PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey};
+use crate::{
+    auth::AccessRole,
+    keys::{PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
+};
 
 //
 // See the security architecture document for information on the purpose of these values and how
@@ -218,6 +221,6 @@ pub struct ClientKeys {
     pub public_signing_key: PublicSigningKey,
     pub wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
     pub encrypted_comment: EncryptedKeyComment,
-    pub is_admin: bool,
+    pub role: AccessRole,
     pub accessed_at: Option<DateTime<Utc>>,
 }
