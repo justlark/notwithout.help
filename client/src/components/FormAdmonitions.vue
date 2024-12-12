@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { type ClientKeyId, type FormId, type SecretLinkKey } from "@/crypto";
 import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
+import Card from "primevue/card";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 
 const props = defineProps<{
