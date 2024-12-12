@@ -8,6 +8,10 @@ command = "cargo install -q worker-build && worker-build --release"
 [vars]
 WORKER_ENV = "prod"
 
+[triggers]
+# Automatically delete expired forms.
+crons = ["0 0 * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "notwithouthelp"

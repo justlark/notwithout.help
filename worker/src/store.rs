@@ -145,6 +145,21 @@ impl Store {
     }
 
     #[worker::send]
+    pub async fn delete_expired_forms(&self) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            DELETE FROM forms
+            WHERE forms.expires_at IS NOT NULL AND forms.expires_at < CURRENT_TIMESTAMP;
+            ",
+        )?;
+
+        stmt.run().await?.meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
     pub async fn list_submissions(&self, form_id: &FormId) -> anyhow::Result<Vec<Submission>> {
         let stmt = query!(
             &self.db,
