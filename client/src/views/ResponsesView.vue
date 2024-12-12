@@ -8,7 +8,7 @@ import { TOAST_ERROR_TTL, TOAST_INFO_TTL, type ContactMethodCode } from "@/vars"
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
-import api, { type SubmissionBody } from "@/api";
+import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
 import { useRouter } from "vue-router";
@@ -47,13 +47,22 @@ const doDelete = async () => {
 
   try {
     await api.deleteForm({ formId: formId.value, accessToken: accessToken.value.value });
-  } catch {
-    toast.add({
-      severity: "error",
-      summary: "Failed to delete group",
-      detail: "Something unexpected happened.",
-      life: TOAST_ERROR_TTL,
-    });
+  } catch (error) {
+    if (error instanceof ApiError && error.kind === "forbidden") {
+      toast.add({
+        severity: "error",
+        summary: "Failed to delete group",
+        detail: "You do not have permission to do this.",
+        life: TOAST_ERROR_TTL,
+      });
+    } else {
+      toast.add({
+        severity: "error",
+        summary: "Failed to delete group",
+        detail: "Something unexpected happened.",
+        life: TOAST_ERROR_TTL,
+      });
+    }
 
     return;
   }

@@ -19,7 +19,12 @@ import type { ContactMethodCode } from "./vars";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 
-export type ApiErrorKind = "not-found" | "unauthorized" | "content-too-large" | "unexpected";
+export type ApiErrorKind =
+  | "not-found"
+  | "unauthorized"
+  | "forbidden"
+  | "content-too-large"
+  | "unexpected";
 
 export class ApiError extends Error {
   public readonly kind: ApiErrorKind;
@@ -31,6 +36,8 @@ export class ApiError extends Error {
       this.kind = "not-found";
     } else if (response.status === 401) {
       this.kind = "unauthorized";
+    } else if (response.status === 403) {
+      this.kind = "forbidden";
     } else if (response.status === 413) {
       this.kind = "content-too-large";
     } else {
@@ -202,6 +209,7 @@ export interface PostKeyParams {
   publicSigningKey: PublicSigningKey;
   wrappedPrivatePrimaryKey: WrappedPrivatePrimaryKey;
   encryptedComment: EncryptedKeyComment;
+  isAdmin: boolean;
   accessToken: ApiAccessToken;
 }
 
@@ -214,12 +222,14 @@ export const postKey = async ({
   publicSigningKey,
   wrappedPrivatePrimaryKey,
   encryptedComment,
+  isAdmin,
   accessToken,
 }: PostKeyParams) => {
   const requestBody = {
     public_signing_key: encodeBase64(publicSigningKey),
     wrapped_private_primary_key: encodeBase64(wrappedPrivatePrimaryKey),
     encrypted_comment: encodeBase64(encryptedComment),
+    is_admin: isAdmin,
   };
 
   const response = await fetch(`${API_URL}/keys/${formId}`, {
@@ -276,6 +286,7 @@ export interface ListKeysParams {
 export interface ListKeysResponse {
   clientKeyId: ClientKeyId;
   encryptedComment: EncryptedKeyComment;
+  isAdmin: boolean;
   accessedAt: Date | undefined;
 }
 
@@ -296,9 +307,10 @@ export const listKeys = async ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const keys: Array<any> = await response.json();
 
-  return keys.map(({ client_key_id, encrypted_comment, accessed_at }) => ({
+  return keys.map(({ client_key_id, encrypted_comment, is_admin, accessed_at }) => ({
     clientKeyId: client_key_id,
     encryptedComment: decodeBase64(encrypted_comment) as EncryptedKeyComment,
+    isAdmin: is_admin,
     accessedAt: accessed_at ? new Date(accessed_at) : undefined,
   }));
 };

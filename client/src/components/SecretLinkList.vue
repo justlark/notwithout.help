@@ -7,7 +7,7 @@ import SplitButton from "primevue/splitbutton";
 import Dialog from "primevue/dialog";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
-import api from "@/api";
+import api, { ApiError } from "@/api";
 import {
   deriveKeys,
   generateSecretLinkKey,
@@ -28,6 +28,7 @@ import useForm from "@/composables/useForm";
 interface SecretKeyInfo {
   comment: string;
   clientKeyId: ClientKeyId;
+  isAdmin: boolean;
   accessedAt: Date | undefined;
 }
 
@@ -67,19 +68,36 @@ watchEffect(async () => {
     return;
   }
 
-  const keys = await api.listKeys({ formId: props.formId, accessToken: accessToken.value.value });
-
-  secretKeys.value = keys.map((key) => ({
-    comment: decodeUtf8(
-      unsealKeyComment(
-        key.encryptedComment,
-        form.value.value.publicPrimaryKey,
-        privatePrimaryKey.value.value,
+  try {
+    const keys = await api.listKeys({ formId: props.formId, accessToken: accessToken.value.value });
+    secretKeys.value = keys.map((key) => ({
+      comment: decodeUtf8(
+        unsealKeyComment(
+          key.encryptedComment,
+          form.value.value.publicPrimaryKey,
+          privatePrimaryKey.value.value,
+        ),
       ),
-    ),
-    clientKeyId: key.clientKeyId,
-    accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
-  }));
+      isAdmin: key.isAdmin,
+      clientKeyId: key.clientKeyId,
+      accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
+    }));
+  } catch (error) {
+    // Users need admin permission to list keys. If they don't have this permission, we don't show
+    // them. No need for an error toast.
+    if (error instanceof ApiError && error.kind === "forbidden") {
+      secretKeys.value = [];
+    } else {
+      toast.add({
+        severity: "error",
+        summary: "Failed to list secret links",
+        detail: "Something unexpected happened.",
+        life: TOAST_ERROR_TTL,
+      });
+
+      return;
+    }
+  }
 });
 
 const createSecretLink = async (isAdmin: boolean) => {
@@ -111,6 +129,7 @@ const createSecretLink = async (isAdmin: boolean) => {
       publicSigningKey: derivedKeys.publicSigningKey,
       wrappedPrivatePrimaryKey,
       encryptedComment,
+      isAdmin,
       accessToken: accessToken.value.value,
     });
 
@@ -128,6 +147,7 @@ const createSecretLink = async (isAdmin: boolean) => {
 
   secretKeys.value.push({
     comment: newSecretLinkComment.value,
+    isAdmin,
     clientKeyId: newClientKeyId,
     accessedAt: undefined,
   });
@@ -186,7 +206,7 @@ const secretLinkActions = [
             :client-key-id="secretKey.clientKeyId"
             :active-client-key-id="props.clientKeyId"
             :accessed-at="secretKey.accessedAt"
-            :is-admin="false"
+            :is-admin="secretKey.isAdmin"
             :count="count"
             @revoke="removeSecretLinkFromList"
           />
