@@ -29,10 +29,10 @@ const accessTokenCache = ref(new Map<string, ApiAccessToken>());
 // this hook doesn't run more than once concurrently. We want to make sure we
 // don't go through the auth flow more than once per page load.
 //
-// Once this value is set to `true` for a given (form ID, client key ID) pair,
-// it will stay `true` for the lifetime of the page load, because and invalid
-// secret link is unlikely to ever become valid in the future; revoked secret
-// links cannot be re-enabled.
+// Once this value is set to `true` for a given (form ID, client key ID, secret
+// link key) tuple, it will stay `true` for the lifetime of the page load,
+// because and invalid secret link is unlikely to ever become valid in the
+// future; revoked secret links cannot be re-enabled.
 const accessTokenHasStartedLoading = ref(new Map<string, boolean>());
 
 const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
