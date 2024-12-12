@@ -4,7 +4,7 @@ import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8 } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
@@ -40,6 +40,36 @@ const isNotFound = computed(() => {
 });
 const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 
+const doDelete = async () => {
+  if (!isDone(accessToken)) {
+    return;
+  }
+
+  try {
+    await api.deleteForm({ formId: formId.value, accessToken: accessToken.value.value });
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Failed to delete form",
+      detail: "Something unexpected happened.",
+      life: TOAST_ERROR_TTL,
+    });
+
+    return;
+  }
+
+  submissions.value = [];
+
+  toast.add({
+    severity: "success",
+    summary: "Form deleted",
+    detail: "Your form and all responses have been permanently deleted.",
+    life: TOAST_INFO_TTL,
+  });
+
+  router.push({ path: "/" });
+};
+
 const deleteForm = () => {
   confirm.require({
     header: "Delete this form?",
@@ -55,24 +85,7 @@ const deleteForm = () => {
       severity: "secondary",
       outlined: true,
     },
-    accept: async () => {
-      if (!isDone(accessToken)) {
-        return;
-      }
-
-      await api.deleteForm({ formId: formId.value, accessToken: accessToken.value.value });
-
-      submissions.value = [];
-
-      toast.add({
-        severity: "success",
-        summary: "Form deleted",
-        detail: "Your form and all responses have been permanently deleted.",
-        life: TOAST_INFO_TTL,
-      });
-
-      router.push({ path: "/" });
-    },
+    accept: doDelete,
   });
 };
 
