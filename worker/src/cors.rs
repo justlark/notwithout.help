@@ -10,7 +10,7 @@ const CORS_ALLOWED_ORIGINS: [&str; 3] = [
     // Prod environment
     "https://notwithout.help",
     // Dev environment
-    "https://dev.notwithouthelp.pages.dev",
+    "https://main.notwithouthelp.pages.dev",
 ];
 
 const CORS_ALLOWED_METHODS: [Method; 4] =
