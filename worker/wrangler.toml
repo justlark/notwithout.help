@@ -12,7 +12,22 @@ crons = ["0 0 * * *"]
 [env.prod]
 
   [env.prod.vars]
-  WORKER_ENV = "prod"
+  ENV = "prod"
+  ORIGIN = "https://api.notwithout.help"
+
+  # We generate a new access token on each page load, so this doesn't need to
+  # live that long.
+  ACCESS_TOKEN_EXP = "3600" # 1 hour
+
+  # The challenge token should be short-lived; it only needs to live long enough
+  # to be exchanged for an access token.
+  CHALLENGE_TOKEN_EXP = "60" # 1 minute
+
+  # The longest request bodies we expect to see are form templates and user
+  # submissions, which are both just plain text. This should give users enough
+  # space to say what they want to say while protecting us from someone uploading
+  # the complete works of Shakespeare.
+  MAX_REQUEST_BODY_LEN = "1048576" # 1 MiB
 
   [env.prod.route]
   pattern = "api.notwithout.help"
@@ -32,7 +47,13 @@ crons = ["0 0 * * *"]
 [env.dev]
 
   [env.dev.vars]
-  WORKER_ENV = "dev"
+  ENV = "dev"
+  ORIGIN = "https://api-dev.notwithout.help"
+
+  # Copied from the prod environment.
+  ACCESS_TOKEN_EXP = "3600"        # 1 hour
+  CHALLENGE_TOKEN_EXP = "60"       # 1 minute
+  MAX_REQUEST_BODY_LEN = "1048576" # 1 MiB
 
   [env.dev.route]
   pattern = "api-dev.notwithout.help"

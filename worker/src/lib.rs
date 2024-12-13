@@ -22,6 +22,8 @@ const KV_BINDING: &str = "KV";
 async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Response<Body>> {
     console_error_panic_hook::set_once();
 
+    config::init(&env).expect("failed to initialize config");
+
     let state = AppState {
         store: UnauthenticatedStore::new(env.d1(D1_BINDING)?, env.kv(KV_BINDING)?),
     };
@@ -32,6 +34,8 @@ async fn fetch(req: HttpRequest, env: Env, _ctx: Context) -> worker::Result<Resp
 #[event(scheduled)]
 async fn scheduled(_event: ScheduledEvent, env: Env, _ctx: ScheduleContext) {
     console_error_panic_hook::set_once();
+
+    config::init(&env).expect("failed to initialize config");
 
     let d1 = env.d1(D1_BINDING).expect("failed to get D1 binding");
     let kv = env.kv(KV_BINDING).expect("failed to get KV binding");

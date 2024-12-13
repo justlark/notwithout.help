@@ -1,7 +1,58 @@
-use std::time::Duration;
+use std::{sync::OnceLock, time::Duration};
+
+use worker::Env;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum WorkerEnv {
+    Dev,
+    Prod,
+}
+
+#[derive(Debug)]
+struct Config {
+    env: WorkerEnv,
+    origin: String,
+    access_token_exp: Duration,
+    challenge_token_exp: Duration,
+    max_request_body_len: usize,
+}
+
+static CONFIG: OnceLock<Config> = OnceLock::new();
+
+pub fn init(env: &Env) -> anyhow::Result<()> {
+    CONFIG
+        .set(Config {
+            env: match env.var("ENV")?.to_string().as_str() {
+                "dev" => WorkerEnv::Dev,
+                "prod" => WorkerEnv::Prod,
+                _ => return Err(anyhow::anyhow!("invalid ENV")),
+            },
+            origin: env.var("ORIGIN")?.to_string(),
+            access_token_exp: Duration::from_secs(
+                env.var("ACCESS_TOKEN_EXP")?.to_string().parse()?,
+            ),
+            challenge_token_exp: Duration::from_secs(
+                env.var("CHALLENGE_TOKEN_EXP")?.to_string().parse()?,
+            ),
+            max_request_body_len: env.var("MAX_REQUEST_BODY_LEN")?.to_string().parse()?,
+        })
+        .ok();
+
+    Ok(())
+}
+
+fn get_config() -> &'static Config {
+    CONFIG.get().expect("config not initialized")
+}
+
+// Currently unused.
+#[allow(dead_code)]
+pub fn env() -> WorkerEnv {
+    get_config().env
+}
 
 pub fn current_origin() -> String {
-    String::from("https://api.notwithout.help")
+    get_config().origin.clone()
 }
 
 pub fn allowed_origins() -> Vec<String> {
@@ -9,16 +60,13 @@ pub fn allowed_origins() -> Vec<String> {
 }
 
 pub fn access_token_exp() -> Duration {
-    Duration::from_secs(60 * 60)
+    get_config().access_token_exp
 }
 
 pub fn challenge_token_exp() -> Duration {
-    Duration::from_secs(60)
+    get_config().challenge_token_exp
 }
 
 pub fn max_request_body_len() -> usize {
-    // The longest request bodies we expect to see are form templates and user submissions, which
-    // are both just plain text. This should give users enough space to say what they want to say
-    // while protecting us from someone uploading the complete works of Shakespeare.
-    1024 * 1024
+    get_config().max_request_body_len
 }
