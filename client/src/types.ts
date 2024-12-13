@@ -4,8 +4,6 @@ export type Newtype<T, S> = T & {
   readonly __tag: S;
 };
 
-export type AtLeastOne<T> = [T, ...Array<T>];
-
 export type Loadable<T = unknown, E = never> =
   | { state: "loading" }
   | { state: "done"; value: T }

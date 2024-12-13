@@ -2,14 +2,14 @@ import type { ApiErrorKind } from "@/api";
 import api, { ApiError } from "@/api";
 import type { PublicPrimaryKey } from "@/crypto";
 import type { Loadable } from "@/types";
-import type { ContactMethodCode } from "@/vars";
+import type { ContactMethod } from "@/vars";
 import { ref, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useLink } from "./useLink";
 
 export interface Form {
   orgName: string;
   description: string;
-  contactMethods: Array<ContactMethodCode>;
+  contactMethods: Array<ContactMethod>;
   publicPrimaryKey: PublicPrimaryKey;
   expirationDate: Date | undefined;
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Card from "primevue/card";
 import { formatDateTime } from "@/encoding";
-import { type ContactMethodCode, contactMethodByCode, TOAST_INFO_TTL } from "@/vars";
+import { type ContactMethod, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
 
@@ -9,7 +9,7 @@ const props = defineProps<{
   index: string;
   name: string;
   contact: string;
-  contactMethod: ContactMethodCode;
+  contactMethod: ContactMethod;
   createdAt: Date;
 }>();
 
@@ -49,9 +49,7 @@ const headingId = computed(() => `contact-card-heading-${props.index}`);
             <i class="pi pi-clipboard cursor-pointer" aria-hidden="true" @click="copyContact" />
           </button>
           <span>{{ props.contact }}</span>
-          <span class="text-sm text-muted-color"
-            >({{ contactMethodByCode(props.contactMethod)?.name }})</span
-          >
+          <span class="text-sm text-muted-color">({{ props.contactMethod }})</span>
         </div>
       </template>
     </Card>

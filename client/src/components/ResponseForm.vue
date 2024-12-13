@@ -4,7 +4,7 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-import { CONTACT_METHOD_CODES, contactMethodByCode, type ContactMethodCode } from "@/vars";
+import { CONTACT_METHODS, type ContactMethod } from "@/vars";
 import { z } from "zod";
 import { loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
@@ -13,7 +13,7 @@ import { toTypedSchema } from "@vee-validate/zod";
 const FORM_STORAGE_KEY = "form";
 
 const props = defineProps<{
-  contactMethods: ReadonlyArray<ContactMethodCode>;
+  contactMethods: Array<ContactMethod>;
 }>();
 
 type Emits = {
@@ -25,7 +25,7 @@ const emit = defineEmits<Emits>();
 const schema = z.object({
   name: z.string().min(1, { message: "You must provide a name." }),
   contact: z.string().min(1, { message: "You must provide a way to contact you." }),
-  contactMethod: z.enum(CONTACT_METHOD_CODES, {
+  contactMethod: z.enum(CONTACT_METHODS, {
     message: "You must provide a preferred contact method.",
   }),
 });
@@ -106,9 +106,7 @@ const resetForm = () => {
         <Select
           v-model="contactMethod"
           v-bind="contactMethodAttrs"
-          :options="props.contactMethods.map(contactMethodByCode)"
-          option-label="name"
-          option-value="code"
+          :options="props.contactMethods"
           size="large"
           placeholder="Method"
           class="basis-1/3 max-sm:grow"

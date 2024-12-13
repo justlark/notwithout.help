@@ -11,7 +11,7 @@ import {
   type WrappedPrivatePrimaryKey,
 } from "./crypto";
 import { decodeBase64, encodeBase64 } from "./encoding";
-import type { ContactMethodCode } from "./vars";
+import type { ContactMethod } from "./vars";
 
 //
 // TODO: Handle errors from the API.
@@ -53,7 +53,7 @@ export type AccessRole = "read" | "admin";
 export interface SubmissionBody {
   name: string;
   contact: string;
-  contact_method: ContactMethodCode;
+  contact_method: ContactMethod;
 }
 
 export interface GetFormParams {
@@ -63,7 +63,7 @@ export interface GetFormParams {
 export interface GetFormResponse {
   orgName: string;
   description: string;
-  contactMethods: Array<ContactMethodCode>;
+  contactMethods: Array<ContactMethod>;
   publicPrimaryKey: PublicPrimaryKey;
   expirationDate: Date | undefined;
 }
@@ -92,7 +92,7 @@ export interface PostFormParams {
   publicSigningKey: PublicSigningKey;
   orgName: string;
   description: string;
-  contactMethods: Array<ContactMethodCode>;
+  contactMethods: Array<ContactMethod>;
   expirationDate: Date | undefined;
 }
 

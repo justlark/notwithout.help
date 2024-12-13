@@ -4,7 +4,7 @@ import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { TOAST_ERROR_TTL, TOAST_INFO_TTL, type ContactMethodCode } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL, type ContactMethod } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
@@ -21,7 +21,7 @@ import { stringify as toCsv } from "csv-stringify/browser/esm/sync";
 export interface Submission {
   name: string;
   contact: string;
-  contactMethod: ContactMethodCode;
+  contactMethod: ContactMethod;
   createdAt: Date;
 }
 
