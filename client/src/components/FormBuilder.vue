@@ -22,7 +22,7 @@ type Emits = {
 const emit = defineEmits<Emits>();
 
 const schema = z.object({
-  title: z.string().min(1, { message: "You must provide a title." }),
+  title: z.string().min(1, { message: "You must provide a name for your group." }),
   description: z.string().min(1, { message: "You must provide a description." }),
   contactMethods: z
     .array(z.string())
@@ -126,7 +126,7 @@ const addCustomContactMethod = () => {
         v-model="description"
         v-bind="descriptionAttrs"
         auto-resize
-        placeholder="We're a group advocating for…"
+        placeholder="We're a group that…"
         aria-describedby="description-help"
       />
       <Message v-if="errors.description" severity="error" size="small" variant="simple">
@@ -147,7 +147,7 @@ const addCustomContactMethod = () => {
         v-model="contactMethods"
         v-bind="contactMethodsAttrs"
         :options="contactMethodOptions"
-        placeholder="Email, SMS, Signal, etc."
+        placeholder="Email, Signal, Telegram, etc."
         display="chip"
         size="large"
         aria-describedby="contact-help"

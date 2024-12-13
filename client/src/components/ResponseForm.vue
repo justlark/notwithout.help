@@ -78,7 +78,7 @@ const resetForm = () => {
         v-bind="nameAttrs"
         type="text"
         size="large"
-        placeholder="Jane"
+        placeholder="Alex"
         aria-describedby="name-help"
       />
       <Message v-if="errors.name" severity="error" size="small" variant="simple">
@@ -98,7 +98,7 @@ const resetForm = () => {
           v-bind="contactAttrs"
           type="text"
           size="large"
-          placeholder="jane@example.com"
+          placeholder="alex@example.com"
           aria-describedby="contact-help"
           class="grow"
         />
@@ -107,7 +107,7 @@ const resetForm = () => {
           v-bind="contactMethodAttrs"
           :options="props.contactMethods"
           size="large"
-          placeholder="Method"
+          placeholder="Email"
           class="basis-1/3 max-sm:grow"
         />
       </div>
