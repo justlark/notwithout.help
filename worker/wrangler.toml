@@ -14,6 +14,10 @@ crons = ["0 0 * * *"]
   [env.prod.vars]
   WORKER_ENV = "prod"
 
+  [env.prod.route]
+  pattern = "api.notwithout.help"
+  custom_domain = true
+
   [[env.prod.d1_databases]]
   binding = "DB"
   database_name = "notwithouthelp"
@@ -29,6 +33,10 @@ crons = ["0 0 * * *"]
 
   [env.dev.vars]
   WORKER_ENV = "dev"
+
+  [env.dev.route]
+  pattern = "api-dev.notwithout.help"
+  custom_domain = true
 
   [[env.dev.d1_databases]]
   binding = "DB"
