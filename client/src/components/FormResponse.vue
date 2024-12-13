@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Card from "primevue/card";
 import { formatDateTime } from "@/encoding";
-import { type ContactMethod, TOAST_INFO_TTL } from "@/vars";
+import { TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
 
@@ -9,7 +9,7 @@ const props = defineProps<{
   index: string;
   name: string;
   contact: string;
-  contactMethod: ContactMethod;
+  contactMethod: string;
   createdAt: Date;
 }>();
 

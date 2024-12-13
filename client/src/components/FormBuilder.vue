@@ -11,7 +11,7 @@ import { loadState, persistState } from "@/state";
 import { z } from "zod";
 import { serializeDate, deserializeDate } from "@/encoding";
 import { toTypedSchema } from "@vee-validate/zod";
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const FORM_STORAGE_KEY = "template";
 
@@ -25,7 +25,7 @@ const schema = z.object({
   title: z.string().min(1, { message: "You must provide a title." }),
   description: z.string().min(1, { message: "You must provide a description." }),
   contactMethods: z
-    .array(z.enum(CONTACT_METHODS))
+    .array(z.string())
     .nonempty({ message: "You must specify at least one contact method." }),
   expirationDate: z.date().optional(),
 });
@@ -64,6 +64,18 @@ watch(values, () => {
   }));
 });
 
+const newCustomContactMethod = ref("");
+
+// If the user refreshes the page, loading the form state from local storage, we want to make sure
+// we include any custom contact methods to the multiselect options, while preserving the ordering.
+const contactMethodOptions = computed(() => {
+  const defaultMethods = new Set<string>(CONTACT_METHODS);
+  return [
+    ...CONTACT_METHODS,
+    ...contactMethods.value.filter((method) => !defaultMethods.has(method)),
+  ];
+});
+
 const submitForm = handleSubmit((values) => {
   emit("submit", values, resetForm);
 });
@@ -71,6 +83,12 @@ const submitForm = handleSubmit((values) => {
 const resetForm = () => {
   localStorage.removeItem(FORM_STORAGE_KEY);
   resetFormInner({ values: initialValues.value });
+};
+
+const addCustomContactMethod = () => {
+  contactMethodOptions.value.push(newCustomContactMethod.value);
+  contactMethods.value.push(newCustomContactMethod.value);
+  newCustomContactMethod.value = "";
 };
 </script>
 
@@ -128,12 +146,30 @@ const resetForm = () => {
         id="contact-input"
         v-model="contactMethods"
         v-bind="contactMethodsAttrs"
-        :options="[...CONTACT_METHODS]"
+        :options="contactMethodOptions"
         placeholder="Email, SMS, Signal, etc."
         display="chip"
         size="large"
         aria-describedby="contact-help"
-      />
+      >
+        <template #footer>
+          <div class="flex gap-4 m-4">
+            <InputText
+              v-model="newCustomContactMethod"
+              placeholder="Custom"
+              size="small"
+              class="grow"
+            />
+            <Button
+              @click="addCustomContactMethod"
+              label="Add"
+              severity="primary"
+              class="min-w-16"
+              size="small"
+            />
+          </div>
+        </template>
+      </MultiSelect>
       <Message v-if="errors.contactMethods" severity="error" size="small" variant="simple">
         {{ errors.contactMethods }}
       </Message>

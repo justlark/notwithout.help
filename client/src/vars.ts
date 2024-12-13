@@ -16,7 +16,7 @@ export const newSecretLink = (
     `${window.location.origin}/view/#/${formId}/${clientKeyId}/${encodeBase64Url(secretLinkKey)}`,
   );
 
-export const CONTACT_METHODS = [
+export const CONTACT_METHODS: ReadonlyArray<string> = [
   "Email",
   "SMS",
   "Signal",
@@ -32,11 +32,9 @@ export const CONTACT_METHODS = [
   "Facebook",
   "Snapchat",
   "WeChat",
-] as const;
+];
 
-export type ContactMethod = (typeof CONTACT_METHODS)[number];
-
-export const TITLE_LEADS = [
+export const TITLE_LEADS: ReadonlyArray<string> = [
   "Can I mobilize my community?",
   "Can I enact lasting change?",
   "Can I make a real difference?",
@@ -44,6 +42,6 @@ export const TITLE_LEADS = [
   "Can I change the world?",
 ];
 
-const pickRandom = <T>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+const pickRandom = <T>(arr: ReadonlyArray<T>) => arr[Math.floor(Math.random() * arr.length)];
 
 export const randomTitleLead = () => pickRandom(TITLE_LEADS);

@@ -4,7 +4,6 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
-import { CONTACT_METHODS, type ContactMethod } from "@/vars";
 import { z } from "zod";
 import { loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
@@ -13,7 +12,7 @@ import { toTypedSchema } from "@vee-validate/zod";
 const FORM_STORAGE_KEY = "form";
 
 const props = defineProps<{
-  contactMethods: Array<ContactMethod>;
+  contactMethods: Array<string>;
 }>();
 
 type Emits = {
@@ -25,7 +24,7 @@ const emit = defineEmits<Emits>();
 const schema = z.object({
   name: z.string().min(1, { message: "You must provide a name." }),
   contact: z.string().min(1, { message: "You must provide a way to contact you." }),
-  contactMethod: z.enum(CONTACT_METHODS, {
+  contactMethod: z.string({
     message: "You must provide a preferred contact method.",
   }),
 });
