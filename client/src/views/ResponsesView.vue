@@ -2,6 +2,7 @@
 import FormResponse from "@/components/FormResponse.vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
+import Card from "primevue/card";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL, type ContactMethod } from "@/vars";
@@ -171,7 +172,7 @@ watchEffect(async () => {
     <div class="xl:w-3/4 mx-auto" v-else>
       <div
         v-if="isDone(form)"
-        class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-1"
+        class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-2"
       >
         <h2>{{ form.value.orgName }}</h2>
         <span v-if="form.value.expirationDate" class="text-muted-color">
@@ -179,7 +180,7 @@ watchEffect(async () => {
           Expires on <time>{{ formatDate(form.value.expirationDate) }}</time>
         </span>
       </div>
-      <div class="flex flex-col gap-8">
+      <div class="flex flex-col gap-4">
         <SecretLinkList
           v-if="!isReadOnly"
           :form-id="formId"
@@ -197,13 +198,17 @@ watchEffect(async () => {
             :contactMethod="submission.contactMethod"
             :createdAt="submission.createdAt"
           />
-          <div v-if="noSubmissions" class="flex gap-5 items-center text-muted-color">
-            <i class="pi pi-info-circle !text-4xl"></i>
-            <div class="flex flex-col gap-1">
-              <span class="text-2xl">No responses yet</span>
-              <span>Refresh the page to check again.</span>
-            </div>
-          </div>
+          <Card v-if="noSubmissions" class="w-full">
+            <template #content>
+              <div class="flex gap-5 items-center text-muted-color">
+                <i class="pi pi-info-circle !text-4xl"></i>
+                <div class="flex flex-col gap-1">
+                  <span class="text-2xl">No responses yet</span>
+                  <span>Refresh the page to check again.</span>
+                </div>
+              </div>
+            </template>
+          </Card>
         </div>
       </div>
       <div class="xl:sticky bottom-6">
