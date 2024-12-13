@@ -168,72 +168,73 @@ watchEffect(async () => {
       message="Either this is an invalid link, the group has been deleted, or you don't have access to it anymore."
     />
 
-    <div v-else>
-      <div v-if="isDone(form)" class="text-center flex flex-col gap-2 mb-8">
+    <div class="xl:w-3/4 mx-auto" v-else>
+      <div
+        v-if="isDone(form)"
+        class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-1"
+      >
         <h2>{{ form.value.orgName }}</h2>
         <span v-if="form.value.expirationDate" class="text-muted-color">
           <i class="pi pi-calendar"></i>
           Expires on <time>{{ formatDate(form.value.expirationDate) }}</time>
         </span>
       </div>
-      <div class="xl:w-3/4 mx-auto">
-        <div class="flex flex-col gap-8">
-          <SecretLinkList
-            v-if="!isReadOnly"
-            :form-id="formId"
-            :client-key-id="clientKeyId"
-            :secret-link-key="secretLinkKey"
+      <div class="flex flex-col gap-8">
+        <SecretLinkList
+          v-if="!isReadOnly"
+          :form-id="formId"
+          :client-key-id="clientKeyId"
+          :secret-link-key="secretLinkKey"
+        />
+        <div class="flex flex-col gap-4 items-center">
+          <FormResponse
+            v-for="(submission, index) in submissions"
+            :key="index"
+            :index="index.toString()"
+            class="w-full"
+            :name="submission.name"
+            :contact="submission.contact"
+            :contactMethod="submission.contactMethod"
+            :createdAt="submission.createdAt"
           />
-          <div class="flex flex-col gap-4 items-center">
-            <FormResponse
-              v-for="(submission, index) in submissions"
-              :key="index"
-              :index="index.toString()"
-              class="w-full"
-              :name="submission.name"
-              :contact="submission.contact"
-              :contactMethod="submission.contactMethod"
-              :createdAt="submission.createdAt"
-            />
-            <div v-if="noSubmissions" class="flex gap-5 items-center text-muted-color">
-              <i class="pi pi-info-circle !text-4xl"></i>
-              <div class="flex flex-col gap-1">
-                <span class="text-2xl">No responses yet</span>
-                <span>Refresh the page to check again.</span>
-              </div>
+          <div v-if="noSubmissions" class="flex gap-5 items-center text-muted-color">
+            <i class="pi pi-info-circle !text-4xl"></i>
+            <div class="flex flex-col gap-1">
+              <span class="text-2xl">No responses yet</span>
+              <span>Refresh the page to check again.</span>
             </div>
           </div>
         </div>
-        <div class="xl:sticky bottom-6">
-          <div
-            class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
-          >
-            <Button
-              v-if="submissions.length > 0"
-              class="!justify-start"
-              as="a"
-              :href="csvFileObjectUrl"
-              download="responses.csv"
-              label="Export"
-              severity="secondary"
-              icon="pi pi-download"
-            />
-            <Button
-              v-if="isLoaded && !isReadOnly"
-              class="!justify-start"
-              label="Edit"
-              severity="secondary"
-              icon="pi pi-pen-to-square"
-            />
-            <Button
-              v-if="isLoaded && !isReadOnly"
-              @click="deleteForm"
-              class="!justify-start"
-              label="Delete"
-              severity="danger"
-              icon="pi pi-trash"
-            />
-          </div>
+      </div>
+      <div class="xl:sticky bottom-6">
+        <div
+          class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
+        >
+          <Button
+            v-if="submissions.length > 0"
+            class="!justify-start"
+            as="a"
+            :href="csvFileObjectUrl"
+            download="responses.csv"
+            label="Export"
+            severity="secondary"
+            icon="pi pi-download"
+          />
+          <Button
+            v-if="isLoaded && !isReadOnly"
+            class="!justify-start"
+            label="Edit"
+            severity="secondary"
+            icon="pi pi-pen-to-square"
+          />
+          <Button
+            v-if="isLoaded && !isReadOnly"
+            @click="deleteForm"
+            class="!justify-start"
+            label="Delete"
+            severity="danger"
+            icon="pi pi-trash"
+          />
         </div>
       </div>
     </div>
