@@ -1,3 +1,11 @@
+resource "cloudflare_record" "apex_cname" {
+  zone_id = data.cloudflare_zone.site.id
+  type    = "CNAME"
+  name    = "@"
+  content = "notwithouthelp.pages.dev"
+  proxied = true
+}
+
 resource "cloudflare_record" "apex_txt_sl_verification" {
   zone_id = data.cloudflare_zone.site.id
   type    = "TXT"
