@@ -12,6 +12,7 @@ pub enum WorkerEnv {
 struct Config {
     env: WorkerEnv,
     origin: String,
+    cors_allowed_origin: String,
     access_token_exp: Duration,
     challenge_token_exp: Duration,
     max_request_body_len: usize,
@@ -27,6 +28,7 @@ pub fn init(env: &Env) -> anyhow::Result<()> {
                 "prod" => WorkerEnv::Prod,
                 _ => return Err(anyhow::anyhow!("invalid ENV")),
             },
+            cors_allowed_origin: env.var("CORS_ALLOWED_ORIGIN")?.to_string(),
             origin: env.var("ORIGIN")?.to_string(),
             access_token_exp: Duration::from_secs(
                 env.var("ACCESS_TOKEN_EXP")?.to_string().parse()?,
@@ -55,8 +57,12 @@ pub fn current_origin() -> String {
     get_config().origin.clone()
 }
 
-pub fn allowed_origins() -> Vec<String> {
+pub fn api_allowed_origins() -> Vec<String> {
     vec![current_origin()]
+}
+
+pub fn cors_allowed_origin() -> String {
+    get_config().cors_allowed_origin.clone()
 }
 
 pub fn access_token_exp() -> Duration {

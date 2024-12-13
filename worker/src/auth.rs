@@ -43,13 +43,13 @@ fn new_jwt_validation() -> jwt::Validation {
         .map(|claim| claim.to_string())
         .collect();
     validation.aud = Some(
-        config::allowed_origins()
+        config::api_allowed_origins()
             .into_iter()
             .map(String::from)
             .collect(),
     );
     validation.iss = Some(
-        config::allowed_origins()
+        config::api_allowed_origins()
             .into_iter()
             .map(String::from)
             .collect(),

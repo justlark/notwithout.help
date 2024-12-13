@@ -14,6 +14,7 @@ crons = ["0 0 * * *"]
   [env.prod.vars]
   ENV = "prod"
   ORIGIN = "https://api.notwithout.help"
+  CORS_ALLOWED_ORIGIN = "https://notwithout.help"
 
   # We generate a new access token on each page load, so this doesn't need to
   # live that long.
@@ -49,6 +50,7 @@ crons = ["0 0 * * *"]
   [env.dev.vars]
   ENV = "dev"
   ORIGIN = "https://api-dev.notwithout.help"
+  CORS_ALLOWED_ORIGIN = "https://main.notwithouthelp.pages.dev"
 
   # Copied from the prod environment.
   ACCESS_TOKEN_EXP = "3600"        # 1 hour
