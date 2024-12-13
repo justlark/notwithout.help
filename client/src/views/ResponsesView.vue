@@ -171,7 +171,7 @@ watchEffect(async () => {
 
     <div class="xl:w-3/4 mx-auto" v-else>
       <div
-        v-if="isDone(form)"
+        v-if="isDone(form) && isLoaded"
         class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-2"
       >
         <h2>{{ form.value.orgName }}</h2>
