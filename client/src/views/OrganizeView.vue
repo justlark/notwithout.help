@@ -34,8 +34,8 @@ const formSubmitted = computed(
 );
 
 const submitForm = async (values: FormValues, resetForm: () => void) => {
-  const newSecretLinkKey = generateSecretLinkKey();
-  const newPrimaryKeypair = generatePrimaryKeypair();
+  const newSecretLinkKey = await generateSecretLinkKey();
+  const newPrimaryKeypair = await generatePrimaryKeypair();
   const derivedKeys = await deriveKeys(newSecretLinkKey);
 
   let response;
@@ -79,11 +79,11 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
     derivedKeys.privateSigningKey,
   );
 
-  const encryptedComment = sealKeyComment(
+  const encryptedComment = await sealKeyComment(
     encodeUtf8(INITIAL_KEY_COMMENT),
     newPrimaryKeypair.public,
   );
-  const wrappedPrivatePrimaryKey = wrapPrivatePrimaryKey(
+  const wrappedPrivatePrimaryKey = await wrapPrivatePrimaryKey(
     newPrimaryKeypair.private,
     derivedKeys.secretWrappingKey,
   );

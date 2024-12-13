@@ -142,7 +142,7 @@ watchEffect(async () => {
   noSubmissions.value = encryptedSubmissions.length === 0;
 
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
-    const encodedSubmissionBody = unsealSubmissionBody(
+    const encodedSubmissionBody = await unsealSubmissionBody(
       encryptedBody,
       publicPrimaryKey,
       privatePrimaryKey.value.value,

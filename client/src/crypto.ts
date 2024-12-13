@@ -2,8 +2,16 @@ import _sodium from "libsodium-wrappers";
 import * as ed from "@noble/ed25519";
 import type { Newtype } from "./types";
 
-await _sodium.ready;
-export const sodium = _sodium;
+let isSodiumReady = false;
+
+const getSodium = async () => {
+  if (!isSodiumReady) {
+    await _sodium.ready;
+    isSodiumReady = true;
+  }
+
+  return _sodium;
+};
 
 export type FormId = Newtype<string, { readonly __tag: unique symbol }>;
 export type ClientKeyId = Newtype<string, { readonly __tag: unique symbol }>;
@@ -41,22 +49,30 @@ type DerivedKeyParams = {
   len: number;
 };
 
-const SECRET_WRAPPING_KEY_PARAMS: DerivedKeyParams = {
-  index: 1,
-  context: "nwh-wrap",
-  len: sodium["crypto_secretbox_KEYBYTES"],
+const secretWrappingKeyParams = async (): Promise<DerivedKeyParams> => {
+  const sodium = await getSodium();
+
+  return {
+    index: 1,
+    context: "nwh-wrap",
+    len: sodium["crypto_secretbox_KEYBYTES"],
+  };
 };
 
-const PRIVATE_SIGNING_KEY_PARAMS: DerivedKeyParams = {
+const privateSigningKeyParams = (): DerivedKeyParams => ({
   index: 2,
   context: "nwh-sign",
   len: 32,
+});
+
+export const generateSecretLinkKey = async (): Promise<SecretLinkKey> => {
+  const sodium = await getSodium();
+  return sodium.crypto_kdf_keygen() as SecretLinkKey;
 };
 
-export const generateSecretLinkKey = (): SecretLinkKey =>
-  sodium.crypto_kdf_keygen() as SecretLinkKey;
+export const generatePrimaryKeypair = async (): Promise<PrimaryKeypair> => {
+  const sodium = await getSodium();
 
-export const generatePrimaryKeypair = (): PrimaryKeypair => {
   const { privateKey, publicKey } = sodium.crypto_box_keypair();
 
   return {
@@ -66,17 +82,22 @@ export const generatePrimaryKeypair = (): PrimaryKeypair => {
 };
 
 export const deriveKeys = async (secretLinkKey: SecretLinkKey): Promise<DerivedKeys> => {
+  const sodium = await getSodium();
+
+  const wrappingkeyParams = await secretWrappingKeyParams();
+  const signingKeyParams = privateSigningKeyParams();
+
   const secretWrappingKey = sodium.crypto_kdf_derive_from_key(
-    SECRET_WRAPPING_KEY_PARAMS.len,
-    SECRET_WRAPPING_KEY_PARAMS.index,
-    SECRET_WRAPPING_KEY_PARAMS.context,
+    wrappingkeyParams.len,
+    wrappingkeyParams.index,
+    wrappingkeyParams.context,
     secretLinkKey,
   ) as SecretWrappingKey;
 
   const privateSigningKey = sodium.crypto_kdf_derive_from_key(
-    PRIVATE_SIGNING_KEY_PARAMS.len,
-    PRIVATE_SIGNING_KEY_PARAMS.index,
-    PRIVATE_SIGNING_KEY_PARAMS.context,
+    signingKeyParams.len,
+    signingKeyParams.index,
+    signingKeyParams.context,
     secretLinkKey,
   ) as PrivateSigningKey;
 
@@ -89,72 +110,87 @@ export const deriveKeys = async (secretLinkKey: SecretLinkKey): Promise<DerivedK
   };
 };
 
-const encryptSecretbox = (
+const encryptSecretbox = async (
   plaintext: Uint8Array,
   secretWrappingKey: SecretWrappingKey,
-): Uint8Array => {
+): Promise<Uint8Array> => {
+  const sodium = await getSodium();
+
   const nonce = sodium.randombytes_buf(sodium["crypto_secretbox_NONCEBYTES"]);
   const ciphertext = sodium.crypto_secretbox_easy(plaintext, nonce, secretWrappingKey);
   return new Uint8Array([...nonce, ...ciphertext]);
 };
 
-export const decryptSecretbox = (
+export const decryptSecretbox = async (
   ciphertext: Uint8Array,
   secretWrappingKey: SecretWrappingKey,
-): Uint8Array => {
+): Promise<Uint8Array> => {
+  const sodium = await getSodium();
+
   const nonce = ciphertext.slice(0, sodium["crypto_secretbox_NONCEBYTES"]);
   const message = ciphertext.slice(sodium["crypto_secretbox_NONCEBYTES"]);
 
   return sodium.crypto_secretbox_open_easy(message, nonce, secretWrappingKey);
 };
 
-const sealBox = (message: Uint8Array, publicPrimaryKey: PublicPrimaryKey): Uint8Array =>
-  sodium.crypto_box_seal(message, publicPrimaryKey);
+const sealBox = async (
+  message: Uint8Array,
+  publicPrimaryKey: PublicPrimaryKey,
+): Promise<Uint8Array> => {
+  const sodium = await getSodium();
+  return sodium.crypto_box_seal(message, publicPrimaryKey);
+};
 
-const unsealBox = (
+const unsealBox = async (
   ciphertext: Uint8Array,
   publicPrimaryKey: PublicPrimaryKey,
   privatePrimaryKey: PrivatePrimaryKey,
-): Uint8Array => sodium.crypto_box_seal_open(ciphertext, publicPrimaryKey, privatePrimaryKey);
+): Promise<Uint8Array> => {
+  const sodium = await getSodium();
+  return sodium.crypto_box_seal_open(ciphertext, publicPrimaryKey, privatePrimaryKey);
+};
 
 const sign = async (
   message: Uint8Array,
   privateSigningKey: PrivateSigningKey,
 ): Promise<Uint8Array> => ed.signAsync(message, privateSigningKey);
 
-export const wrapPrivatePrimaryKey = (
+export const wrapPrivatePrimaryKey = async (
   privatePrimaryKey: PrivatePrimaryKey,
   secretWrappingKey: SecretWrappingKey,
-): WrappedPrivatePrimaryKey =>
-  encryptSecretbox(privatePrimaryKey, secretWrappingKey) as WrappedPrivatePrimaryKey;
+): Promise<WrappedPrivatePrimaryKey> =>
+  (await encryptSecretbox(privatePrimaryKey, secretWrappingKey)) as WrappedPrivatePrimaryKey;
 
-export const unwrapPrivatePrimaryKey = (
+export const unwrapPrivatePrimaryKey = async (
   wrappedPrivatePrimaryKey: WrappedPrivatePrimaryKey,
   secretWrappingKey: SecretWrappingKey,
-): PrivatePrimaryKey =>
-  decryptSecretbox(wrappedPrivatePrimaryKey, secretWrappingKey) as PrivatePrimaryKey;
+): Promise<PrivatePrimaryKey> =>
+  (await decryptSecretbox(wrappedPrivatePrimaryKey, secretWrappingKey)) as PrivatePrimaryKey;
 
-export const sealKeyComment = (
+export const sealKeyComment = async (
   comment: Uint8Array,
   publicPrimaryKey: PublicPrimaryKey,
-): EncryptedKeyComment => sealBox(comment, publicPrimaryKey) as EncryptedKeyComment;
+): Promise<EncryptedKeyComment> =>
+  (await sealBox(comment, publicPrimaryKey)) as EncryptedKeyComment;
 
-export const unsealKeyComment = (
+export const unsealKeyComment = async (
   comment: EncryptedKeyComment,
   publicPrimaryKey: PublicPrimaryKey,
   privatePrimaryKey: PrivatePrimaryKey,
-): Uint8Array => unsealBox(comment, publicPrimaryKey, privatePrimaryKey) as Uint8Array;
+): Promise<Uint8Array> =>
+  (await unsealBox(comment, publicPrimaryKey, privatePrimaryKey)) as Uint8Array;
 
-export const sealSubmissionBody = (
+export const sealSubmissionBody = async (
   body: Uint8Array,
   publicPrimaryKey: PublicPrimaryKey,
-): EncryptedSubmissionBody => sealBox(body, publicPrimaryKey) as EncryptedSubmissionBody;
+): Promise<EncryptedSubmissionBody> =>
+  (await sealBox(body, publicPrimaryKey)) as EncryptedSubmissionBody;
 
-export const unsealSubmissionBody = (
+export const unsealSubmissionBody = async (
   body: EncryptedSubmissionBody,
   publicPrimaryKey: PublicPrimaryKey,
   privatePrimaryKey: PrivatePrimaryKey,
-): Uint8Array => unsealBox(body, publicPrimaryKey, privatePrimaryKey);
+): Promise<Uint8Array> => await unsealBox(body, publicPrimaryKey, privatePrimaryKey);
 
 export const signApiChallengeNonce = async (
   nonce: ApiChallengeNonce,

@@ -72,18 +72,20 @@ watchEffect(async () => {
 
   try {
     const keys = await api.listKeys({ formId: props.formId, accessToken: token });
-    secretKeys.value = keys.map((key) => ({
-      comment: decodeUtf8(
-        unsealKeyComment(
-          key.encryptedComment,
-          form.value.value.publicPrimaryKey,
-          privatePrimaryKey.value.value,
+    secretKeys.value = await Promise.all(
+      keys.map(async (key) => ({
+        comment: decodeUtf8(
+          await unsealKeyComment(
+            key.encryptedComment,
+            form.value.value.publicPrimaryKey,
+            privatePrimaryKey.value.value,
+          ),
         ),
-      ),
-      role: key.role,
-      clientKeyId: key.clientKeyId,
-      accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
-    }));
+        role: key.role,
+        clientKeyId: key.clientKeyId,
+        accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
+      })),
+    );
   } catch {
     toast.add({
       severity: "error",
@@ -106,14 +108,14 @@ const createSecretLink = async (role: AccessRole) => {
 
   const { token } = accessToken.value.value;
 
-  const newSecretLinkKey = generateSecretLinkKey();
+  const newSecretLinkKey = await generateSecretLinkKey();
   const derivedKeys = await deriveKeys(newSecretLinkKey);
 
-  const encryptedComment = sealKeyComment(
+  const encryptedComment = await sealKeyComment(
     encodeUtf8(newSecretLinkComment.value),
     form.value.value.publicPrimaryKey,
   );
-  const wrappedPrivatePrimaryKey = wrapPrivatePrimaryKey(
+  const wrappedPrivatePrimaryKey = await wrapPrivatePrimaryKey(
     privatePrimaryKey.value.value,
     derivedKeys.secretWrappingKey,
   );

@@ -33,7 +33,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
     contact_method: values.contactMethod,
   };
 
-  const encryptedBody = sealSubmissionBody(
+  const encryptedBody = await sealSubmissionBody(
     encodeUtf8(JSON.stringify(submissionBody)),
     publicPrimaryKey,
   );

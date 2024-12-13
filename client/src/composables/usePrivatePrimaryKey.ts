@@ -47,7 +47,7 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
 
       loadable.value = {
         state: "done",
-        value: unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey),
+        value: await unwrapPrivatePrimaryKey(wrappedPrivatePrimaryKey, secretWrappingKey),
       };
     } catch (error) {
       if (error instanceof ApiError) {
