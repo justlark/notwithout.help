@@ -49,6 +49,8 @@ const isNotFound = computed(() => {
 const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 const isReadOnly = computed(() => !isDone(accessToken) || accessToken.value.value.role === "read");
 
+const isMenuExpanded = ref(false);
+
 const csvFileObjectUrl = computed(() => {
   const headers = ["Name", "Contact", "Contact method", "Submitted at"];
   const data = submissions.value.map((submission) => [
@@ -216,41 +218,61 @@ watchEffect(async () => {
       </div>
       <div class="xl:sticky bottom-6">
         <div
-          class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
+          class="flex flex-col gap-6 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
         >
+          <div
+            id="action-menu"
+            :class="{
+              flex: true,
+              'flex-col': true,
+              'gap-3': true,
+              hidden: !isMenuExpanded,
+              'xl:flex': true,
+            }"
+          >
+            <Button
+              class="!justify-start"
+              as="a"
+              :href="newShareLink(formId)"
+              target="_blank"
+              label="Share"
+              severity="secondary"
+              icon="pi pi-external-link"
+            />
+            <Button
+              v-if="submissions.length > 0"
+              class="!justify-start"
+              as="a"
+              :href="csvFileObjectUrl"
+              download="responses.csv"
+              label="Export"
+              severity="secondary"
+              icon="pi pi-download"
+            />
+            <Button
+              v-if="isLoaded && !isReadOnly"
+              class="!justify-start"
+              label="Edit"
+              severity="secondary"
+              icon="pi pi-pen-to-square"
+            />
+            <Button
+              v-if="isLoaded && !isReadOnly"
+              @click="deleteForm"
+              class="!justify-start"
+              label="Delete"
+              severity="danger"
+              icon="pi pi-trash"
+            />
+          </div>
           <Button
-            class="!justify-start"
-            as="a"
-            :href="newShareLink(formId)"
-            target="_blank"
-            label="Share"
-            severity="secondary"
-            icon="pi pi-external-link"
-          />
-          <Button
-            v-if="submissions.length > 0"
-            class="!justify-start"
-            as="a"
-            :href="csvFileObjectUrl"
-            download="responses.csv"
-            label="Export"
-            severity="secondary"
-            icon="pi pi-download"
-          />
-          <Button
-            v-if="isLoaded && !isReadOnly"
-            class="!justify-start"
-            label="Edit"
-            severity="secondary"
-            icon="pi pi-pen-to-square"
-          />
-          <Button
-            v-if="isLoaded && !isReadOnly"
-            @click="deleteForm"
-            class="!justify-start"
-            label="Delete"
-            severity="danger"
-            icon="pi pi-trash"
+            @click="isMenuExpanded = !isMenuExpanded"
+            class="!jusitfy-start xl:!hidden"
+            label="Menu"
+            :severity="isMenuExpanded ? 'secondary' : 'primary'"
+            :icon="isMenuExpanded ? 'pi pi-times' : 'pi pi-bars'"
+            :aria-expanded="isMenuExpanded"
+            aria-controls="action-menu"
           />
         </div>
       </div>
