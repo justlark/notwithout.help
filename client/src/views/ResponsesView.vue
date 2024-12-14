@@ -224,7 +224,7 @@ watchEffect(async () => {
       </div>
       <div class="xl:sticky bottom-6">
         <div
-          v-if="isLoaded"
+          v-if="isLoaded && !waitingForSubmissions"
           class="flex flex-col gap-6 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
         >
           <div
@@ -247,7 +247,7 @@ watchEffect(async () => {
               icon="pi pi-external-link"
             />
             <Button
-              v-if="!returnedNoSubmissions"
+              v-if="submissions.length > 0"
               class="!justify-start"
               as="a"
               :href="csvFileObjectUrl"
