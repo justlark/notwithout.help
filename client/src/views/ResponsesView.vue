@@ -5,7 +5,7 @@ import SecretLinkList from "@/components/SecretLinkList.vue";
 import Card from "primevue/card";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newShareLink } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
@@ -218,6 +218,15 @@ watchEffect(async () => {
         <div
           class="flex flex-col gap-3 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
         >
+          <Button
+            class="!justify-start"
+            as="a"
+            :href="newShareLink(formId)"
+            target="_blank"
+            label="Share"
+            severity="secondary"
+            icon="pi pi-external-link"
+          />
           <Button
             v-if="submissions.length > 0"
             class="!justify-start"
