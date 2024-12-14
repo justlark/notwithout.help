@@ -70,17 +70,6 @@ const doRevoke = async () => {
 };
 
 const revokeSecretLink = async () => {
-  if (isOnlyRemainingLink.value) {
-    toast.add({
-      severity: "error",
-      summary: "Cannot revoke only remaining secret link",
-      detail: "Without any secret links, you would be locked out of this page!",
-      life: TOAST_ERROR_TTL,
-    });
-
-    return;
-  }
-
   confirm.require({
     header: "Revoke this secret link?",
     message: isCurrentUser.value
@@ -140,6 +129,7 @@ const revokeSecretLink = async () => {
       </div>
     </div>
     <Button
+      v-if="!isOnlyRemainingLink"
       class="shrink-0"
       label="Revoke"
       icon="pi pi-times"
