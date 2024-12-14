@@ -177,7 +177,10 @@ watchEffect(async () => {
         <h2>{{ form.value.orgName }}</h2>
         <span v-if="form.value.expirationDate" class="text-muted-color">
           <i class="pi pi-calendar"></i>
-          Expires on <time>{{ formatDate(form.value.expirationDate) }}</time>
+          Expires
+          <time :datetime="form.value.expirationDate.toISOString()">{{
+            formatDate(form.value.expirationDate)
+          }}</time>
         </span>
       </div>
       <div class="flex flex-col gap-4">

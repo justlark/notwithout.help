@@ -131,7 +131,7 @@ const revokeSecretLink = async () => {
         <span class="text-muted-color">
           <span v-if="props.accessedAt">
             last used
-            <time class="text-nowrap" datetime="props.accessedAt.toISOString()">
+            <time class="text-nowrap" :datetime="props.accessedAt.toISOString()">
               {{ formatDateTime(props.accessedAt) }}
             </time>
           </span>
