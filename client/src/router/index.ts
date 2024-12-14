@@ -24,6 +24,11 @@ const router = createRouter({
       name: "view",
       component: () => import("../views/ResponsesView.vue"),
     },
+    {
+      path: "/:path(.*)*",
+      name: "not-found",
+      component: () => import("../views/NotFoundView.vue"),
+    },
   ],
 });
 
