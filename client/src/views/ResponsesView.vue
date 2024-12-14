@@ -3,6 +3,7 @@ import FormResponse from "@/components/FormResponse.vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Card from "primevue/card";
+import Skeleton from "primevue/skeleton";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newShareLink } from "@/vars";
@@ -27,7 +28,10 @@ export interface Submission {
 }
 
 const submissions = ref<Array<Submission>>([]);
-const noSubmissions = ref(false);
+const returnedNoSubmissions = ref(false);
+const waitingForSubmissions = computed(
+  () => submissions.value.length === 0 && !returnedNoSubmissions.value,
+);
 
 const router = useRouter();
 const confirm = useConfirm();
@@ -141,7 +145,7 @@ watchEffect(async () => {
     accessToken: token,
   });
 
-  noSubmissions.value = encryptedSubmissions.length === 0;
+  returnedNoSubmissions.value = encryptedSubmissions.length === 0;
 
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
     const encodedSubmissionBody = await unsealSubmissionBody(
@@ -173,7 +177,7 @@ watchEffect(async () => {
 
     <div class="xl:w-3/4 mx-auto" v-else>
       <div
-        v-if="isDone(form) && isLoaded"
+        v-if="isDone(form)"
         class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-2"
       >
         <h2>{{ form.value.orgName }}</h2>
@@ -203,7 +207,7 @@ watchEffect(async () => {
             :contactMethod="submission.contactMethod"
             :createdAt="submission.createdAt"
           />
-          <Card v-if="noSubmissions" class="w-full">
+          <Card v-if="returnedNoSubmissions" class="w-full">
             <template #content>
               <div class="flex gap-5 items-center text-muted-color">
                 <i class="pi pi-info-circle !text-4xl"></i>
@@ -214,10 +218,13 @@ watchEffect(async () => {
               </div>
             </template>
           </Card>
+          <Skeleton v-if="waitingForSubmissions" height="6rem" />
+          <Skeleton v-if="waitingForSubmissions" height="6rem" />
         </div>
       </div>
       <div class="xl:sticky bottom-6">
         <div
+          v-if="isLoaded"
           class="flex flex-col gap-6 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
         >
           <div
@@ -240,7 +247,7 @@ watchEffect(async () => {
               icon="pi pi-external-link"
             />
             <Button
-              v-if="submissions.length > 0"
+              v-if="!returnedNoSubmissions"
               class="!justify-start"
               as="a"
               :href="csvFileObjectUrl"
@@ -250,14 +257,14 @@ watchEffect(async () => {
               icon="pi pi-download"
             />
             <Button
-              v-if="isLoaded && !isReadOnly"
+              v-if="!isReadOnly"
               class="!justify-start"
               label="Edit"
               severity="secondary"
               icon="pi pi-pen-to-square"
             />
             <Button
-              v-if="isLoaded && !isReadOnly"
+              v-if="!isReadOnly"
               @click="deleteForm"
               class="!justify-start"
               label="Delete"
