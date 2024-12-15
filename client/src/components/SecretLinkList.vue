@@ -193,7 +193,7 @@ const secretLinkActions = [
       <ul>
         <li>Create a new secret link for each person you want to give access to this page.</li>
         <li>
-          Links can be made read-only; they can't be used to make edits or generate new secret
+          Links can be made read-only so they can't be used to make edits or generate new secret
           links.
         </li>
         <li>Links can be revoked (disabled) when they're lost or no longer needed.</li>
