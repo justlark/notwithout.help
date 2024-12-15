@@ -16,6 +16,15 @@ export const newSecretLink = (
     `${window.location.origin}/view/#/${formId}/${clientKeyId}/${encodeBase64Url(secretLinkKey)}`,
   );
 
+export const newEditLink = (
+  formId: FormId,
+  clientKeyId: ClientKeyId,
+  secretLinkKey: SecretLinkKey,
+) =>
+  new URL(
+    `${window.location.origin}/edit/#/${formId}/${clientKeyId}/${encodeBase64Url(secretLinkKey)}`,
+  );
+
 export const CONTACT_METHODS: ReadonlyArray<string> = [
   "Email",
   "SMS",

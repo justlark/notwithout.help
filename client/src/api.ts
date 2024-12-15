@@ -67,7 +67,7 @@ export interface GetFormResponse {
   expirationDate: Date | undefined;
 }
 
-export const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
+const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
   const response = await fetch(`${API_URL}/forms/${formId}`);
 
   if (!response.ok) {
@@ -100,7 +100,7 @@ export interface PostFormResponse {
   clientKeyId: ClientKeyId;
 }
 
-export const postForm = async ({
+const postForm = async ({
   publicPrimaryKey,
   publicSigningKey,
   orgName,
@@ -142,7 +142,7 @@ export interface DeleteFormParams {
   accessToken: ApiAccessToken;
 }
 
-export const deleteForm = async ({ formId, accessToken }: DeleteFormParams) => {
+const deleteForm = async ({ formId, accessToken }: DeleteFormParams) => {
   const response = await fetch(`${API_URL}/forms/${formId}`, {
     method: "DELETE",
     headers: {
@@ -155,12 +155,50 @@ export const deleteForm = async ({ formId, accessToken }: DeleteFormParams) => {
   }
 };
 
+export interface PatchFormParams {
+  formId: FormId;
+  orgName: string;
+  description: string;
+  contactMethods: Array<string>;
+  expirationDate: Date | undefined;
+  accessToken: ApiAccessToken;
+}
+
+const patchForm = async ({
+  formId,
+  orgName,
+  description,
+  contactMethods,
+  expirationDate,
+  accessToken,
+}: PatchFormParams) => {
+  const requestBody = {
+    org_name: orgName,
+    description: description,
+    contact_methods: contactMethods,
+    expires_at: expirationDate?.toISOString(),
+  };
+
+  const response = await fetch(`${API_URL}/forms/${formId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response);
+  }
+};
+
 export interface GetChallengeTokenParams {
   formId: FormId;
   clientKeyId: ClientKeyId;
 }
 
-export const getChallengeToken = async ({
+const getChallengeToken = async ({
   formId,
   clientKeyId,
 }: GetChallengeTokenParams): Promise<ApiChallengeToken> => {
@@ -185,7 +223,7 @@ export interface PatchKeyParams {
   accessToken: ApiAccessToken;
 }
 
-export const patchKey = async ({
+const patchKey = async ({
   formId,
   clientKeyId,
   wrappedPrivatePrimaryKey,
@@ -224,7 +262,7 @@ export interface PostKeyResponse {
   clientKeyId: ClientKeyId;
 }
 
-export const postKey = async ({
+const postKey = async ({
   formId,
   publicSigningKey,
   wrappedPrivatePrimaryKey,
@@ -265,7 +303,7 @@ export interface GetKeyParams {
   accessToken: ApiAccessToken;
 }
 
-export const getKey = async ({
+const getKey = async ({
   formId,
   clientKeyId,
   accessToken,
@@ -297,7 +335,7 @@ export interface ListKeysResponse {
   accessedAt: Date | undefined;
 }
 
-export const listKeys = async ({
+const listKeys = async ({
   formId,
   accessToken,
 }: ListKeysParams): Promise<Array<ListKeysResponse>> => {
@@ -328,7 +366,7 @@ export interface DeleteKeyParams {
   accessToken: ApiAccessToken;
 }
 
-export const deleteKey = async ({ formId, clientKeyId, accessToken }: DeleteKeyParams) => {
+const deleteKey = async ({ formId, clientKeyId, accessToken }: DeleteKeyParams) => {
   const response = await fetch(`${API_URL}/keys/${formId}/${clientKeyId}`, {
     method: "DELETE",
     headers: {
@@ -346,7 +384,7 @@ export interface PostAccessTokenParams {
   challenge: ApiChallengeToken;
 }
 
-export const postAccessToken = async ({ signature, challenge }: PostAccessTokenParams) => {
+const postAccessToken = async ({ signature, challenge }: PostAccessTokenParams) => {
   const requestBody = {
     signature: encodeBase64(signature),
     challenge: challenge,
@@ -374,7 +412,7 @@ export interface PostSubmissionParams {
   encryptedBody: EncryptedSubmissionBody;
 }
 
-export const postSubmission = async ({ formId, encryptedBody }: PostSubmissionParams) => {
+const postSubmission = async ({ formId, encryptedBody }: PostSubmissionParams) => {
   const requestBody = {
     encrypted_body: encodeBase64(encryptedBody),
   };
@@ -402,7 +440,7 @@ export interface GetSubmissionsResponse {
   createdAt: Date;
 }
 
-export const getSubmissions = async ({
+const getSubmissions = async ({
   formId,
   accessToken,
 }: GetSubmissionsParams): Promise<Array<GetSubmissionsResponse>> => {
@@ -429,6 +467,7 @@ export default {
   getForm,
   postForm,
   deleteForm,
+  patchForm,
   getChallengeToken,
   getKey,
   listKeys,

@@ -6,7 +6,7 @@ import Card from "primevue/card";
 import Skeleton from "primevue/skeleton";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newShareLink } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newShareLink, newEditLink } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
@@ -41,6 +41,7 @@ const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
+const editLink = computed(() => newEditLink(formId.value, clientKeyId.value, secretLinkKey.value));
 
 const isNotFound = computed(() => {
   return returnsError(
@@ -261,6 +262,8 @@ watchEffect(async () => {
             <Button
               v-if="!isReadOnly"
               class="!justify-start"
+              as="a"
+              :href="editLink"
               label="Edit"
               severity="secondary"
               icon="pi pi-pen-to-square"

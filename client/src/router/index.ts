@@ -15,9 +15,14 @@ const router = createRouter({
       component: () => import("../views/FormView.vue"),
     },
     {
-      path: "/organize",
-      name: "organize",
+      path: "/start",
+      name: "start",
       component: () => import("../views/OrganizeView.vue"),
+    },
+    {
+      path: "/edit",
+      name: "edit",
+      component: () => import("../views/EditView.vue"),
     },
     {
       path: "/view",

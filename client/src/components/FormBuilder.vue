@@ -21,6 +21,10 @@ type Emits = {
 
 const emit = defineEmits<Emits>();
 
+const props = defineProps<{
+  initialValues?: FormValues;
+}>();
+
 const schema = z.object({
   title: z.string().min(1, { message: "You must provide a name for your group." }),
   description: z.string().min(1, { message: "You must provide a description." }),
@@ -32,13 +36,15 @@ const schema = z.object({
 
 export type FormValues = z.infer<typeof schema>;
 
-const initialValues = computed(() =>
-  loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
-    title: values.title ?? "",
-    description: values.description ?? "",
-    contactMethods: values.contactMethods ?? [],
-    expirationDate: values.expirationDate ? deserializeDate(values.expirationDate) : undefined,
-  })),
+const initialValues = computed(
+  () =>
+    props.initialValues ??
+    loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
+      title: values.title ?? "",
+      description: values.description ?? "",
+      contactMethods: values.contactMethods ?? [],
+      expirationDate: values.expirationDate ? deserializeDate(values.expirationDate) : undefined,
+    })),
 );
 
 const {
