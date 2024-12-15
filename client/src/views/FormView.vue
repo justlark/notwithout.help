@@ -90,7 +90,11 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
         {{ form.value.orgName }}
       </h1>
       <p class="text-jusitfy max-w-xl mx-auto">{{ form.value.description }}</p>
-      <ResponseForm @submit="postSubmission" :contact-methods="[...form.value.contactMethods]" />
+      <ResponseForm
+        @submit="postSubmission"
+        :storage-key="`form/${formId}`"
+        :contact-methods="[...form.value.contactMethods]"
+      />
     </div>
   </main>
 </template>

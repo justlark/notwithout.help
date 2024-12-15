@@ -7,13 +7,11 @@ import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import DatePicker from "primevue/datepicker";
 import { CONTACT_METHODS } from "@/vars";
-import { loadState, persistState } from "@/state";
+import { deleteState, loadState, persistState } from "@/state";
 import { z } from "zod";
 import { serializeDate, deserializeDate } from "@/encoding";
 import { toTypedSchema } from "@vee-validate/zod";
 import { computed, ref, watch } from "vue";
-
-const FORM_STORAGE_KEY = "template";
 
 type Emits = {
   (eventName: "submit", values: FormValues, resetForm: () => void): void;
@@ -22,6 +20,7 @@ type Emits = {
 const emit = defineEmits<Emits>();
 
 const props = defineProps<{
+  storageKey: string;
   initialValues?: FormValues;
 }>();
 
@@ -31,21 +30,24 @@ const schema = z.object({
   contactMethods: z
     .array(z.string())
     .nonempty({ message: "You must specify at least one contact method." }),
-  expirationDate: z.date().nullish().optional(),
+  expirationDate: z
+    .date()
+    .nullish()
+    .optional()
+    .transform((value) => value ?? undefined),
 });
 
 export type FormValues = z.infer<typeof schema>;
 
-const initialValues = computed(
-  () =>
-    props.initialValues ??
-    loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
-      title: values.title ?? "",
-      description: values.description ?? "",
-      contactMethods: values.contactMethods ?? [],
-      expirationDate: values.expirationDate ? deserializeDate(values.expirationDate) : undefined,
-    })),
-);
+const loadInitialValues = () =>
+  loadState<FormValues>(props.storageKey, (values) => ({
+    title: values.title ?? props.initialValues?.title ?? "",
+    description: values.description ?? props.initialValues?.description ?? "",
+    contactMethods: values.contactMethods ?? props.initialValues?.contactMethods ?? [],
+    expirationDate: values.expirationDate
+      ? deserializeDate(values.expirationDate)
+      : props.initialValues?.expirationDate,
+  }));
 
 const {
   values,
@@ -55,7 +57,7 @@ const {
   handleSubmit,
 } = useForm<FormValues>({
   validationSchema: toTypedSchema(schema),
-  initialValues: initialValues.value,
+  initialValues: loadInitialValues(),
 });
 
 const [title, titleAttrs] = defineField("title");
@@ -64,7 +66,7 @@ const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
 const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 
 watch(values, () => {
-  persistState(FORM_STORAGE_KEY, values, (values) => ({
+  persistState(props.storageKey, values, (values) => ({
     ...values,
     expirationDate: values.expirationDate ? serializeDate(values.expirationDate) : undefined,
   }));
@@ -87,8 +89,8 @@ const submitForm = handleSubmit((values) => {
 });
 
 const resetForm = () => {
-  localStorage.removeItem(FORM_STORAGE_KEY);
-  resetFormInner({ values: initialValues.value });
+  deleteState(props.storageKey);
+  resetFormInner({ values: props.initialValues ?? loadInitialValues() });
 };
 
 const addCustomContactMethod = () => {

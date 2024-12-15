@@ -5,13 +5,12 @@ import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
 import { z } from "zod";
-import { loadState, persistState } from "@/state";
+import { deleteState, loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 
-const FORM_STORAGE_KEY = "form";
-
 const props = defineProps<{
+  storageKey: string;
   contactMethods: Array<string>;
 }>();
 
@@ -32,7 +31,7 @@ const schema = z.object({
 export type FormValues = z.infer<typeof schema>;
 
 const initialValues = computed(() =>
-  loadState<FormValues>(FORM_STORAGE_KEY, (values) => ({
+  loadState<FormValues>(props.storageKey, (values) => ({
     name: values.name ?? "",
     contact: values.contact ?? "",
     contactMethod: values.contactMethod,
@@ -55,7 +54,7 @@ const [contact, contactAttrs] = defineField("contact");
 const [contactMethod, contactMethodAttrs] = defineField("contactMethod");
 
 watch(values, () => {
-  persistState(FORM_STORAGE_KEY, values);
+  persistState(props.storageKey, values);
 });
 
 const submitForm = handleSubmit((values) => {
@@ -63,7 +62,7 @@ const submitForm = handleSubmit((values) => {
 });
 
 const resetForm = () => {
-  localStorage.removeItem(FORM_STORAGE_KEY);
+  deleteState(props.storageKey);
   resetFormInner({ values: initialValues.value });
 };
 </script>

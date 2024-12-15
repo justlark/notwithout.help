@@ -64,8 +64,6 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       });
     }
 
-    // We want to reset the form even if there was an error, because if the user goes to create a
-    // *new* form, it should start empty.
     resetForm();
 
     return;
@@ -87,7 +85,12 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
 <template>
   <main aria-labelledby="main-heading">
     <h1 id="main-heading" class="text-center mb-10">Edit your group</h1>
-    <FormBuilder v-if="initialValues" :initial-values="initialValues" @submit="submitForm" />
+    <FormBuilder
+      v-if="initialValues"
+      :storage-key="`edit/${formId}`"
+      :initial-values="initialValues"
+      @submit="submitForm"
+    />
   </main>
 </template>
 
