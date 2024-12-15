@@ -72,10 +72,9 @@ const doRevoke = async () => {
 const revokeSecretLink = async () => {
   confirm.require({
     header: "Revoke this secret link?",
-    message: isCurrentUser.value
-      ? "You are about to revoke the secret link you are currently using to access this page! Are you sure you want to do this? You will be locked out of this page unless someone with access generates a new secret link for you."
-      : "Are you sure you want to permanently revoke this secret link? Once revoked, nobody will be able to use it to access this page.",
-    icon: isCurrentUser.value ? "pi pi-exclamation-triangle" : "pi pi-info-circle",
+    message:
+      "Are you sure you want to permanently revoke this secret link? Once revoked, nobody will be able to use it to access this page.",
+    icon: "pi pi-info-circle",
     acceptProps: {
       label: "Revoke",
       severity: "danger",
@@ -125,7 +124,7 @@ const revokeSecretLink = async () => {
       </div>
     </div>
     <Button
-      v-if="!isOnlyRemainingLink"
+      v-if="!isCurrentUser && !isOnlyRemainingLink"
       class="shrink-0"
       label="Revoke"
       icon="pi pi-times"
