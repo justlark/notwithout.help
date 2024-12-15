@@ -31,7 +31,7 @@ const schema = z.object({
   contactMethods: z
     .array(z.string())
     .nonempty({ message: "You must specify at least one contact method." }),
-  expirationDate: z.date().optional(),
+  expirationDate: z.date().nullish().optional(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -198,6 +198,10 @@ const addCustomContactMethod = () => {
         v-bind="expirationDateAttrs"
         size="large"
         aria-describedby="date-help"
+        :minDate="new Date()"
+        show-button-bar
+        icon="pi pi-calendar"
+        show-icon
       />
       <Message v-if="errors.expirationDate" severity="error" size="small" variant="simple">
         {{ errors.expirationDate }}
