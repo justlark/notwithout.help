@@ -245,6 +245,7 @@ watchEffect(async () => {
               label="Share"
               severity="secondary"
               icon="pi pi-external-link"
+              raised
             />
             <Button
               v-if="submissions.length > 0"
@@ -255,6 +256,7 @@ watchEffect(async () => {
               label="Export"
               severity="secondary"
               icon="pi pi-download"
+              raised
             />
             <Button
               v-if="!isReadOnly"
@@ -262,6 +264,7 @@ watchEffect(async () => {
               label="Edit"
               severity="secondary"
               icon="pi pi-pen-to-square"
+              raised
             />
             <Button
               v-if="!isReadOnly"
@@ -270,6 +273,7 @@ watchEffect(async () => {
               label="Delete"
               severity="danger"
               icon="pi pi-trash"
+              raised
             />
           </div>
           <Button
@@ -278,6 +282,7 @@ watchEffect(async () => {
             label="Menu"
             :severity="isMenuExpanded ? 'secondary' : 'primary'"
             :icon="isMenuExpanded ? 'pi pi-times' : 'pi pi-bars'"
+            raised
             :aria-expanded="isMenuExpanded"
             aria-controls="action-menu"
           />
