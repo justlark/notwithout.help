@@ -211,6 +211,12 @@ pub struct FormData {
 }
 
 #[derive(Debug)]
+pub struct FormUpdate {
+    pub template: FormTemplate,
+    pub expires_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug)]
 pub struct Submission {
     pub encrypted_body: EncryptedSubmissionBody,
     pub created_at: DateTime<Utc>,

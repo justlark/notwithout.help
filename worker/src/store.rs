@@ -11,7 +11,7 @@ use crate::{
     keys::{EphemeralServerKey, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody,
-        FormData, FormId, FormTemplate, ServerKeyId, Submission, SubmissionId,
+        FormData, FormId, FormTemplate, FormUpdate, ServerKeyId, Submission, SubmissionId,
     },
 };
 
@@ -137,6 +137,28 @@ impl Store {
             WHERE forms.form_id = ?1;
             ",
             form_id,
+        )?;
+
+        stmt.run().await?.meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
+    pub async fn edit_form(&self, form_id: &FormId, data: &FormUpdate) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            UPDATE forms
+            SET
+                template = ?2,
+                expires_at = ?3
+            WHERE form_id = ?1;
+            ",
+            form_id,
+            serde_json::to_string(&data.template)?,
+            data.expires_at
+                .map(|dt| dt.format(SQLITE_DATETIME_FORMAT).to_string()),
         )?;
 
         stmt.run().await?.meta()?;

@@ -14,8 +14,8 @@ use worker::console_error;
 use crate::{
     api::{
         GetApiChallengeResponse, GetFormResponse, GetKeyResponse, ListKeysResponse,
-        ListSubmissionsResponse, PatchKeyRequest, PostFormRequest, PostFormResponse,
-        PostKeyRequest, PostKeyResponse, PostSubmissionRequest, PostTokenRequest,
+        ListSubmissionsResponse, PatchFormRequest, PatchKeyRequest, PostFormRequest,
+        PostFormResponse, PostKeyRequest, PostKeyResponse, PostSubmissionRequest, PostTokenRequest,
         PostTokenResponse,
     },
     auth::{
@@ -26,8 +26,8 @@ use crate::{
     cors::cors_layer,
     keys::{ApiChallengeNonce, EphemeralServerKey},
     models::{
-        ChallengeId, ClientKeyId, EncryptedKeyComment, FormId, FormTemplate, ServerKeyId,
-        SubmissionId,
+        ChallengeId, ClientKeyId, EncryptedKeyComment, FormId, FormTemplate, FormUpdate,
+        ServerKeyId, SubmissionId,
     },
     store::UnauthenticatedStore,
 };
@@ -55,6 +55,7 @@ pub fn new(state: AppState) -> Router {
         // AUTHENTICATED ENDPOINTS
         .route("/submissions/:form_id", get(list_form_submissions))
         .route("/forms/:form_id", delete(delete_form))
+        .route("/forms/:form_id", patch(edit_form))
         .route("/keys/:form_id/:client_key_id", get(get_key))
         .route("/keys/:form_id", get(list_keys))
         .route("/keys/:form_id", post(add_key))
@@ -273,6 +274,42 @@ async fn delete_form(
         .map_err(auth_err)?;
 
     store.delete_form(&form_id).await.map_err(internal_err)?;
+
+    Ok(NoContent)
+}
+
+#[axum::debug_handler]
+async fn edit_form(
+    State(state): State<Arc<AppState>>,
+    Extension(token): Extension<SignedApiAccessToken>,
+    Path(form_id): Path<FormId>,
+    Json(body): Json<PatchFormRequest>,
+) -> Result<NoContent, ErrorResponse> {
+    let store = token
+        .validate(&state.store, &form_id, AccessRole::Admin)
+        .await
+        .map_err(auth_err)?;
+
+    let form_update = FormUpdate {
+        template: FormTemplate {
+            org_name: body.org_name,
+            description: body.description,
+            contact_methods: body.contact_methods,
+        },
+        expires_at: match body.expires_at {
+            Some(expires_at) => Some(
+                DateTime::parse_from_rfc3339(&expires_at)
+                    .map_err(|err| internal_err(err.into()))?
+                    .to_utc(),
+            ),
+            None => None,
+        },
+    };
+
+    store
+        .edit_form(&form_id, &form_update)
+        .await
+        .map_err(internal_err)?;
 
     Ok(NoContent)
 }

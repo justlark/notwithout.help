@@ -47,6 +47,14 @@ pub struct PostFormResponse {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct PatchFormRequest {
+    pub org_name: String,
+    pub description: String,
+    pub contact_methods: Vec<String>,
+    pub expires_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct PostSubmissionRequest {
     pub encrypted_body: EncryptedSubmissionBody,
 }
