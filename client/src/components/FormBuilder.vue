@@ -86,6 +86,10 @@ const resetForm = () => {
 };
 
 const addCustomContactMethod = () => {
+  if (!newCustomContactMethod.value) {
+    return;
+  }
+
   contactMethodOptions.value.push(newCustomContactMethod.value);
   contactMethods.value.push(newCustomContactMethod.value);
   newCustomContactMethod.value = "";
@@ -162,6 +166,7 @@ const addCustomContactMethod = () => {
             />
             <Button
               @click="addCustomContactMethod"
+              :disabled="!newCustomContactMethod"
               label="Add"
               severity="primary"
               class="min-w-16"
