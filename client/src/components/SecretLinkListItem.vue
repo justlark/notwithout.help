@@ -93,27 +93,23 @@ const revokeSecretLink = async () => {
 <template>
   <div class="flex gap-4 sm:gap-8 items-center justify-between">
     <div class="flex gap-4 items-center">
-      <i
-        class="!hidden md:!inline pi pi-key text-green-500 dark:text-green-200"
-        style="font-size: 1.5rem"
-        aria-hidden="true"
-      ></i>
+      <i class="!hidden md:!inline pi pi-user" style="font-size: 1.5rem" aria-hidden="true"></i>
       <div class="flex flex-col">
         <span class="flex flex-wrap gap-2 justify-start items-center">
-          <i class="pi pi-key md:!hidden text-green-500 dark:text-green-200" aria-hidden="true"></i>
+          <i class="pi pi-user md:!hidden" aria-hidden="true"></i>
           <span>{{ props.comment }}</span>
           <Tag
             class="text-xs text-nowrap"
             v-if="isCurrentUser"
             value="me"
-            severity="info"
+            severity="primary"
             rounded
           />
           <Tag
             class="text-xs text-nowrap"
             v-if="isReadOnly"
             value="read-only"
-            severity="warn"
+            severity="secondary"
             rounded
           />
         </span>
