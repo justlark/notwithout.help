@@ -218,6 +218,16 @@ const addCustomContactMethod = () => {
   </form>
 </template>
 
+<style>
+/*
+ * Prevent the date picker panel from filling the width of the input box, making it difficult to
+ * navigate with a pointer.
+ */
+.p-datepicker-panel {
+  min-width: 0 !important;
+}
+</style>
+
 <style scoped>
 .required-marker {
   color: var(--p-message-error-color);
