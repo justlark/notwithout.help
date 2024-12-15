@@ -95,11 +95,11 @@ const revokeSecretLink = async () => {
     <div class="flex gap-4 items-center">
       <i class="!hidden md:!inline pi pi-user" style="font-size: 1.5rem" aria-hidden="true"></i>
       <div class="flex flex-col">
-        <span class="flex flex-wrap gap-2 justify-start items-center">
-          <i class="pi pi-user md:!hidden" aria-hidden="true"></i>
-          <span>{{ props.comment }}</span>
+        <span>
+          <i class="pi pi-user md:!hidden me-2" aria-hidden="true"></i>
+          <span class="me-2">{{ props.comment }}</span>
           <Tag
-            class="text-xs text-nowrap"
+            class="text-xs text-nowrap me-2"
             v-if="isCurrentUser"
             value="me"
             severity="primary"

@@ -2,6 +2,7 @@
 import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
+import Divider from "primevue/divider";
 import InputText from "primevue/inputtext";
 import SplitButton from "primevue/splitbutton";
 import Dialog from "primevue/dialog";
@@ -189,11 +190,15 @@ const secretLinkActions = [
           <h1 id="secret-links-list-heading" class="text-lg mb-0">Secret links ({{ count }})</h1>
         </span>
       </template>
-      <p>
-        Create a new secret link for each person you want to give access to this page, and revoke
-        them at any time. Create read-only links to restrict the ability to make changes or create
-        new secret links.
-      </p>
+      <ul>
+        <li>Create a new secret link for each person you want to give access to this page.</li>
+        <li>
+          Links can be made read-only; they can't be used to make edits or generate new secret
+          links.
+        </li>
+        <li>Links can be revoked (disabled) when they're lost or no longer needed.</li>
+      </ul>
+      <Divider />
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           <SecretLinkListItem
