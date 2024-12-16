@@ -38,10 +38,3 @@ jsonwebtoken = "9.3.0"
 secrecy = "0.10.3"
 ed25519-dalek = "2.1.1"
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
-
-# The Cloudflare Workers runtime appears to be broken for Rust 1.82. This is a
-# workaround.
-#
-# https://github.com/cloudflare/workers-rs/issues/668
-[patch.crates-io]
-wasm-bindgen = { git = "https://github.com/rustwasm/wasm-bindgen" }

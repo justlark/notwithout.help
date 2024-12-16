@@ -1723,8 +1723,3 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[patch.unused]]
-name = "wasm-bindgen"
-version = "0.2.95"
-source = "git+https://github.com/rustwasm/wasm-bindgen#fe5d89fcf5c0f947d16f23304843f8907c5aafed"
