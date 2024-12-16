@@ -1,0 +1,46 @@
+name: "Worker"
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  check:
+    name: "Check"
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+    defaults:
+      run:
+        working-directory: ./worker/
+    steps:
+      - name: "Checkout sources"
+        uses: actions/checkout@v4
+
+        # We check against the MSRV to ensure we're not using Rust features
+        # from a later version of Rust. If you update the MSRV here, update the
+        # Cargo.toml as well.
+      - name: "Install MSRV toolchain"
+        run: rustup toolchain install --profile minimal 1.75.0
+
+      - name: "Run cargo check"
+        run: cargo check
+
+  lints:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-D warnings"
+    defaults:
+      run:
+        working-directory: ./worker/
+    steps:
+      - name: "Checkout sources"
+        uses: actions/checkout@v4
+
+      - name: "Install stable toolchain"
+        run: rustup toolchain install --profile minimal --component rustfmt clippy -- stable
+
+      - name: "Run cargo fmt"
+        run: cargo fmt --all -- --check
+
+      - name: "Run cargo clippy"
+        run: cargo clippy
