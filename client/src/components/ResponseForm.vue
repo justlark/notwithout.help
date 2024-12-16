@@ -106,7 +106,6 @@ const resetForm = () => {
           v-bind="contactMethodAttrs"
           :options="props.contactMethods"
           size="large"
-          placeholder="Email"
           class="basis-1/3 max-sm:grow"
         />
       </div>
