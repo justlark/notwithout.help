@@ -447,11 +447,12 @@ impl ValidatedApiChallengeResponse {
     }
 }
 
+type BoxFutureResponseResult<'a> = BoxFuture<'a, Result<Request<Body>, Response<Body>>>;
+
 // Extract the bearer token from the Authorization header and insert it into the request
 // extensions.
-pub fn auth_layer<'a>() -> AsyncRequireAuthorizationLayer<
-    impl Fn(Request<Body>) -> BoxFuture<'a, Result<Request<Body>, Response<Body>>> + Clone,
-> {
+pub fn auth_layer<'a>(
+) -> AsyncRequireAuthorizationLayer<impl Fn(Request<Body>) -> BoxFutureResponseResult<'a> + Clone> {
     AsyncRequireAuthorizationLayer::new(|mut req: Request<Body>| {
         async move {
             let auth_header = req
