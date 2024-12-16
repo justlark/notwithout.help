@@ -3,6 +3,8 @@ name = "notwithouthelp"
 version = "0.1.0"
 edition = "2021"
 authors = ["Lark <lark@lark.gay>"]
+# If you update this, update the GitHub Actions workflow as well.
+rust-version = "1.75.0"
 
   [package.metadata.release]
   release = false
