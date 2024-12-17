@@ -241,11 +241,16 @@ const secretLinkActions = [
       </div>
     </Panel>
   </section>
-  <Dialog class="p-2 mx-4" v-model:visible="newSecretLinkModalIsVisible" modal>
+  <Dialog
+    class="p-2 mx-4"
+    v-model:visible="newSecretLinkModalIsVisible"
+    modal
+    aria-labelledby="share-link-dialog-name"
+  >
     <template #header>
       <span class="flex gap-3 text-xl items-center">
         <i class="pi pi-lock"></i>
-        <strong>Keep this link secret</strong>
+        <strong id="share-link-dialog-name">Keep this link secret</strong>
       </span>
     </template>
     <SecretLinkAdmonition

@@ -247,6 +247,8 @@ watchEffect(async () => {
               label="Share"
               severity="secondary"
               icon="pi pi-share-alt"
+              aria-controls="share-link-modal"
+              :aria-expanded="shareLinkModalIsVisible"
               raised
             />
             <Button
@@ -293,11 +295,17 @@ watchEffect(async () => {
         </div>
       </div>
     </div>
-    <Dialog class="p-2 mx-4" v-model:visible="shareLinkModalIsVisible" modal>
+    <Dialog
+      id="share-link-modal"
+      class="p-2 mx-4"
+      v-model:visible="shareLinkModalIsVisible"
+      modal
+      aria-labelledby="share-link-modal-name"
+    >
       <template #header>
         <span class="flex gap-3 text-xl items-center">
           <i class="pi pi-share-alt"></i>
-          <strong>Share this link</strong>
+          <strong id="share-link-modal-name">Share this link</strong>
         </span>
       </template>
       <ShareLinkAdmonition :form-id="formId" />
