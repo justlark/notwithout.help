@@ -15,7 +15,7 @@ import { unsealSubmissionBody } from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
-import { useRouter } from "vue-router";
+import { useRouter, RouterLink } from "vue-router";
 import useSecretLink from "@/composables/useSecretLink";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
@@ -265,8 +265,8 @@ watchEffect(async () => {
             <Button
               v-if="!isReadOnly"
               class="!justify-start"
-              as="a"
-              :href="editLink"
+              as="router-link"
+              :to="{ path: editLink.pathname, hash: editLink.hash }"
               label="Edit"
               severity="secondary"
               icon="pi pi-pen-to-square"
