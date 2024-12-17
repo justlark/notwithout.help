@@ -71,7 +71,7 @@ export const useAccessToken = () => {
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
-  const cacheKey = computed(() => `${formId.value}/${clientKeyId.value}/${secretLinkKey.value}`);
+  const cacheKey = computed(() => `${formId.value}:${clientKeyId.value}:${secretLinkKey.value}`);
 
   watchEffect(async () => {
     const cachedAccessToken = accessTokenCache.value.get(cacheKey.value);

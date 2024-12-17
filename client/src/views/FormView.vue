@@ -88,7 +88,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
     <div v-else-if="isDone(form)">
       <ResponseForm
         @submit="postSubmission"
-        :storage-key="`form/${formId}`"
+        :storage-key="`form:${formId}`"
         :contact-methods="[...form.value.contactMethods]"
         aria-labelledby="main-heading"
       >

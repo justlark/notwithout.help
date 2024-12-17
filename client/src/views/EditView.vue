@@ -96,7 +96,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
     />
     <FormBuilder
       v-if="initialValues && !isNotFound"
-      :storage-key="`edit/${formId}`"
+      :storage-key="`edit:${formId}`"
       :initial-values="initialValues"
       @submit="submitForm"
       aria-labelledby="main-heading"
