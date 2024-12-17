@@ -2,10 +2,11 @@
 import api, { ApiError } from "@/api";
 import type { FormValues } from "@/components/FormBuilder.vue";
 import FormBuilder from "@/components/FormBuilder.vue";
+import ErrorCard from "@/components/ErrorCard.vue";
 import useAccessToken from "@/composables/useAccessToken";
 import useForm from "@/composables/useForm";
 import useSecretLink from "@/composables/useSecretLink";
-import { isDone } from "@/types";
+import { isDone, returnsError } from "@/types";
 import { newSecretLink, TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
@@ -14,6 +15,10 @@ import { useRouter } from "vue-router";
 const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
 const form = useForm();
+
+const isNotFound = computed(() => {
+  return returnsError(["unauthorized", "forbidden", "not-found"], accessToken, form);
+});
 
 const router = useRouter();
 const toast = useToast();
@@ -84,8 +89,13 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
 
 <template>
   <main aria-labelledby="main-heading">
+    <ErrorCard
+      v-if="isNotFound"
+      title="Not found"
+      message="Either this is an invalid link, the group has been deleted, or you don't have access to it anymore."
+    />
     <FormBuilder
-      v-if="initialValues"
+      v-if="initialValues && !isNotFound"
       :storage-key="`edit/${formId}`"
       :initial-values="initialValues"
       @submit="submitForm"
