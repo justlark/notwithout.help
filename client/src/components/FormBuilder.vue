@@ -113,7 +113,7 @@ const addCustomContactMethod = () => {
       <div class="flex flex-col gap-2">
         <label for="title-input" class="flex gap-2">
           Name
-          <span class="required-marker">*</span>
+          <span class="text-red-600 dark:text-red-500">*</span>
         </label>
         <InputText
           id="title-input"
@@ -135,7 +135,7 @@ const addCustomContactMethod = () => {
       <div class="flex flex-col gap-2">
         <label for="description-input" class="flex gap-2">
           Description
-          <span class="required-marker">*</span>
+          <span class="text-red-600 dark:text-red-500">*</span>
         </label>
         <Textarea
           id="description-input"
@@ -156,7 +156,7 @@ const addCustomContactMethod = () => {
       <div class="flex flex-col gap-2">
         <label for="contact-input" class="flex gap-2">
           <span>Contact methods</span>
-          <span class="required-marker">*</span>
+          <span class="text-red-600 dark:text-red-500">*</span>
         </label>
         <MultiSelect
           id="contact-input"
@@ -235,8 +235,4 @@ const addCustomContactMethod = () => {
 }
 </style>
 
-<style scoped>
-.required-marker {
-  color: var(--p-message-error-color);
-}
-</style>
+<style scoped></style>

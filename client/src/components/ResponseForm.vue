@@ -74,7 +74,10 @@ const resetForm = () => {
     </div>
     <div class="max-w-xl mx-auto flex flex-col gap-8">
       <div class="flex flex-col gap-2">
-        <label for="name-input">Your name</label>
+        <label for="name-inpul" class="flex gap-2">
+          <span>Your name</span>
+          <span class="text-red-600 dark:text-red-500">*</span>
+        </label>
         <InputText
           id="name-input"
           v-model="name"
@@ -93,7 +96,10 @@ const resetForm = () => {
       </div>
 
       <div class="flex flex-col gap-2">
-        <label for="contact-input">Contact info</label>
+        <label for="contact-input" class="flex gap-2">
+          <span>Contact info</span>
+          <span class="text-red-600 dark:text-red-500">*</span>
+        </label>
         <div class="flex max-sm:flex-col gap-2">
           <InputText
             id="contact-input"
