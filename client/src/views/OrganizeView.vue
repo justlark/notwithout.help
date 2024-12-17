@@ -111,8 +111,16 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
 
 <template>
   <main aria-labelledby="main-heading">
-    <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>
-    <FormBuilder v-if="!formSubmitted" storage-key="template" @submit="submitForm" />
+    <FormBuilder
+      v-if="!formSubmitted"
+      storage-key="template"
+      @submit="submitForm"
+      aria-labelledby="main-heading"
+    >
+      <template #lead>
+        <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>
+      </template>
+    </FormBuilder>
     <FormAdmonitions
       v-if="formId !== undefined && clientKeyId !== undefined && secretLinkKey !== undefined"
       :formId="formId"

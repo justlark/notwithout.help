@@ -87,9 +87,9 @@ const resetForm = () => {
         <Message v-if="errors.name" severity="error" size="small" variant="simple">
           {{ errors.name }}
         </Message>
-        <Message id="name-help" size="small" severity="secondary" variant="simple">
+        <span id="name-help" class="text-muted-color text-sm font-medium">
           The name, nickname, alias, or handle you want to send to the organizers.
-        </Message>
+        </span>
       </div>
 
       <div class="flex flex-col gap-2">
@@ -119,9 +119,9 @@ const resetForm = () => {
         <Message v-if="errors.contactMethod" severity="error" size="small" variant="simple">
           {{ errors.contactMethod }}
         </Message>
-        <Message id="contact-help" size="small" severity="secondary" variant="simple">
+        <span id="contact-help" class="text-muted-color text-sm font-medium">
           How you want the organizers to contact you.
-        </Message>
+        </span>
       </div>
 
       <div class="flex justify-around">

@@ -84,13 +84,17 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
 
 <template>
   <main aria-labelledby="main-heading">
-    <h1 id="main-heading" class="text-center mb-10">Edit your group</h1>
     <FormBuilder
       v-if="initialValues"
       :storage-key="`edit/${formId}`"
       :initial-values="initialValues"
       @submit="submitForm"
-    />
+      aria-labelledby="main-heading"
+    >
+      <template #lead>
+        <h1 id="main-heading" class="text-center mb-10">Edit your group</h1>
+      </template>
+    </FormBuilder>
   </main>
 </template>
 
