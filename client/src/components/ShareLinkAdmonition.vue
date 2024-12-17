@@ -31,9 +31,6 @@ const copyShareLink = () => {
       <ul>
         <li>Send this link to anyone you want to fill out your survey.</li>
         <li>People with this link can respond to your survey, but cannot view other responses.</li>
-        <li>
-          Copy this link down in a safe place, because it will disappear when you leave this page.
-        </li>
       </ul>
     </LinkAdmonition>
   </div>

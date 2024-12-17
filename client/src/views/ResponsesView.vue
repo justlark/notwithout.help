@@ -3,10 +3,12 @@ import FormResponse from "@/components/FormResponse.vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
 import Card from "primevue/card";
+import Dialog from "primevue/dialog";
+import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
 import Skeleton from "primevue/skeleton";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newShareLink, newEditLink } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newEditLink } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
 import { decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
@@ -55,6 +57,7 @@ const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 const isReadOnly = computed(() => !isDone(accessToken) || accessToken.value.value.role === "read");
 
 const isMenuExpanded = ref(false);
+const shareLinkModalIsVisible = ref(false);
 
 const csvFileObjectUrl = computed(() => {
   const headers = ["Name", "Contact", "Contact method", "Submitted at"];
@@ -240,12 +243,10 @@ watchEffect(async () => {
           >
             <Button
               class="!justify-start"
-              as="a"
-              :href="newShareLink(formId)"
-              target="_blank"
+              @click="shareLinkModalIsVisible = true"
               label="Share"
               severity="secondary"
-              icon="pi pi-external-link"
+              icon="pi pi-share-alt"
               raised
             />
             <Button
@@ -292,6 +293,15 @@ watchEffect(async () => {
         </div>
       </div>
     </div>
+    <Dialog class="p-2 mx-4" v-model:visible="shareLinkModalIsVisible" modal>
+      <template #header>
+        <span class="flex gap-3 text-xl items-center">
+          <i class="pi pi-share-alt"></i>
+          <strong>Share this link</strong>
+        </span>
+      </template>
+      <ShareLinkAdmonition :form-id="formId" />
+    </Dialog>
     <ConfirmDialog class="max-w-xl mx-6" />
   </main>
 </template>

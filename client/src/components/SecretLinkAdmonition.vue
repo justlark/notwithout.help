@@ -35,8 +35,7 @@ const copySecretLink = () => {
       <ul>
         <li>Use this link to view responses to your survey.</li>
         <li>
-          This link is like a password. <strong>Anyone</strong> with this link can access your
-          survey responses.
+          This link is like a password. Anyone with this link can access your survey responses.
         </li>
         <li>
           Copy this link down in a safe place, because it will disappear when you leave this page.

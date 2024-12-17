@@ -243,7 +243,7 @@ const secretLinkActions = [
   </section>
   <Dialog class="p-2 mx-4" v-model:visible="newSecretLinkModalIsVisible" modal>
     <template #header>
-      <span class="flex gap-3 items-center">
+      <span class="flex gap-3 text-xl items-center">
         <i class="pi pi-lock"></i>
         <strong>Keep this link secret</strong>
       </span>
