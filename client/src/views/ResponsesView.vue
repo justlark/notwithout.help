@@ -47,7 +47,7 @@ const editLink = computed(() => newEditLink(formId.value, clientKeyId.value, sec
 
 const isNotFound = computed(() => {
   return returnsError(
-    ["unauthorized", "forbidden", "not-found"],
+    ["bad-request", "unauthorized", "forbidden", "not-found"],
     accessToken,
     privatePrimaryKey,
     form,

@@ -17,7 +17,7 @@ const accessToken = useAccessToken();
 const form = useForm();
 
 const isNotFound = computed(() => {
-  return returnsError(["unauthorized", "forbidden", "not-found"], accessToken, form);
+  return returnsError(["bad-request", "unauthorized", "forbidden", "not-found"], accessToken, form);
 });
 
 const router = useRouter();

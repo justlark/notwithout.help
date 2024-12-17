@@ -19,6 +19,7 @@ import { decodeBase64, encodeBase64 } from "./encoding";
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 
 export type ApiErrorKind =
+  | "bad-request"
   | "not-found"
   | "unauthorized"
   | "forbidden"
@@ -31,7 +32,9 @@ export class ApiError extends Error {
   constructor(response: Response) {
     super(`HTTP error ${response.status}`);
 
-    if (response.status === 404) {
+    if (response.status === 400) {
+      this.kind = "bad-request";
+    } else if (response.status === 404) {
       this.kind = "not-found";
     } else if (response.status === 401) {
       this.kind = "unauthorized";

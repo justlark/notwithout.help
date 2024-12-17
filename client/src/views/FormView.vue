@@ -17,7 +17,7 @@ const { formId } = useLink();
 const form = useForm();
 
 const isNotFound = computed(() => {
-  return returnsError("not-found", form);
+  return returnsError(["bad-request", "not-found"], form);
 });
 
 const postSubmission = async (values: FormValues, resetForm: () => void) => {
