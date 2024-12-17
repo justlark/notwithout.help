@@ -86,15 +86,19 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
       message="Either this is an invalid link, or the group is no longer accepting responses."
     />
     <div v-else-if="isDone(form)">
-      <h1 id="main-heading" v-if="isDone(form)" class="text-center mb-10">
-        {{ form.value.orgName }}
-      </h1>
-      <p class="text-jusitfy max-w-xl mx-auto">{{ form.value.description }}</p>
       <ResponseForm
         @submit="postSubmission"
         :storage-key="`form/${formId}`"
         :contact-methods="[...form.value.contactMethods]"
-      />
+        aria-labelledby="main-heading"
+      >
+        <template #lead>
+          <h1 id="main-heading" class="text-center mb-10">
+            {{ form.value.orgName }}
+          </h1>
+          <p class="text-jusitfy max-w-xl mx-auto">{{ form.value.description }}</p>
+        </template>
+      </ResponseForm>
     </div>
   </main>
 </template>

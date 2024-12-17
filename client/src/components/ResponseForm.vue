@@ -68,61 +68,66 @@ const resetForm = () => {
 </script>
 
 <template>
-  <form @submit="submitForm" class="max-w-xl mx-auto flex flex-col gap-8">
-    <div class="flex flex-col gap-2">
-      <label for="name-input">Your name</label>
-      <InputText
-        id="name-input"
-        v-model="name"
-        v-bind="nameAttrs"
-        type="text"
-        size="large"
-        placeholder="Alex"
-        aria-describedby="name-help"
-      />
-      <Message v-if="errors.name" severity="error" size="small" variant="simple">
-        {{ errors.name }}
-      </Message>
-      <Message id="name-help" size="small" severity="secondary" variant="simple">
-        The name, nickname, alias, or handle you want to send to the organizers.
-      </Message>
+  <form @submit="submitForm">
+    <div>
+      <slot name="lead" />
     </div>
-
-    <div class="flex flex-col gap-2">
-      <label for="contact-input">Contact info</label>
-      <div class="flex max-sm:flex-col gap-2">
+    <div class="max-w-xl mx-auto flex flex-col gap-8">
+      <div class="flex flex-col gap-2">
+        <label for="name-input">Your name</label>
         <InputText
-          id="contact-input"
-          v-model="contact"
-          v-bind="contactAttrs"
+          id="name-input"
+          v-model="name"
+          v-bind="nameAttrs"
           type="text"
           size="large"
-          placeholder="alex@example.com"
-          aria-describedby="contact-help"
-          class="grow"
+          placeholder="Alex"
+          aria-describedby="name-help"
         />
-        <Select
-          v-model="contactMethod"
-          v-bind="contactMethodAttrs"
-          :options="props.contactMethods"
-          size="large"
-          class="basis-1/3 max-sm:grow"
-        />
+        <Message v-if="errors.name" severity="error" size="small" variant="simple">
+          {{ errors.name }}
+        </Message>
+        <Message id="name-help" size="small" severity="secondary" variant="simple">
+          The name, nickname, alias, or handle you want to send to the organizers.
+        </Message>
       </div>
-      <Message v-if="errors.contact" severity="error" size="small" variant="simple">
-        {{ errors.contact }}
-      </Message>
-      <Message v-if="errors.contactMethod" severity="error" size="small" variant="simple">
-        {{ errors.contactMethod }}
-      </Message>
-      <Message id="contact-help" size="small" severity="secondary" variant="simple">
-        How you want the organizers to contact you.
-      </Message>
-    </div>
 
-    <div class="flex justify-around">
-      <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
-      <Button @click="resetForm" severity="secondary" label="Reset" class="max-w-24" />
+      <div class="flex flex-col gap-2">
+        <label for="contact-input">Contact info</label>
+        <div class="flex max-sm:flex-col gap-2">
+          <InputText
+            id="contact-input"
+            v-model="contact"
+            v-bind="contactAttrs"
+            type="text"
+            size="large"
+            placeholder="alex@example.com"
+            aria-describedby="contact-help"
+            class="grow"
+          />
+          <Select
+            v-model="contactMethod"
+            v-bind="contactMethodAttrs"
+            :options="props.contactMethods"
+            size="large"
+            class="basis-1/3 max-sm:grow"
+          />
+        </div>
+        <Message v-if="errors.contact" severity="error" size="small" variant="simple">
+          {{ errors.contact }}
+        </Message>
+        <Message v-if="errors.contactMethod" severity="error" size="small" variant="simple">
+          {{ errors.contactMethod }}
+        </Message>
+        <Message id="contact-help" size="small" severity="secondary" variant="simple">
+          How you want the organizers to contact you.
+        </Message>
+      </div>
+
+      <div class="flex justify-around">
+        <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
+        <Button @click="resetForm" severity="secondary" label="Reset" class="max-w-24" />
+      </div>
     </div>
   </form>
 </template>
