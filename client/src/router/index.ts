@@ -30,6 +30,11 @@ const router = createRouter({
       component: () => import("../views/ResponsesView.vue"),
     },
     {
+      path: "/contact",
+      name: "contact",
+      component: () => import("../views/ContactView.vue"),
+    },
+    {
       path: "/:path(.*)*",
       name: "not-found",
       component: () => import("../views/NotFoundView.vue"),
