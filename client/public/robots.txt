@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /start
+Disallow: /share
+Disallow: /view
+Disallow: /edit
