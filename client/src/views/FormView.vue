@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import api, { ApiError, type SubmissionBody } from "@/api";
+import api, { ApiError, CURRENT_VERSION, type SubmissionBody } from "@/api";
 import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import ErrorCard from "@/components/ErrorCard.vue";
 import useForm from "@/composables/useForm";
@@ -28,6 +28,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
   const { publicPrimaryKey } = form.value.value;
 
   const submissionBody: SubmissionBody = {
+    version: CURRENT_VERSION,
     name: values.name,
     contact: values.contact,
     contact_method: values.contactMethod,

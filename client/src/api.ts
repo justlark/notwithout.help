@@ -50,9 +50,16 @@ export class ApiError extends Error {
 
 export type AccessRole = "read" | "admin";
 
+// We version the submission body so we can change the shape of the object in
+// the future while preserving backwards compatibility. This is particularly
+// important because the submission body is encrypted client-side, so we can't
+// implement any sort of migrations.
+export const CURRENT_VERSION = 1;
+
 // This is the shape of the object that's serialized, sealed, and sent to the
 // server.
 export interface SubmissionBody {
+  version: 1;
   name: string;
   contact: string;
   contact_method: string;
