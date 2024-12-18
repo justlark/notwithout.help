@@ -10,7 +10,7 @@
     min-width: 200px;
     max-width: 1200px;
     margin: 0 auto !important;
-    @apply p-4;
+    @apply p-4 dark:bg-[#201e26];
   }
 
   p {
