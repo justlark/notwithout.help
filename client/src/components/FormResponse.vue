@@ -10,6 +10,7 @@ const props = defineProps<{
   name: string;
   contact: string;
   contactMethod: string;
+  comment: string;
   createdAt: Date;
 }>();
 
@@ -27,6 +28,10 @@ const copyContact = async () => {
 };
 
 const headingId = computed(() => `contact-card-heading-${props.index}`);
+
+// Convert newline-separated blocks of text in the input into paragraphs, just
+// like Markdown. Collapse adjacent lines and remove empty paragraphs.
+const commentParagraphs = computed(() => props.comment.split("\n\n").filter((p) => p.length > 0));
 </script>
 
 <template>
@@ -44,12 +49,19 @@ const headingId = computed(() => `contact-card-heading-${props.index}`);
         </div>
       </template>
       <template #content>
-        <div class="flex gap-2 items-baseline">
-          <button @click="copyContact" aria-label="Copy">
-            <i class="pi pi-clipboard cursor-pointer" aria-hidden="true" @click="copyContact" />
-          </button>
-          <span>{{ props.contact }}</span>
-          <span class="text-sm text-muted-color">({{ props.contactMethod }})</span>
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-2 items-baseline">
+            <button @click="copyContact" aria-label="Copy">
+              <i class="pi pi-clipboard cursor-pointer" aria-hidden="true" @click="copyContact" />
+            </button>
+            <span>{{ props.contact }}</span>
+            <span class="text-sm text-muted-color">({{ props.contactMethod }})</span>
+          </div>
+          <div v-if="commentParagraphs.length > 0">
+            <p v-for="(paragraph, index) of commentParagraphs" :key="index" class="last:mb-0">
+              {{ paragraph }}
+            </p>
+          </div>
         </div>
       </template>
     </Card>

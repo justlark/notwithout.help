@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import InputText from "primevue/inputtext";
+import Textarea from "primevue/textarea";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
@@ -26,6 +27,7 @@ const schema = z.object({
   contactMethod: z.string({
     message: "You must provide a preferred contact method.",
   }),
+  comment: z.string().optional(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -35,6 +37,7 @@ const initialValues = computed(() =>
     name: values.name ?? "",
     contact: values.contact ?? "",
     contactMethod: values.contactMethod,
+    comment: values.comment ?? "",
   })),
 );
 
@@ -52,6 +55,7 @@ const {
 const [name, nameAttrs] = defineField("name");
 const [contact, contactAttrs] = defineField("contact");
 const [contactMethod, contactMethodAttrs] = defineField("contactMethod");
+const [comment, commentAttrs] = defineField("comment");
 
 watch(values, () => {
   persistState(props.storageKey, values);
@@ -127,6 +131,27 @@ const resetForm = () => {
         </Message>
         <span id="contact-help" class="text-muted-color text-sm font-medium">
           How you want the organizers to contact you.
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="contact-input" class="flex gap-2">
+          <span>More info</span>
+        </label>
+        <Textarea
+          id="comment-input"
+          v-model="comment"
+          v-bind="commentAttrs"
+          size="large"
+          auto-resize
+          placeholder="I'm looking to contribute…"
+          aria-describedby="comment-help"
+        />
+        <Message v-if="errors.comment" severity="error" size="small" variant="simple">
+          {{ errors.comment }}
+        </Message>
+        <span id="contact-help" class="text-muted-color text-sm font-medium">
+          What kinds of help you're looking to contribute.
         </span>
       </div>
 

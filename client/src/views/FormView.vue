@@ -32,6 +32,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
     name: values.name,
     contact: values.contact,
     contact_method: values.contactMethod,
+    comment: values.comment,
   };
 
   const encryptedBody = await sealSubmissionBody(

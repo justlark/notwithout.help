@@ -27,6 +27,7 @@ export interface Submission {
   name: string;
   contact: string;
   contactMethod: string;
+  comment: string;
   createdAt: Date;
 }
 
@@ -61,12 +62,13 @@ const isMenuExpanded = ref(false);
 const shareLinkModalIsVisible = ref(false);
 
 const csvFileObjectUrl = computed(() => {
-  const headers = ["Name", "Contact", "Contact method", "Submitted at"];
+  const headers = ["Name", "Contact", "Contact method", "Submitted at", "Comment"];
   const data = submissions.value.map((submission) => [
     submission.name,
     submission.contact,
     submission.contactMethod,
     submission.createdAt.toISOString(),
+    submission.comment,
   ]);
   const rows = [headers, ...data];
   const csv = toCsv(rows);
@@ -165,6 +167,7 @@ watchEffect(async () => {
       name: submissionBody.name,
       contact: submissionBody.contact,
       contactMethod: submissionBody.contact_method,
+      comment: submissionBody.comment ?? "",
       createdAt: new Date(createdAt),
     });
   }
@@ -210,6 +213,7 @@ watchEffect(async () => {
             :name="submission.name"
             :contact="submission.contact"
             :contactMethod="submission.contactMethod"
+            :comment="submission.comment"
             :createdAt="submission.createdAt"
           />
           <Card v-if="returnedNoSubmissions" class="w-full">
