@@ -62,12 +62,12 @@ const isMenuExpanded = ref(false);
 const shareLinkModalIsVisible = ref(false);
 
 const csvFileObjectUrl = computed(() => {
-  const headers = ["Name", "Contact", "Contact method", "Submitted at", "Comment"];
+  const headers = ["Submitted at", "Name", "Contact", "Contact method", "Comment"];
   const data = submissions.value.map((submission) => [
+    submission.createdAt.toISOString(),
     submission.name,
     submission.contact,
     submission.contactMethod,
-    submission.createdAt.toISOString(),
     submission.comment,
   ]);
   const rows = [headers, ...data];
