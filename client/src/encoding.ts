@@ -26,6 +26,9 @@ export const deserializeDate = (date: string): Date => {
 export const serializeDate = (date: Date): string =>
   `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
+export const datetimeToCsvFormat = (date: Date): string =>
+  `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-${date.getUTCDate()} ${date.getUTCHours()}:${date.getUTCMinutes()}:${date.getUTCSeconds()}`;
+
 const localeDateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
   timeStyle: "short",

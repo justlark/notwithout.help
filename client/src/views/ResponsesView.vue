@@ -10,7 +10,7 @@ import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newEditLink } from "@/vars";
 import { computed, ref, watchEffect } from "vue";
-import { decodeUtf8, formatDate } from "@/encoding";
+import { datetimeToCsvFormat, decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
@@ -62,9 +62,9 @@ const isMenuExpanded = ref(false);
 const shareLinkModalIsVisible = ref(false);
 
 const csvFileObjectUrl = computed(() => {
-  const headers = ["Submitted at", "Name", "Contact", "Contact method", "Comment"];
+  const headers = ["Submitted at (UTC)", "Name", "Contact", "Contact method", "Comment"];
   const data = submissions.value.map((submission) => [
-    submission.createdAt.toISOString(),
+    datetimeToCsvFormat(submission.createdAt),
     submission.name,
     submission.contact,
     submission.contactMethod,
