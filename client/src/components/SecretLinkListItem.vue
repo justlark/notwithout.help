@@ -72,8 +72,7 @@ const doRevoke = async () => {
 const revokeSecretLink = async () => {
   confirm.require({
     header: "Revoke this secret link?",
-    message:
-      "Are you sure you want to permanently revoke this secret link? Once revoked, nobody will be able to use it to access this page.",
+    message: `Are you sure you want to permanently revoke the secret link "${props.comment}"? Once revoked, nobody will be able to use it to access this page.`,
     icon: "pi pi-info-circle",
     acceptProps: {
       label: "Revoke",
