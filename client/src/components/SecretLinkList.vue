@@ -173,7 +173,7 @@ const secretLinkActions = [
 </script>
 
 <template>
-  <section v-if="count > 0" aria-labelledby="secret-links-list-heading">
+  <section aria-labelledby="secret-links-list-heading">
     <Panel
       toggleable
       collapsed
