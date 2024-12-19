@@ -9,7 +9,7 @@ import Skeleton from "primevue/skeleton";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newEditLink } from "@/vars";
-import { computed, ref, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
 import { datetimeToCsvFormat, decodeUtf8, formatDate } from "@/encoding";
 import { unsealSubmissionBody } from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
@@ -56,7 +56,17 @@ const isLoaded = computed(() => allDone(accessToken, privatePrimaryKey, form));
 const isReadOnly = computed(() => !isDone(accessToken) || accessToken.value.value.role === "read");
 
 const isMenuExpanded = ref(false);
-const shareLinkModalIsVisible = ref(false);
+const isShareLinkModalVisible = ref(false);
+const isReloadButtonSpinning = ref(false);
+
+watch([submissionsState], () => {
+  if (submissionsState.value === "reloading") {
+    isReloadButtonSpinning.value = true;
+    setTimeout(() => {
+      isReloadButtonSpinning.value = false;
+    }, 1000);
+  }
+});
 
 const csvFileObjectUrl = computed(() => {
   const headers = ["Submitted at (UTC)", "Name", "Contact", "Contact method", "Comment"];
@@ -223,6 +233,7 @@ watchEffect(async () => {
           >
             <Button
               @click="refreshSubmissions"
+              :loading="isReloadButtonSpinning"
               icon="pi pi-refresh"
               size="large"
               severity="secondary"
@@ -276,12 +287,12 @@ watchEffect(async () => {
           >
             <Button
               class="!justify-start"
-              @click="shareLinkModalIsVisible = true"
+              @click="isShareLinkModalVisible = true"
               label="Share"
               severity="secondary"
               icon="pi pi-share-alt"
               aria-controls="share-link-modal"
-              :aria-expanded="shareLinkModalIsVisible"
+              :aria-expanded="isShareLinkModalVisible"
               raised
             />
             <Button
@@ -331,7 +342,7 @@ watchEffect(async () => {
     <Dialog
       id="share-link-modal"
       class="p-2 mx-4"
-      v-model:visible="shareLinkModalIsVisible"
+      v-model:visible="isShareLinkModalVisible"
       modal
       aria-labelledby="share-link-modal-name"
     >
