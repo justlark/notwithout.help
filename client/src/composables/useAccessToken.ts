@@ -33,6 +33,11 @@ const loadStoredAccessToken = (
   formId: FormId,
   clientKeyId: ClientKeyId,
 ): ApiAccessToken | undefined => {
+  if (getTokenState(formId, clientKeyId) === "expired") {
+    sessionStorage.removeItem(cacheKey(formId, clientKeyId));
+    return undefined;
+  }
+
   const accessToken = sessionStorage.getItem(
     cacheKey(formId, clientKeyId),
   ) as ApiAccessToken | null;
@@ -51,14 +56,15 @@ const loadStoredAccessToken = (
   return accessToken;
 };
 
-const accessTokenIsLoading = ref(new Map<string, boolean>());
+type TokenState = "loading" | "done" | "expired";
+const accessTokenState = ref(new Map<string, TokenState>());
 
-const setIsLoading = (formId: FormId, clientKeyId: ClientKeyId, value: boolean) => {
-  accessTokenIsLoading.value.set(cacheKey(formId, clientKeyId), value);
+const setTokenState = (formId: FormId, clientKeyId: ClientKeyId, value: TokenState) => {
+  accessTokenState.value.set(cacheKey(formId, clientKeyId), value);
 };
 
-const getIsLoading = (formId: FormId, clientKeyId: ClientKeyId) =>
-  accessTokenIsLoading.value.get(cacheKey(formId, clientKeyId));
+const getTokenState = (formId: FormId, clientKeyId: ClientKeyId) =>
+  accessTokenState.value.get(cacheKey(formId, clientKeyId));
 
 const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
   const { nonce } = jwtDecode<{ nonce: string }>(challengeToken);
@@ -115,12 +121,12 @@ export const useAccessToken = () => {
 
       // Make sure the `watchEffect` tracks that we're done loading the access
       // token, because it won't react to changes in the session storage.
-      setIsLoading(formId.value, clientKeyId.value, false);
+      setTokenState(formId.value, clientKeyId.value, "done");
 
       return;
     }
 
-    if (getIsLoading(formId.value, clientKeyId.value)) {
+    if (getTokenState(formId.value, clientKeyId.value) === "loading") {
       return;
     }
 
@@ -128,7 +134,7 @@ export const useAccessToken = () => {
     // ensure this hook doesn't run more than once concurrently. We want to
     // make sure we don't go through the auth flow more than once per page
     // load.
-    setIsLoading(formId.value, clientKeyId.value, true);
+    setTokenState(formId.value, clientKeyId.value, "loading");
 
     let privateSigningKey;
 
@@ -148,6 +154,14 @@ export const useAccessToken = () => {
       const accessToken = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
 
       storeAccessToken(formId.value, clientKeyId.value, accessToken);
+      setTokenState(formId.value, clientKeyId.value, "done");
+
+      // Once the token expires, trigger the `watchEffect` to request a new one.
+      const tokenTtl = extractExp(accessToken).getTime() - Date.now();
+      setTimeout(() => {
+        console.warn("Access token has expired. Requesting a new one.");
+        setTokenState(formId.value, clientKeyId.value, "expired");
+      }, tokenTtl);
 
       loadable.value = {
         state: "done",
