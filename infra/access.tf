@@ -24,3 +24,47 @@ resource "cloudflare_zero_trust_access_policy" "site_preview" {
     email = var.cloudflare_access_emails
   }
 }
+
+resource "cloudflare_list" "pages_dev_domains" {
+  account_id  = var.cloudflare_account_id
+  kind        = "redirect"
+  name        = "notwithouthelp_pages_dev_domains"
+  description = "List of *.notwithouthelp.pages.dev domains"
+
+  item {
+    value {
+      redirect {
+        source_url            = "notwithouthelp.pages.dev"
+        target_url            = "https://${cloudflare_pages_domain.site.domain}"
+        status_code           = 301
+        include_subdomains    = "enabled"
+        preserve_query_string = "enabled"
+        subpath_matching      = "enabled"
+        preserve_path_suffix  = "enabled"
+      }
+    }
+  }
+}
+
+resource "cloudflare_ruleset" "redirect_pages_dev_domains" {
+  account_id  = var.cloudflare_account_id
+  name        = "redirect *.notwithouthelp.pages.dev domains"
+  description = "redirect *.notwithouthelp.pages.dev domains"
+  kind        = "root"
+  phase       = "http_request_redirect"
+
+  rules {
+    action = "redirect"
+
+    action_parameters {
+      from_list {
+        name = cloudflare_list.pages_dev_domains.name
+        key  = "http.request.full_uri"
+      }
+    }
+
+    expression  = "http.request.full_uri in ${format("$%s", cloudflare_list.pages_dev_domains.name)}"
+    description = "Apply redirects from ${cloudflare_list.pages_dev_domains.name}"
+    enabled     = true
+  }
+}
