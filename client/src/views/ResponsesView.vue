@@ -185,11 +185,11 @@ watchEffect(async () => {
 
     <div class="xl:w-3/4 mx-auto" v-else>
       <div
-        v-if="isDone(form)"
         class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-2"
       >
-        <h2>{{ form.value.orgName }}</h2>
-        <span v-if="form.value.expirationDate" class="text-muted-color">
+        <h2 v-if="isDone(form)">{{ form.value.orgName }}</h2>
+        <Skeleton v-else width="10rem" height="2.5rem" />
+        <span v-if="isDone(form) && form.value.expirationDate" class="text-muted-color">
           <i class="pi pi-calendar"></i>
           Expires
           <time :datetime="form.value.expirationDate.toISOString()">{{
