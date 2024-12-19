@@ -204,6 +204,21 @@ watchEffect(async () => {
           :client-key-id="clientKeyId"
           :secret-link-key="secretLinkKey"
         />
+        <div class="xl:sticky top-6">
+          <div
+            v-if="isLoaded && !waitingForSubmissions"
+            class="fixed xl:absolute xl:-translate-x-full xl:translate-y-1/2 bottom-6 xl:bottom-auto xl:top-full xl:-left-6"
+          >
+            <Button
+              icon="pi pi-refresh"
+              size="large"
+              severity="secondary"
+              aria-label="Refresh"
+              raised
+              rounded
+            />
+          </div>
+        </div>
         <div class="flex flex-col gap-4 items-center">
           <FormResponse
             v-for="(submission, index) in submissions"
@@ -222,7 +237,7 @@ watchEffect(async () => {
                 <i class="pi pi-info-circle !text-4xl"></i>
                 <div class="flex flex-col gap-1">
                   <span class="text-2xl">No responses yet</span>
-                  <span>Refresh the page to check again.</span>
+                  <span>Click the refresh button to check again.</span>
                 </div>
               </div>
             </template>
