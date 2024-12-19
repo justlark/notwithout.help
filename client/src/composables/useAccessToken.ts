@@ -10,30 +10,55 @@ import {
 } from "@/crypto";
 import { type Loadable } from "@/types";
 import api, { ApiError, type AccessRole, type ApiErrorKind } from "@/api";
-import { ref, readonly, computed, watchEffect } from "vue";
+import { ref, readonly, watchEffect } from "vue";
 import { decodeBase64 } from "@/encoding";
 import { jwtDecode } from "jwt-decode";
 import { useSecretLink } from "./useSecretLink";
 
-// We cache access tokens to avoid going through the auth flow more than once
-// per page load.
-//
-// Remember: The URL fragment (and therefore the form ID, client key ID, and
-// secret link key) can change without reloading the page.
-//
-// TODO: What happens if the access token expires before the user reloads the
-// page?
-const accessTokenCache = ref(new Map<string, ApiAccessToken>());
+const cacheKey = (formId: FormId, clientKeyId: ClientKeyId) => `token:${formId}/${clientKeyId}`;
 
-// Keep track of whether we've started loading a given access token to ensure
-// this hook doesn't run more than once concurrently. We want to make sure we
-// don't go through the auth flow more than once per page load.
-//
-// Once this value is set to `true` for a given (form ID, client key ID, secret
-// link key) tuple, it will stay `true` for the lifetime of the page load,
-// because and invalid secret link is unlikely to ever become valid in the
-// future; revoked secret links cannot be re-enabled.
-const accessTokenHasStartedLoading = ref(new Map<string, boolean>());
+const storeAccessToken = (
+  formId: FormId,
+  clientKeyId: ClientKeyId,
+  accessToken: ApiAccessToken,
+) => {
+  // We use the session storage instead of the local storage because there's no
+  // need to persist the access token across sessions; the URL fragment
+  // contains all the information necessary to request a new one, which only
+  // takes a few seconds longer.
+  sessionStorage.setItem(cacheKey(formId, clientKeyId), accessToken);
+};
+
+const loadStoredAccessToken = (
+  formId: FormId,
+  clientKeyId: ClientKeyId,
+): ApiAccessToken | undefined => {
+  const accessToken = sessionStorage.getItem(
+    cacheKey(formId, clientKeyId),
+  ) as ApiAccessToken | null;
+
+  if (accessToken === null) {
+    return undefined;
+  }
+
+  const exp = extractExp(accessToken);
+
+  if (exp < new Date()) {
+    console.warn("Access token has expired. Requesting a new one.");
+    return undefined;
+  }
+
+  return accessToken;
+};
+
+const accessTokenIsLoading = ref(new Map<string, boolean>());
+
+const setIsLoading = (formId: FormId, clientKeyId: ClientKeyId, value: boolean) => {
+  accessTokenIsLoading.value.set(cacheKey(formId, clientKeyId), value);
+};
+
+const getIsLoading = (formId: FormId, clientKeyId: ClientKeyId) =>
+  accessTokenIsLoading.value.get(cacheKey(formId, clientKeyId));
 
 const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
   const { nonce } = jwtDecode<{ nonce: string }>(challengeToken);
@@ -43,6 +68,11 @@ const extractNonce = (challengeToken: ApiChallengeToken): ApiChallengeNonce => {
 const extractRole = (accessToken: ApiAccessToken): AccessRole => {
   const { role } = jwtDecode<{ role: AccessRole }>(accessToken);
   return role;
+};
+
+const extractExp = (accessToken: ApiAccessToken): Date => {
+  const { exp } = jwtDecode<{ exp: number }>(accessToken);
+  return new Date(exp * 1000);
 };
 
 export interface AccessTokenParts {
@@ -71,28 +101,34 @@ export const useAccessToken = () => {
 
   const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 
-  const cacheKey = computed(() => `${formId.value}:${clientKeyId.value}:${secretLinkKey.value}`);
-
   watchEffect(async () => {
-    const cachedAccessToken = accessTokenCache.value.get(cacheKey.value);
+    const storedAccessToken = loadStoredAccessToken(formId.value, clientKeyId.value);
 
-    if (cachedAccessToken !== undefined) {
+    if (storedAccessToken !== undefined) {
       loadable.value = {
         state: "done",
         value: {
-          token: cachedAccessToken,
-          role: extractRole(cachedAccessToken),
+          token: storedAccessToken,
+          role: extractRole(storedAccessToken),
         },
       };
 
+      // Make sure the `watchEffect` tracks that we're done loading the access
+      // token, because it won't react to changes in the session storage.
+      setIsLoading(formId.value, clientKeyId.value, false);
+
       return;
     }
 
-    if (accessTokenHasStartedLoading.value.get(cacheKey.value)) {
+    if (getIsLoading(formId.value, clientKeyId.value)) {
       return;
     }
 
-    accessTokenHasStartedLoading.value.set(cacheKey.value, true);
+    // Keep track of whether we've started loading a given access token to
+    // ensure this hook doesn't run more than once concurrently. We want to
+    // make sure we don't go through the auth flow more than once per page
+    // load.
+    setIsLoading(formId.value, clientKeyId.value, true);
 
     let privateSigningKey;
 
@@ -111,7 +147,7 @@ export const useAccessToken = () => {
     try {
       const accessToken = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
 
-      accessTokenCache.value.set(cacheKey.value, accessToken);
+      storeAccessToken(formId.value, clientKeyId.value, accessToken);
 
       loadable.value = {
         state: "done",
