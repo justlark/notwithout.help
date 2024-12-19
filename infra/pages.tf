@@ -41,3 +41,9 @@ resource "cloudflare_pages_domain" "site" {
   project_name = cloudflare_pages_project.site.name
   domain       = data.cloudflare_zone.site.name
 }
+
+resource "cloudflare_pages_domain" "site_dev" {
+  account_id   = var.cloudflare_account_id
+  project_name = cloudflare_pages_project.site.name
+  domain       = "dev.${data.cloudflare_zone.site.name}"
+}

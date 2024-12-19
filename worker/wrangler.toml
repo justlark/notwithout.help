@@ -50,7 +50,7 @@ crons = ["0 0 * * *"]
   [env.dev.vars]
   ENV = "dev"
   ORIGIN = "https://api-dev.notwithout.help"
-  CORS_ALLOWED_ORIGIN = "https://main.notwithouthelp.pages.dev"
+  CORS_ALLOWED_ORIGIN = "https://dev.notwithout.help"
 
   # Copied from the prod environment.
   ACCESS_TOKEN_EXP = "3600"        # 1 hour

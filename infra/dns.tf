@@ -2,7 +2,15 @@ resource "cloudflare_record" "apex_cname" {
   zone_id = data.cloudflare_zone.site.id
   type    = "CNAME"
   name    = "@"
-  content = "notwithouthelp.pages.dev"
+  content = cloudflare_pages_project.site.subdomain
+  proxied = true
+}
+
+resource "cloudflare_record" "dev_cname" {
+  zone_id = data.cloudflare_zone.site.id
+  type    = "CNAME"
+  name    = "dev"
+  content = "main.${cloudflare_pages_project.site.subdomain}"
   proxied = true
 }
 
