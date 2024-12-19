@@ -32,10 +32,7 @@ export interface Submission {
 }
 
 const submissions = ref<Array<Submission>>([]);
-const returnedNoSubmissions = ref(false);
-const waitingForSubmissions = computed(
-  () => submissions.value.length === 0 && !returnedNoSubmissions.value,
-);
+const submissionsState = ref<"loading" | "done" | "none" | "reloading">("loading");
 
 const router = useRouter();
 const confirm = useConfirm();
@@ -136,8 +133,15 @@ const deleteForm = () => {
   });
 };
 
+const refreshSubmissions = () => {
+  submissionsState.value = "reloading";
+};
+
 watchEffect(async () => {
-  submissions.value = [];
+  // Make sure this is tracked by the `watchEffect` before the first await boundary.
+  //
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  submissionsState.value;
 
   // Ensure all of these are tracked by Vue before the first await boundary.
   if (!isDone(accessToken) || !isDone(privatePrimaryKey) || !isDone(form)) {
@@ -152,7 +156,12 @@ watchEffect(async () => {
     accessToken: token,
   });
 
-  returnedNoSubmissions.value = encryptedSubmissions.length === 0;
+  if (encryptedSubmissions.length === 0) {
+    submissionsState.value = "none";
+    return;
+  }
+
+  const newSubmissions = [];
 
   for (const { encryptedBody, createdAt } of encryptedSubmissions) {
     const encodedSubmissionBody = await unsealSubmissionBody(
@@ -163,7 +172,7 @@ watchEffect(async () => {
 
     const submissionBody: SubmissionBody = JSON.parse(decodeUtf8(encodedSubmissionBody));
 
-    submissions.value.push({
+    newSubmissions.push({
       name: submissionBody.name,
       contact: submissionBody.contact,
       contactMethod: submissionBody.contact_method,
@@ -171,6 +180,9 @@ watchEffect(async () => {
       createdAt: new Date(createdAt),
     });
   }
+
+  submissions.value = newSubmissions;
+  submissionsState.value = "done";
 });
 </script>
 <template>
@@ -206,10 +218,11 @@ watchEffect(async () => {
         />
         <div class="xl:sticky top-6">
           <div
-            v-if="isLoaded && !waitingForSubmissions"
+            v-if="isLoaded && submissionsState !== 'loading'"
             class="fixed xl:absolute xl:-translate-x-full xl:translate-y-1/2 bottom-6 xl:bottom-auto xl:top-full xl:-left-6"
           >
             <Button
+              @click="refreshSubmissions"
               icon="pi pi-refresh"
               size="large"
               severity="secondary"
@@ -231,7 +244,7 @@ watchEffect(async () => {
             :comment="submission.comment"
             :createdAt="submission.createdAt"
           />
-          <Card v-if="returnedNoSubmissions" class="w-full">
+          <Card v-if="submissionsState === 'none'" class="w-full">
             <template #content>
               <div class="flex gap-5 items-center text-muted-color">
                 <i class="pi pi-info-circle !text-4xl"></i>
@@ -242,13 +255,13 @@ watchEffect(async () => {
               </div>
             </template>
           </Card>
-          <Skeleton v-if="waitingForSubmissions" height="6rem" />
-          <Skeleton v-if="waitingForSubmissions" height="6rem" />
+          <Skeleton v-if="submissionsState === 'loading'" height="6rem" />
+          <Skeleton v-if="submissionsState === 'loading'" height="6rem" />
         </div>
       </div>
       <div class="xl:sticky bottom-6">
         <div
-          v-if="isLoaded && !waitingForSubmissions"
+          v-if="isLoaded && submissionsState !== 'loading'"
           class="flex flex-col gap-6 fixed xl:absolute xl:translate-x-full bottom-6 xl:bottom-0 right-6 xl:-right-6"
         >
           <div
