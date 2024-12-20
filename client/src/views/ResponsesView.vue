@@ -211,7 +211,11 @@ watchEffect(async () => {
       message="Either this is an invalid link, the group has been deleted, or you don't have access to it anymore."
     />
 
-    <div class="xl:w-3/4 mx-auto" v-else>
+    <!--
+      Include a bottom margin so the user can scroll far enough that the
+      floating action buttons don't overlap the content.
+    -->
+    <div class="xl:w-3/4 mx-auto mb-20 xl:mb-0" v-else>
       <div
         class="text-center flex items-center sm:items-baseline flex-col sm:flex-row sm:justify-between mb-6 sm:mb-2"
       >
