@@ -34,7 +34,7 @@ resource "cloudflare_list" "pages_dev_domains" {
   item {
     value {
       redirect {
-        source_url            = "notwithouthelp.pages.dev"
+        source_url            = "${cloudflare_pages_project.site.subdomain}/"
         target_url            = "https://${cloudflare_pages_domain.site.domain}"
         status_code           = 301
         include_subdomains    = "enabled"
