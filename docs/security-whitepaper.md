@@ -3,7 +3,7 @@
 **Author**: Lark (they/it)\
 **Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 11 Dec 2024
+**Last Updated**: 20 Dec 2024
 
 This document is an informal overview of how [Not Without
 Help](https://notwithout.help) mitigates security risks.
@@ -285,6 +285,13 @@ Delete the **Form** from the database, along with all its associated
 
 ```
 DELETE /forms/:form_id
+```
+
+Update the metadata associated with a **Form**, such as its description or
+expiration date.
+
+```
+PATCH /forms/:form_id
 ```
 
 Get a **Wrapped Private Primary Key** by its **Client Key ID**.
