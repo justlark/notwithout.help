@@ -9,11 +9,10 @@ import { RouterLink } from "vue-router";
     <h1 id="main-heading" class="text-center mb-0">Not Without Help</h1>
     <Button as="router-link" to="/start" label="Start a Group" />
     <div class="text-justify max-w-3xl flex flex-col">
-      <p class="text-center">🚧 This site is under construction 🚧</p>
       <p>
         Not Without Help is a tool for connecting organizations with people who want to help. In
-        this early iteration, it's just a form where volunteers can leave their contact information
-        for organizers to get in touch.
+        this early iteration of the concept, it's just a form where volunteers can leave their
+        contact information for organizers to get in touch.
       </p>
       <h2 class="text-center my-4">How it works</h2>
       <ul class="list-none flex flex-col gap-4 px-0">

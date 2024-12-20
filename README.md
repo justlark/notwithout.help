@@ -1,21 +1,6 @@
 # Not Without Help
 
-🚧 This repo is under construction 🚧
-
 A web app for connecting organizations with people that want to get involved.
-
-How it works:
-
-- Organizers create forms for volunteers to fill out.
-- Volunteers answer some questions about the kinds of roles they're interested
-  in and leave their contact information.
-- Neither organizers nor volunteers need an account, email address, or phone
-  number to use the app. Volunteers just follow a link to fill out the form,
-  and organizers have a separate link to view the responses.
-- Only the organizers can see the volunteers' responses. Neither the website
-  owner nor the hosting provider have access to them.
-- Organizers can individually revoke access to volunteers' responses at any
-  time.
 
 ## Architecture
 
@@ -31,9 +16,9 @@ this repo under [`./worker/`](./worker).
 
 ## Deployment
 
-The client app is automatically deployed to the CDN on pushes to `main`. To
-deploy the worker, [install Rust](https://www.rust-lang.org/tools/install) and
-run:
+The client app is automatically deployed to the CDN on pushes to `main` and
+`prod`. To deploy the worker, [install
+Rust](https://www.rust-lang.org/tools/install) and run:
 
 ```shell
 cd ./worker/
