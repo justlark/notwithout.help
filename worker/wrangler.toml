@@ -16,8 +16,10 @@ crons = ["0 0 * * *"]
   ORIGIN = "https://api.notwithout.help"
   CORS_ALLOWED_ORIGIN = "https://notwithout.help"
 
-  # We generate a new access token on each page load, so this doesn't need to
-  # live that long.
+  # Generating a new access token is fairly quick and doesn't require kicking
+  # the user back to any sort of login screen, because all they information
+  # needed to request one is embedded in the URL fragment. So, this doesn't
+  # need to be that long.
   ACCESS_TOKEN_EXP = "3600" # 1 hour
 
   # The challenge token should be short-lived; it only needs to live long enough
