@@ -1,14 +1,12 @@
 # Security Whitepaper
 
 **Author**: Lark (they/it)\
-**Contact**: <lark@lark.gay>\
+**Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
 **Last Updated**: 11 Dec 2024
 
 This document is an informal overview of how [Not Without
 Help](https://notwithout.help) mitigates security risks.
-
-⚠️ This document is in an early draft stage. ⚠️
 
 ## Disclaimer
 
