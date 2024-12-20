@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from "primevue/button";
+import Card from "primevue/card";
 import { RouterLink } from "vue-router";
 </script>
 
@@ -14,33 +15,88 @@ import { RouterLink } from "vue-router";
         this early iteration, it's just a form where volunteers can leave their contact information
         for organizers to get in touch.
       </p>
-      <h2 class="text-center">How it works</h2>
-      <ul>
+      <h2 class="text-center my-4">How it works</h2>
+      <ul class="list-none flex flex-col gap-4 px-0">
         <li>
-          You'll fill out some information about your group and what kinds of help you're looking
-          for.
+          <Card>
+            <template #content>
+              <div class="flex gap-4 items-center">
+                <i class="pi pi-pencil text-muted-color !text-3xl" aria-hidden></i>
+                <span>
+                  You'll fill out some information about your group and what kinds of help you're
+                  looking for.
+                </span>
+              </div>
+            </template>
+          </Card>
         </li>
         <li>
-          You'll get a link to share around and collect responses from people who want to help.
+          <Card>
+            <template #content>
+              <div class="flex gap-4 items-center">
+                <i class="pi pi-link text-muted-color !text-3xl" aria-hidden></i>
+                <span>
+                  You'll get a link to share around and collect responses from people who want to
+                  help.
+                </span>
+              </div>
+            </template>
+          </Card>
         </li>
         <li>
-          Folks who are interested leave their contact information so you can reach out to them
-          directly.
+          <Card>
+            <template #content>
+              <div class="flex gap-4 items-center">
+                <i class="pi pi-address-book text-muted-color !text-3xl" aria-hidden></i>
+                <span>
+                  Folks who are interested leave their contact information so you can reach out to
+                  them directly.
+                </span>
+              </div>
+            </template>
+          </Card>
         </li>
       </ul>
-      <h2 class="text-center">Privacy</h2>
-      <ul>
+      <h2 class="text-center my-4">Privacy</h2>
+      <ul class="list-none flex flex-col gap-4 px-0">
         <li>
-          Only you can see the information people send you. Neither us nor our hosting provider have
-          access to it.
+          <Card>
+            <template #content>
+              <div class="flex gap-4 items-center">
+                <i class="pi pi-eye-slash text-muted-color !text-3xl" aria-hidden></i>
+                <span>
+                  Only you can see the information people send you. Neither us nor our hosting
+                  provider have access to it.
+                </span>
+              </div>
+            </template>
+          </Card>
         </li>
         <li>
-          You don't need any sort of account to use this tool. You don't need to provide a name,
-          email address, or phone number to start a group.
+          <Card>
+            <template #content>
+              <div class="flex gap-4 items-center">
+                <i class="pi pi-ban text-muted-color !text-3xl" aria-hidden></i>
+                <span>
+                  You don't need any sort of account to use this tool. You don't need to provide a
+                  name, email address, or phone number to start a group.
+                </span>
+              </div>
+            </template>
+          </Card>
         </li>
         <li>
-          You have control over who you authorize to view the information people send you, and you
-          can revoke that access at any time.
+          <Card>
+            <template #content>
+              <div class="flex gap-4 items-center">
+                <i class="pi pi-user-edit text-muted-color !text-3xl" aria-hidden></i>
+                <span>
+                  You have control over who you authorize to view the information people send you,
+                  and you can revoke that access at any time.
+                </span>
+              </div>
+            </template>
+          </Card>
         </li>
       </ul>
     </div>
