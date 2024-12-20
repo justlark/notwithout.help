@@ -32,6 +32,7 @@ export interface Submission {
 }
 
 const submissions = ref<Array<Submission>>([]);
+const submissionsCount = computed(() => submissions.value.length);
 const submissionsState = ref<"loading" | "done" | "none" | "reloading">("loading");
 
 const router = useRouter();
@@ -197,7 +198,12 @@ watchEffect(async () => {
 </script>
 <template>
   <main aria-labelledby="main-heading">
-    <h1 id="main-heading" class="text-center mb-6">View responses</h1>
+    <h1 id="main-heading" class="text-center flex gap-2 justify-center items-baseline mb-6">
+      <span>View responses</span>
+      <span v-if="submissionsCount" class="text-2xl text-muted-color">
+        ({{ submissionsCount }})
+      </span>
+    </h1>
 
     <ErrorCard
       v-if="isNotFound"

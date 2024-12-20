@@ -187,7 +187,10 @@ const secretLinkActions = [
       <template #header>
         <span class="flex items-center gap-3">
           <i class="pi pi-lock !text-xl"></i>
-          <h1 id="secret-links-list-heading" class="text-lg mb-0">Secret links ({{ count }})</h1>
+          <h1 id="secret-links-list-heading" class="flex gap-2 text-lg mb-0">
+            <span>Secret links</span>
+            <span class="text-muted-color">({{ count }})</span>
+          </h1>
         </span>
       </template>
       <ul>
