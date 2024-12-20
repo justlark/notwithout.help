@@ -8,6 +8,7 @@ terraform {
 
   cloud {
     organization = "lark"
+    hostname     = "app.terraform.io"
 
     workspaces {
       name = "notwithouthelp"
