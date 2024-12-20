@@ -103,6 +103,8 @@ import { RouterLink } from "vue-router";
     <p class="flex justify-center gap-2 text-center">
       <RouterLink to="/contact">Contact</RouterLink>
       <span>•</span>
+      <RouterLink to="/security">Security</RouterLink>
+      <span>•</span>
       <a href="https://github.com/justlark/notwithout.help" target="_blank">GitHub</a>
     </p>
   </main>

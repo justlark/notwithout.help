@@ -35,6 +35,11 @@ const router = createRouter({
       component: () => import("../views/ContactView.vue"),
     },
     {
+      path: "/security",
+      name: "security",
+      component: () => import("../views/SecurityView.vue"),
+    },
+    {
       path: "/:path(.*)*",
       name: "not-found",
       component: () => import("../views/NotFoundView.vue"),
