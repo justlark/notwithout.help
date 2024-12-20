@@ -261,7 +261,13 @@ watchEffect(async () => {
             :comment="submission.comment"
             :createdAt="submission.createdAt"
           />
-          <Card v-if="submissionsState === 'none'" class="w-full">
+          <Card
+            v-if="
+              submissionsState === 'none' ||
+              (submissionsCount === 0 && submissionsState === 'reloading')
+            "
+            class="w-full"
+          >
             <template #content>
               <div class="flex gap-5 items-center text-muted-color">
                 <i class="pi pi-info-circle !text-4xl"></i>
