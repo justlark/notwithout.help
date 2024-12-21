@@ -29,7 +29,7 @@ use crate::{
         ChallengeId, ClientKeyId, EncryptedKeyComment, FormId, FormTemplate, FormUpdate,
         ServerKeyId, SubmissionId,
     },
-    store::UnauthenticatedStore,
+    store::{UnauthenticatedStore, FORM_TEMPLATE_CURRENT_VERSION},
 };
 
 fn internal_err(err: anyhow::Error) -> ErrorResponse {
@@ -84,6 +84,7 @@ async fn publish_form(
     let store = state.store.without_authenticating();
 
     let template = FormTemplate {
+        version: FORM_TEMPLATE_CURRENT_VERSION,
         org_name: form.org_name,
         description: form.description,
         contact_methods: form.contact_methods,
@@ -292,6 +293,7 @@ async fn edit_form(
 
     let form_update = FormUpdate {
         template: FormTemplate {
+            version: FORM_TEMPLATE_CURRENT_VERSION,
             org_name: body.org_name,
             description: body.description,
             contact_methods: body.contact_methods,

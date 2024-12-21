@@ -198,6 +198,7 @@ pub struct EncryptedKeyComment(String);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
+    pub version: u32,
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,

@@ -19,6 +19,12 @@ use crate::{
 // automatically generating timestamps with `DEFAULT CURRENT_TIMESTAMP`.
 const SQLITE_DATETIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
+// We version the shape of the form template JSON so that we change it in the future if necessary.
+// This can be accomplished via database migrations, using the SQLite JSON functions.
+//
+// https://sqlite.org/json1.html
+pub const FORM_TEMPLATE_CURRENT_VERSION: u32 = 1;
+
 fn server_key_ttl() -> u64 {
     config::access_token_exp().as_secs() * 2
 }
