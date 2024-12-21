@@ -166,7 +166,7 @@ const removeSecretLinkFromList = (index: number) => {
 const secretLinkActions = [
   {
     label: "Read-only",
-    icon: "pi pi-tag",
+    icon: "pi pi-eye",
     command: async () => createSecretLink("read"),
   },
 ];
