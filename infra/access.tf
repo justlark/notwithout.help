@@ -25,6 +25,19 @@ resource "cloudflare_zero_trust_access_policy" "site_preview" {
   }
 }
 
+# Typically, creating the redirect list would not be enough; you would also
+# need to create the bulk redirect rule as well.
+#
+# However, Cloudflare seems to requires that all bulk redirect rules be
+# contained within a single ruleset, which is a problem for us because this
+# project shares a Cloudflare account with other projects, each having their
+# own bulk redirect rules.
+#
+# So, that logic is being handled elsewhere, in another codebase, and we don't
+# need to worry about it here.
+#
+# If you're trying to deploy your own instance of this app, be aware that
+# you'll need to create the bulk redirect rule yourself.
 resource "cloudflare_list" "pages_dev_domains" {
   account_id  = var.cloudflare_account_id
   kind        = "redirect"
@@ -43,28 +56,5 @@ resource "cloudflare_list" "pages_dev_domains" {
         preserve_path_suffix  = "enabled"
       }
     }
-  }
-}
-
-resource "cloudflare_ruleset" "redirect_pages_dev_domains" {
-  account_id  = var.cloudflare_account_id
-  name        = "redirect *.notwithouthelp.pages.dev domains"
-  description = "redirect *.notwithouthelp.pages.dev domains"
-  kind        = "root"
-  phase       = "http_request_redirect"
-
-  rules {
-    action = "redirect"
-
-    action_parameters {
-      from_list {
-        name = cloudflare_list.pages_dev_domains.name
-        key  = "http.request.full_uri"
-      }
-    }
-
-    expression  = "http.request.full_uri in ${format("$%s", cloudflare_list.pages_dev_domains.name)}"
-    description = "Apply redirects from ${cloudflare_list.pages_dev_domains.name}"
-    enabled     = true
   }
 }
