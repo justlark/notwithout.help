@@ -16,14 +16,16 @@ this repo under [`./worker/`](./worker).
 
 ## Deployment
 
-The client app is automatically deployed to the CDN on pushes to `main` and
-`prod`. To deploy the worker, [install
+The client app and backend worker are automatically deployed to the dev
+environment on pushes to `main` and to the prod environment on pushes to
+`prod`. To deploy the worker manually, [install
 Rust](https://www.rust-lang.org/tools/install) and run:
 
 ```shell
 cd ./worker/
 npm install
-npx wrangler deploy
+npx wrangler deploy --env dev
+npx wrangler deploy --env prod
 ```
 
 You can build the client app locally like this:
