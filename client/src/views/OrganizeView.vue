@@ -17,6 +17,7 @@ import { encodeUtf8 } from "@/encoding";
 import { getAccessToken } from "@/composables/useAccessToken";
 import { useToast } from "primevue";
 import { TOAST_ERROR_TTL } from "@/vars";
+import defaultRoles from "@/assets/default-roles.json";
 
 const INITIAL_KEY_COMMENT = "Original";
 
@@ -48,6 +49,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       description: values.description,
       contactMethods: values.contactMethods,
       expirationDate: values.expirationDate,
+      roles: values.showRoles ? defaultRoles : [],
     });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "content-too-large") {

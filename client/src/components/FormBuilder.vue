@@ -6,12 +6,16 @@ import Message from "primevue/message";
 import MultiSelect from "primevue/multiselect";
 import Button from "primevue/button";
 import DatePicker from "primevue/datepicker";
+import RoleList from "./RoleList.vue";
+import Panel from "primevue/panel";
+import ToggleSwitch from "primevue/toggleswitch";
 import { CONTACT_METHODS } from "@/vars";
 import { deleteState, loadState, persistState } from "@/state";
 import { z } from "zod";
 import { serializeDate, deserializeDate } from "@/encoding";
 import { toTypedSchema } from "@vee-validate/zod";
 import { computed, ref, watch } from "vue";
+import defaultRoles from "@/assets/default-roles.json";
 
 type Emits = {
   (eventName: "submit", values: FormValues, resetForm: () => void): void;
@@ -35,6 +39,7 @@ const schema = z.object({
     .nullish()
     .optional()
     .transform((value) => value ?? undefined),
+  showRoles: z.boolean(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -47,6 +52,7 @@ const loadInitialValues = () =>
     expirationDate: values.expirationDate
       ? deserializeDate(values.expirationDate)
       : props.initialValues?.expirationDate,
+    showRoles: values.showRoles ?? props.initialValues?.showRoles ?? false,
   }));
 
 const {
@@ -64,6 +70,7 @@ const [title, titleAttrs] = defineField("title");
 const [description, descriptionAttrs] = defineField("description");
 const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
 const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
+const [showRoles, showRolesAttrs] = defineField("showRoles");
 
 watch(values, () => {
   persistState(props.storageKey, values, (values) => ({
@@ -194,6 +201,33 @@ const addCustomContactMethod = () => {
           Specify what contact methods you want respondents to pick from when leaving their contact
           information.
         </span>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <ToggleSwitch
+            v-model="showRoles"
+            v-bind="showRolesAttrs"
+            input-id="roles-toggle"
+            aria-describedby="roles-help"
+            size="large"
+          />
+          <label for="roles-toggle" class="flex gap-2">Roles</label>
+        </div>
+        <span id="roles-help" class="text-muted-color text-sm font-medium">
+          Show respondents a list of examples of roles they could have in your organization and let
+          them pick which they're interested in. Credit to
+          <a
+            href="https://drdevonprice.substack.com/i/141409238/figure-out-your-activist-character-class"
+            target="_blank"
+            >Devon Price</a
+          >
+          for this list. In a future version of this app, you'll be able to create your own list of
+          roles.
+        </span>
+        <Panel v-if="showRoles" header="Preview" toggleable collapsed>
+          <RoleList id="role-input-preview" :roles="defaultRoles" preview />
+        </Panel>
       </div>
 
       <div class="flex flex-col gap-2">

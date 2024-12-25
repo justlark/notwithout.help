@@ -71,6 +71,8 @@ pub struct AuthError {
     message: String,
 }
 
+// Not to be confused with the roles within in an organization that form respondents can choose
+// from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AccessRole {
     #[serde(rename = "admin")]

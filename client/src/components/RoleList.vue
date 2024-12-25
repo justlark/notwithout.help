@@ -10,7 +10,8 @@ export interface Role {
 
 const props = defineProps<{
   roles: Array<Role>;
-  inputAttrs: BaseFieldProps;
+  inputAttrs?: BaseFieldProps;
+  preview?: boolean;
 }>();
 
 const selectedRoleIds = defineModel<Array<string>>();
@@ -26,6 +27,7 @@ const selectedRoleIds = defineModel<Array<string>>();
           :value="role.id"
           size="large"
           v-bind="props.inputAttrs"
+          :disabled="props.preview"
         />
         <div class="flex flex-col gap-2">
           <label :for="`role-checkbox-${role.id}`" class="font-bold">{{ role.name }}</label>

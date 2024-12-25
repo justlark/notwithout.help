@@ -11,6 +11,7 @@ import { newSecretLink, TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
 import { useRouter } from "vue-router";
+import defaultRoles from "@/assets/default-roles.json";
 
 const { formId, clientKeyId, secretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
@@ -30,6 +31,7 @@ const initialValues = computed(() =>
         description: form.value.value.description,
         contactMethods: form.value.value.contactMethods as [string, ...Array<string>],
         expirationDate: form.value.value.expirationDate,
+        showRoles: form.value.value.roles.length > 0,
       }
     : undefined,
 );
@@ -51,6 +53,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       contactMethods: values.contactMethods,
       expirationDate: values.expirationDate,
       accessToken: accessToken.value.value.token,
+      roles: values.showRoles ? defaultRoles : [],
     });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "content-too-large") {

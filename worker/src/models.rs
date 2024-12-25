@@ -196,12 +196,16 @@ impl From<String> for EncryptedSubmissionBody {
 #[serde(transparent)]
 pub struct EncryptedKeyComment(String);
 
+// Fields which are added to this struct must have a `#[serde(default)]` attribute to ensure that
+// existing form templates don't break.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormTemplate {
     pub version: u32,
     pub org_name: String,
     pub description: String,
     pub contact_methods: Vec<String>,
+    #[serde(default)]
+    pub roles: Vec<OrgRole>,
 }
 
 #[derive(Debug)]
@@ -231,4 +235,12 @@ pub struct ClientKeys {
     pub encrypted_comment: EncryptedKeyComment,
     pub role: AccessRole,
     pub accessed_at: Option<DateTime<Utc>>,
+}
+
+// Not to be confused with an "access role," part of the authentication system.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OrgRole {
+    pub id: String,
+    pub name: String,
+    pub details: Vec<String>,
 }

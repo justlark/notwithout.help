@@ -1,4 +1,4 @@
-import type { ApiErrorKind } from "@/api";
+import type { ApiErrorKind, OrgRole } from "@/api";
 import api, { ApiError } from "@/api";
 import type { PublicPrimaryKey } from "@/crypto";
 import type { Loadable } from "@/types";
@@ -11,6 +11,7 @@ export interface Form {
   contactMethods: Array<string>;
   publicPrimaryKey: PublicPrimaryKey;
   expirationDate: Date | undefined;
+  roles: Array<OrgRole>;
 }
 
 export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
@@ -30,6 +31,7 @@ export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
           contactMethods: response.contactMethods,
           publicPrimaryKey: response.publicPrimaryKey,
           expirationDate: response.expirationDate,
+          roles: response.roles ?? [],
         },
       };
     } catch (error) {

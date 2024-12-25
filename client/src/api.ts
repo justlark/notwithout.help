@@ -66,6 +66,13 @@ export interface SubmissionBody {
   comment: string | undefined;
 }
 
+// Not to be confused with an "access role."
+export interface OrgRole {
+  id: string;
+  name: string;
+  details: Array<string>;
+}
+
 export interface GetFormParams {
   formId: FormId;
 }
@@ -76,6 +83,7 @@ export interface GetFormResponse {
   contactMethods: Array<string>;
   publicPrimaryKey: PublicPrimaryKey;
   expirationDate: Date | undefined;
+  roles: Array<OrgRole> | undefined;
 }
 
 const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
@@ -85,7 +93,7 @@ const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
     throw new ApiError(response);
   }
 
-  const { org_name, description, contact_methods, public_primary_key, expires_at } =
+  const { org_name, description, contact_methods, public_primary_key, expires_at, roles } =
     await response.json();
 
   return {
@@ -94,6 +102,7 @@ const getForm = async ({ formId }: GetFormParams): Promise<GetFormResponse> => {
     contactMethods: contact_methods,
     publicPrimaryKey: decodeBase64(public_primary_key) as PublicPrimaryKey,
     expirationDate: expires_at ? new Date(expires_at) : undefined,
+    roles,
   };
 };
 
@@ -104,6 +113,7 @@ export interface PostFormParams {
   description: string;
   contactMethods: Array<string>;
   expirationDate: Date | undefined;
+  roles: Array<OrgRole>;
 }
 
 export interface PostFormResponse {
@@ -118,6 +128,7 @@ const postForm = async ({
   description,
   contactMethods,
   expirationDate,
+  roles,
 }: PostFormParams): Promise<PostFormResponse> => {
   const requestBody = {
     public_primary_key: encodeBase64(publicPrimaryKey),
@@ -126,6 +137,7 @@ const postForm = async ({
     description: description,
     contact_methods: contactMethods,
     expires_at: expirationDate?.toISOString(),
+    roles: roles,
   };
 
   const response = await fetch(`${API_URL}/forms`, {
@@ -172,6 +184,7 @@ export interface PatchFormParams {
   description: string;
   contactMethods: Array<string>;
   expirationDate: Date | undefined;
+  roles: Array<OrgRole>;
   accessToken: ApiAccessToken;
 }
 
@@ -182,12 +195,14 @@ const patchForm = async ({
   contactMethods,
   expirationDate,
   accessToken,
+  roles,
 }: PatchFormParams) => {
   const requestBody = {
     org_name: orgName,
     description: description,
     contact_methods: contactMethods,
     expires_at: expirationDate?.toISOString(),
+    roles: roles,
   };
 
   const response = await fetch(`${API_URL}/forms/${formId}`, {

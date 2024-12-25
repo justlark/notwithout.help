@@ -88,6 +88,7 @@ async fn publish_form(
         org_name: form.org_name,
         description: form.description,
         contact_methods: form.contact_methods,
+        roles: form.roles,
     };
 
     let form_id = FormId::new();
@@ -297,6 +298,7 @@ async fn edit_form(
             org_name: body.org_name,
             description: body.description,
             contact_methods: body.contact_methods,
+            roles: body.roles,
         },
         expires_at: match body.expires_at {
             Some(expires_at) => Some(
