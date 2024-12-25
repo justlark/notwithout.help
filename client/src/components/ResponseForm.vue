@@ -141,7 +141,7 @@ const resetForm = () => {
       </div>
 
       <div class="flex flex-col gap-2">
-        <Panel header="Roles">
+        <Panel header="What roles are you interested in?">
           <RoleList
             v-model="selectedRoleIds"
             id="role-input"
