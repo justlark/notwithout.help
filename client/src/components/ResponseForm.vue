@@ -31,6 +31,7 @@ const schema = z.object({
     message: "You must provide a preferred contact method.",
   }),
   comment: z.string().optional(),
+  roles: z.array(z.string()),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -41,6 +42,7 @@ const initialValues = computed(() =>
     contact: values.contact ?? "",
     contactMethod: values.contactMethod,
     comment: values.comment ?? "",
+    roles: values.roles ?? [],
   })),
 );
 
@@ -59,6 +61,7 @@ const [name, nameAttrs] = defineField("name");
 const [contact, contactAttrs] = defineField("contact");
 const [contactMethod, contactMethodAttrs] = defineField("contactMethod");
 const [comment, commentAttrs] = defineField("comment");
+const [selectedRoleIds, selectedRoleIdsAttrs] = defineField("roles");
 
 watch(values, () => {
   persistState(props.storageKey, values);
@@ -139,7 +142,12 @@ const resetForm = () => {
 
       <div class="flex flex-col gap-2">
         <Panel header="Roles">
-          <RoleList id="role-input" :roles="props.roles" />
+          <RoleList
+            v-model="selectedRoleIds"
+            id="role-input"
+            :roles="props.roles"
+            :inputAttrs="selectedRoleIdsAttrs"
+          />
         </Panel>
       </div>
 

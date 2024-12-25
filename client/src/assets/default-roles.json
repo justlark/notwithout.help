@@ -1,6 +1,6 @@
 [
   {
-    "id": "the-protestor",
+    "id": "protestor",
     "name": "The Protestor",
     "responsibilities": [
       "Attend public actions",
@@ -11,7 +11,7 @@
     ]
   },
   {
-    "id": "the-educator",
+    "id": "educator",
     "name": "The Educator",
     "responsibilities": [
       "Creates community resources",
@@ -22,7 +22,7 @@
     ]
   },
   {
-    "id": "the-mediator",
+    "id": "mediator",
     "name": "The Mediator",
     "responsibilities": [
       "Helps translate challenging ideas to people who are on the fence or find some ideas too \"radical\"",

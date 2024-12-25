@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Checkbox from "primevue/checkbox";
-import { ref } from "vue";
+import type { BaseFieldProps } from "vee-validate";
 
 export interface Role {
   id: string;
@@ -10,13 +10,10 @@ export interface Role {
 
 const props = defineProps<{
   roles: Array<Role>;
+  inputAttrs: BaseFieldProps;
 }>();
 
-const selectedRoleIds = ref<Array<string>>([]);
-
-defineExpose({
-  selectedRoleIds,
-});
+const selectedRoleIds = defineModel<Array<string>>();
 </script>
 
 <template>
@@ -27,6 +24,7 @@ defineExpose({
         :input-id="`role-checkbox-${role.id}`"
         :value="role.id"
         size="large"
+        v-bind="props.inputAttrs"
       />
       <div class="flex flex-col gap-2">
         <label :for="`role-checkbox-${role.id}`" class="font-bold">{{ role.name }}</label>
