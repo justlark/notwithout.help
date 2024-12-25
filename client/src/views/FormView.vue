@@ -10,7 +10,6 @@ import { isDone, returnsError } from "@/types";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
-import defaultRoles from "@/assets/default-roles.json";
 
 const toast = useToast();
 
