@@ -71,13 +71,14 @@ watch([submissionsState], () => {
 });
 
 const csvFileObjectUrl = computed(() => {
-  const headers = ["Submitted at (UTC)", "Name", "Contact", "Contact method", "Comment"];
+  const headers = ["Submitted at (UTC)", "Name", "Contact", "Contact method", "Comment", "Roles"];
   const data = submissions.value.map((submission) => [
     datetimeToCsvFormat(submission.createdAt),
     submission.name,
     submission.contact,
     submission.contactMethod,
     submission.comment,
+    submission.roles.join(", "),
   ]);
   const rows = [headers, ...data];
   const csv = toCsv(rows);
