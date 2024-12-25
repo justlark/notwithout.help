@@ -2,7 +2,7 @@
   {
     "id": "protestor",
     "name": "Protestor",
-    "responsibilities": [
+    "details": [
       "Attend public actions",
       "Works with other protestors to disrupt the status quo and draw attention to an issue",
       "Speaks out in the face of injustice",
@@ -13,7 +13,7 @@
   {
     "id": "educator",
     "name": "Educator",
-    "responsibilities": [
+    "details": [
       "Creates community resources",
       "Studies the available literature and movements from the past",
       "Explains concepts and introduces new ideas",
@@ -24,7 +24,7 @@
   {
     "id": "mediator",
     "name": "Mediator",
-    "responsibilities": [
+    "details": [
       "Helps translate challenging ideas to people who are on the fence or find some ideas too \"radical\"",
       "Questions unjust policies and assumptions in their organizations",
       "Intercedes during conflicts to help de-escalate or find common ground",

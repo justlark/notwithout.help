@@ -5,7 +5,7 @@ import type { BaseFieldProps } from "vee-validate";
 export interface Role {
   id: string;
   name: string;
-  responsibilities: Array<string>;
+  details: Array<string>;
 }
 
 const props = defineProps<{
@@ -30,15 +30,15 @@ const selectedRoleIds = defineModel<Array<string>>();
         <div class="flex flex-col gap-2">
           <label :for="`role-checkbox-${role.id}`" class="font-bold">{{ role.name }}</label>
           <ul class="hidden sm:block">
-            <li v-for="(responsibility, index) of role.responsibilities" :key="index">
-              {{ responsibility }}
+            <li v-for="(item, index) of role.details" :key="index">
+              {{ item }}
             </li>
           </ul>
         </div>
       </div>
       <ul class="block sm:hidden">
-        <li v-for="(responsibility, index) of role.responsibilities" :key="index">
-          {{ responsibility }}
+        <li v-for="(item, index) of role.details" :key="index">
+          {{ item }}
         </li>
       </ul>
     </div>
