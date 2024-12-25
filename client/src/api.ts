@@ -63,6 +63,7 @@ export interface SubmissionBody {
   name: string;
   contact: string;
   contact_method: string;
+  roles: Array<string> | undefined;
   comment: string | undefined;
 }
 

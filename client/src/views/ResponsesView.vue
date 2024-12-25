@@ -28,6 +28,7 @@ export interface Submission {
   contact: string;
   contactMethod: string;
   comment: string;
+  roles: Array<string>;
   createdAt: Date;
 }
 
@@ -148,6 +149,14 @@ const refreshSubmissions = () => {
   submissionsState.value = "reloading";
 };
 
+const roleNamesById = computed(() => {
+  if (!isDone(form)) {
+    return new Map<string, string>();
+  }
+
+  return new Map(form.value.value.roles.map((role) => [role.id, role.name]));
+});
+
 watchEffect(async () => {
   // Make sure this is tracked by the `watchEffect` before the first await boundary.
   //
@@ -188,6 +197,10 @@ watchEffect(async () => {
       contact: submissionBody.contact,
       contactMethod: submissionBody.contact_method,
       comment: submissionBody.comment ?? "",
+      roles:
+        submissionBody.roles
+          ?.map((roleId) => roleNamesById.value.get(roleId))
+          .filter((roleName): roleName is string => roleName !== undefined) ?? [],
       createdAt: new Date(createdAt),
     });
   }
@@ -262,6 +275,7 @@ watchEffect(async () => {
             :name="submission.name"
             :contact="submission.contact"
             :contactMethod="submission.contactMethod"
+            :roles="submission.roles"
             :comment="submission.comment"
             :createdAt="submission.createdAt"
           />

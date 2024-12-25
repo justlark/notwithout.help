@@ -33,6 +33,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
     name: values.name,
     contact: values.contact,
     contact_method: values.contactMethod,
+    roles: values.roles,
     comment: values.comment,
   };
 

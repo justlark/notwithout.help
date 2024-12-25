@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Card from "primevue/card";
+import Chip from "primevue/chip";
 import { formatDateTime } from "@/encoding";
 import { TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
@@ -10,6 +11,7 @@ const props = defineProps<{
   name: string;
   contact: string;
   contactMethod: string;
+  roles: Array<string>;
   comment: string;
   createdAt: Date;
 }>();
@@ -57,10 +59,15 @@ const commentParagraphs = computed(() => props.comment.split("\n\n").filter((p) 
             <span>{{ props.contact }}</span>
             <span class="text-sm text-muted-color">({{ props.contactMethod }})</span>
           </div>
+          <div v-if="props.roles.length > 0" class="flex gap-2 text-xs">
+            <Chip v-for="(role, index) of props.roles" :key="index" :label="role" />
+          </div>
           <div v-if="commentParagraphs.length > 0">
-            <p v-for="(paragraph, index) of commentParagraphs" :key="index" class="last:mb-0">
-              {{ paragraph }}
-            </p>
+            <blockquote>
+              <p v-for="(paragraph, index) of commentParagraphs" :key="index" class="last:mb-0">
+                {{ paragraph }}
+              </p>
+            </blockquote>
           </div>
         </div>
       </template>
