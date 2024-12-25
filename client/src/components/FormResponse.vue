@@ -59,7 +59,7 @@ const commentParagraphs = computed(() => props.comment.split("\n\n").filter((p) 
             <span>{{ props.contact }}</span>
             <span class="text-sm text-muted-color">({{ props.contactMethod }})</span>
           </div>
-          <div v-if="props.roles.length > 0" class="flex gap-2 text-xs">
+          <div v-if="props.roles.length > 0" class="flex flex-wrap gap-2 text-xs text-nowrap">
             <Chip v-for="(role, index) of props.roles" :key="index" :label="role" />
           </div>
           <div v-if="commentParagraphs.length > 0">
