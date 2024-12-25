@@ -1,0 +1,35 @@
+[
+  {
+    "id": "the-protestor",
+    "name": "The Protestor",
+    "responsibilities": [
+      "Attend public actions",
+      "Works with other protestors to disrupt the status quo and draw attention to an issue",
+      "Speaks out in the face of injustice",
+      "Intervenes to protect the vulnerable from violence",
+      "Confronts harassment of the vulnerable directly or provides a barrier between the vulnerable and the police or from another attacker"
+    ]
+  },
+  {
+    "id": "the-educator",
+    "name": "The Educator",
+    "responsibilities": [
+      "Creates community resources",
+      "Studies the available literature and movements from the past",
+      "Explains concepts and introduces new ideas",
+      "Documents a movement's history and draws lessons from past experiences",
+      "Mentors members of the community and helps expand their views"
+    ]
+  },
+  {
+    "id": "the-mediator",
+    "name": "The Mediator",
+    "responsibilities": [
+      "Helps translate challenging ideas to people who are on the fence or find some ideas too \"radical\"",
+      "Questions unjust policies and assumptions in their organizations",
+      "Intercedes during conflicts to help de-escalate or find common ground",
+      "Gets people who are \"on the fence\" or not very politically involved more open to difficult conversations",
+      "Advocates for marginalized people to be centered in decision making"
+    ]
+  }
+]

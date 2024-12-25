@@ -10,6 +10,7 @@ import { isDone, returnsError } from "@/types";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
 import { computed } from "vue";
+import defaultRoles from "@/assets/default-roles.json";
 
 const toast = useToast();
 
@@ -93,6 +94,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
         :storage-key="`form:${formId}`"
         :contact-methods="[...form.value.contactMethods]"
         aria-labelledby="main-heading"
+        :roles="defaultRoles"
       >
         <template #lead>
           <h1 id="main-heading" class="text-center mb-10">

@@ -5,14 +5,17 @@ import Textarea from "primevue/textarea";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
+import Panel from "primevue/panel";
 import { z } from "zod";
 import { deleteState, loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
+import RoleList, { type Role } from "./RoleList.vue";
 
 const props = defineProps<{
   storageKey: string;
   contactMethods: Array<string>;
+  roles: Array<Role>;
 }>();
 
 type Emits = {
@@ -135,9 +138,13 @@ const resetForm = () => {
       </div>
 
       <div class="flex flex-col gap-2">
-        <label for="contact-input" class="flex gap-2">
-          <span>More info</span>
-        </label>
+        <Panel header="Roles">
+          <RoleList id="role-input" :roles="props.roles" />
+        </Panel>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="contact-input">More info</label>
         <Textarea
           id="comment-input"
           v-model="comment"
