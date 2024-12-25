@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import InputText from "primevue/inputtext";
 import Textarea from "primevue/textarea";
 import Message from "primevue/message";
@@ -36,15 +36,14 @@ const schema = z.object({
 
 export type FormValues = z.infer<typeof schema>;
 
-const initialValues = computed(() =>
+const loadInitialValues = () =>
   loadState<FormValues>(props.storageKey, (values) => ({
     name: values.name ?? "",
     contact: values.contact ?? "",
     contactMethod: values.contactMethod,
     comment: values.comment ?? "",
     roles: values.roles ?? [],
-  })),
-);
+  }));
 
 const {
   values,
@@ -54,7 +53,7 @@ const {
   handleSubmit,
 } = useForm<FormValues>({
   validationSchema: toTypedSchema(schema),
-  initialValues: initialValues.value,
+  initialValues: loadInitialValues(),
 });
 
 const [name, nameAttrs] = defineField("name");
@@ -73,7 +72,7 @@ const submitForm = handleSubmit((values) => {
 
 const resetForm = () => {
   deleteState(props.storageKey);
-  resetFormInner({ values: initialValues.value });
+  resetFormInner({ values: loadInitialValues() });
 };
 </script>
 
