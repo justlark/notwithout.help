@@ -1,15 +1,10 @@
 <script setup lang="ts">
+import type { OrgRole } from "@/api";
 import Checkbox from "primevue/checkbox";
 import type { BaseFieldProps } from "vee-validate";
 
-export interface Role {
-  id: string;
-  name: string;
-  details: Array<string>;
-}
-
 const props = defineProps<{
-  roles: Array<Role>;
+  roles: Array<OrgRole>;
   inputAttrs?: BaseFieldProps;
   preview?: boolean;
 }>();

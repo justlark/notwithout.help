@@ -10,12 +10,13 @@ import { z } from "zod";
 import { deleteState, loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
-import RoleList, { type Role } from "./RoleList.vue";
+import RoleList from "./RoleList.vue";
+import type { OrgRole } from "@/api";
 
 const props = defineProps<{
   storageKey: string;
   contactMethods: Array<string>;
-  roles: Array<Role>;
+  roles: Array<OrgRole>;
 }>();
 
 type Emits = {
@@ -139,7 +140,7 @@ const resetForm = () => {
         </span>
       </div>
 
-      <div class="flex flex-col gap-2">
+      <div v-if="props.roles.length > 0" class="flex flex-col gap-2">
         <Panel header="What roles are you interested in?">
           <RoleList
             v-model="selectedRoleIds"

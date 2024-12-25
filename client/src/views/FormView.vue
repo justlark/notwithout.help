@@ -95,7 +95,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
         :storage-key="`form:${formId}`"
         :contact-methods="[...form.value.contactMethods]"
         aria-labelledby="main-heading"
-        :roles="defaultRoles"
+        :roles="form.value.roles.map((role) => ({ ...role, details: [...role.details] }))"
       >
         <template #lead>
           <h1 id="main-heading" class="text-center mb-10">
