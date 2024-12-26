@@ -10,9 +10,20 @@ import { RouterLink } from "vue-router";
     <Button as="router-link" to="/start" label="Start a Group" />
     <div class="text-justify max-w-3xl flex flex-col">
       <p>
-        Not Without Help is a tool for connecting organizations with people who want to help. In
-        this early iteration of the concept, it's just a form where volunteers can leave their
-        contact information for organizers to get in touch.
+        Not Without Help is a tool for connecting activist groups with people who want to help. It's
+        an inbox for organizers to collect contact information from folks who are interested, and
+        where volunteers can share information about what kinds of help they can offer.
+      </p>
+      <p>
+        This tool was inspired by Devon Price's concept of
+        <a
+          href="https://drdevonprice.substack.com/p/burning-it-all-down-without-burning?open=false#%C2%A7figure-out-your-activist-character-class"
+          target="_blank"
+          >activist "character classes,"</a
+        >
+        which aims to broaden both organizers' and volunteers' understanding of what kinds of
+        support are valuable in activism and include people who might not otherwise think they have
+        a role.
       </p>
       <h2 class="text-center my-4">How it works</h2>
       <ul class="list-none flex flex-col gap-4 px-0">

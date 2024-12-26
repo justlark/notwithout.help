@@ -223,7 +223,7 @@ const addCustomContactMethod = () => {
           Show respondents a list of examples of roles they could have in your organization and let
           them pick which they're interested in. Credit to
           <a
-            href="https://drdevonprice.substack.com/i/141409238/figure-out-your-activist-character-class"
+            href="https://drdevonprice.substack.com/p/burning-it-all-down-without-burning?open=false#%C2%A7figure-out-your-activist-character-class"
             target="_blank"
             >Devon Price</a
           >
