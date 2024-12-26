@@ -72,7 +72,7 @@ const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
 const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 const [showRoles, showRolesAttrs] = defineField("showRoles");
 
-watch(values, () => {
+const stopPersistStateWatch = watch(values, () => {
   persistState(props.storageKey, values, (values) => ({
     ...values,
     expirationDate: values.expirationDate ? serializeDate(values.expirationDate) : undefined,
@@ -92,7 +92,12 @@ const contactMethodOptions = computed(() => {
 });
 
 const submitForm = handleSubmit((values) => {
-  emit("submit", values, resetForm);
+  const finalizeForm = () => {
+    stopPersistStateWatch();
+    resetForm();
+  };
+
+  emit("submit", values, finalizeForm);
 });
 
 const resetForm = () => {
