@@ -31,5 +31,47 @@
       "Gets people who are \"on the fence\" or not very politically involved more open to difficult conversations",
       "Advocates for marginalized people to be centered in decision making"
     ]
+  },
+  {
+    "id": "healer",
+    "name": "Healer",
+    "details": [
+      "Provides medical care for people harmed during protests or altercations with the police",
+      "Helps ensure people in the community are well fed and have access to resources",
+      "Listens supportively as people decompress about frustrations or traumatic experiences",
+      "Speaks out when a movement is placing unrealistic demands on its members"
+    ]
+  },
+  {
+    "id": "organizer",
+    "name": "Organizer",
+    "details": [
+      "Collects and systematizes community resources",
+      "Assists in the planning and execution of actions",
+      "Maintains records and keeps meeting minutes",
+      "Serves as an informal project manager for initiatives as needed"
+    ]
+  },
+  {
+    "id": "artist",
+    "name": "Artist",
+    "details": [
+      "Inspires others with uplifting messages",
+      "Breaks down complex concepts into memorable messages or symbols",
+      "Provides comfort and much-needed distractions to exhausted members",
+      "Helps provide movements with markers of belonging and identity",
+      "Spreads messages to an audience that might not otherwise find them"
+    ]
+  },
+  {
+    "id": "connector",
+    "name": "Connector",
+    "details": [
+      "Introduces people and expands the community",
+      "Disseminates event invitations and information",
+      "Builds coalitions across organizations or identity groups",
+      "Welcomes new members",
+      "Plugs isolated individuals into the support networks they need"
+    ]
   }
 ]
