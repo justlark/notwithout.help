@@ -44,7 +44,7 @@ worker. It must be running on port `8787`.
 ```shell
 cd ./worker/
 npm install
-npx wrangler dev
+npx wrangler dev --env dev
 ```
 
 Then you can start the local dev server.
