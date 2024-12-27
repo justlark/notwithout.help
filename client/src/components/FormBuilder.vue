@@ -16,6 +16,7 @@ import { serializeDate, deserializeDate } from "@/encoding";
 import { toTypedSchema } from "@vee-validate/zod";
 import { computed, ref, watch } from "vue";
 import defaultRoles from "@/assets/default-roles.json";
+import { useRouter } from "vue-router";
 
 type Emits = {
   (eventName: "submit", values: FormValues, resetForm: () => void): void;
@@ -26,6 +27,7 @@ const emit = defineEmits<Emits>();
 const props = defineProps<{
   storageKey: string;
   initialValues?: FormValues;
+  cancelable?: boolean;
 }>();
 
 const schema = z.object({
@@ -99,6 +101,13 @@ const submitForm = handleSubmit((values) => {
 
   emit("submit", values, finalizeForm);
 });
+
+const router = useRouter();
+
+const cancelForm = () => {
+  router.back();
+  resetForm();
+};
 
 const resetForm = () => {
   deleteState(props.storageKey);
@@ -258,6 +267,13 @@ const addCustomContactMethod = () => {
 
       <div class="flex justify-around">
         <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
+        <Button
+          v-if="props.cancelable"
+          @click="cancelForm"
+          severity="secondary"
+          label="Cancel"
+          class="max-w-24"
+        />
         <Button @click="resetForm" severity="secondary" label="Reset" class="max-w-24" />
       </div>
     </div>
