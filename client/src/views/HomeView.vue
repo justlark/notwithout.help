@@ -21,9 +21,9 @@ import { RouterLink } from "vue-router";
           target="_blank"
           >activist "character classes,"</a
         >
-        which aims to broaden both organizers' and volunteers' understanding of what kinds of
-        support are valuable in activism and include people who might not otherwise think they have
-        a role.
+        with the goal of broadening both organizers' and volunteers' understanding of what kinds of
+        support are valuable in activism and including people who might not otherwise think they
+        have a role.
       </p>
       <h2 class="text-center my-4">How it works</h2>
       <ul class="list-none flex flex-col gap-4 px-0">
