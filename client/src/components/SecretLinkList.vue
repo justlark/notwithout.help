@@ -11,11 +11,13 @@ import api, { type AccessRole } from "@/api";
 import {
   deriveKeys,
   generateSecretLinkKey,
+  protectSecretLinkKey,
   sealKeyComment,
   unsealKeyComment,
   wrapPrivatePrimaryKey,
   type ClientKeyId,
   type FormId,
+  type ProtectedSecretLinkKey,
   type SecretLinkKey,
 } from "@/crypto";
 import { decodeUtf8, encodeUtf8 } from "@/encoding";
@@ -46,7 +48,10 @@ const toast = useToast();
 const secretKeys = ref<Array<SecretKeyInfo>>([]);
 const count = computed(() => secretKeys.value.length);
 
-const newSecretLinkParts = ref<{ clientKeyId: ClientKeyId; secretLinkKey: SecretLinkKey }>();
+const newSecretLinkParts = ref<{
+  clientKeyId: ClientKeyId;
+  secretLinkKey: SecretLinkKey | ProtectedSecretLinkKey;
+}>();
 const newSecretLinkCreateModalIsVisible = ref(false);
 const newSecretLinkViewModalIsVisible = computed<boolean>({
   get() {
@@ -150,7 +155,9 @@ const createSecretLink = async (inputs: SecretLinkFormValues) => {
 
   newSecretLinkParts.value = {
     clientKeyId: newClientKeyId,
-    secretLinkKey: newSecretLinkKey,
+    secretLinkKey: inputs.password
+      ? await protectSecretLinkKey(newSecretLinkKey, inputs.password)
+      : newSecretLinkKey,
   };
 
   newSecretLinkCreateModalIsVisible.value = false;
