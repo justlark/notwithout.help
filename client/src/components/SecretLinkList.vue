@@ -24,7 +24,9 @@ import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import { useToast } from "primevue";
 import { TOAST_ERROR_TTL } from "@/vars";
 import useForm from "@/composables/useForm";
-import CreateSecretLinkModal from "./CreateSecretLinkModal.vue";
+import CreateSecretLinkModal, {
+  type FormValues as SecretLinkFormValues,
+} from "./CreateSecretLinkModal.vue";
 
 interface SecretKeyInfo {
   comment: string;
@@ -44,7 +46,6 @@ const toast = useToast();
 const secretKeys = ref<Array<SecretKeyInfo>>([]);
 const count = computed(() => secretKeys.value.length);
 
-const newSecretLinkComment = ref("");
 const newSecretLinkParts = ref<{ clientKeyId: ClientKeyId; secretLinkKey: SecretLinkKey }>();
 const newSecretLinkCreateModalIsVisible = ref(false);
 const newSecretLinkViewModalIsVisible = computed<boolean>({
@@ -98,13 +99,8 @@ watchEffect(async () => {
   }
 });
 
-const createSecretLink = async (role: AccessRole) => {
-  if (
-    !newSecretLinkComment.value ||
-    !isDone(accessToken) ||
-    !isDone(form) ||
-    !isDone(privatePrimaryKey)
-  ) {
+const createSecretLink = async (inputs: SecretLinkFormValues) => {
+  if (!isDone(accessToken) || !isDone(form) || !isDone(privatePrimaryKey)) {
     return;
   }
 
@@ -114,7 +110,7 @@ const createSecretLink = async (role: AccessRole) => {
   const derivedKeys = await deriveKeys(newSecretLinkKey);
 
   const encryptedComment = await sealKeyComment(
-    encodeUtf8(newSecretLinkComment.value),
+    encodeUtf8(inputs.comment),
     form.value.value.publicPrimaryKey,
   );
   const wrappedPrivatePrimaryKey = await wrapPrivatePrimaryKey(
@@ -129,7 +125,7 @@ const createSecretLink = async (role: AccessRole) => {
       publicSigningKey: derivedKeys.publicSigningKey,
       wrappedPrivatePrimaryKey,
       encryptedComment,
-      role,
+      role: inputs.role,
       accessToken: token,
     });
 
@@ -146,8 +142,8 @@ const createSecretLink = async (role: AccessRole) => {
   }
 
   secretKeys.value.push({
-    comment: newSecretLinkComment.value,
-    role,
+    comment: inputs.comment,
+    role: inputs.role,
     clientKeyId: newClientKeyId,
     accessedAt: undefined,
   });
@@ -157,7 +153,7 @@ const createSecretLink = async (role: AccessRole) => {
     secretLinkKey: newSecretLinkKey,
   };
 
-  newSecretLinkComment.value = "";
+  newSecretLinkCreateModalIsVisible.value = false;
 };
 
 const removeSecretLinkFromList = (index: number) => {
@@ -217,7 +213,6 @@ const removeSecretLinkFromList = (index: number) => {
             @click="newSecretLinkCreateModalIsVisible = true"
             icon="pi pi-plus"
             label="Create"
-            :disabled="!newSecretLinkComment"
             size="small"
           />
         </div>
@@ -236,7 +231,7 @@ const removeSecretLinkFromList = (index: number) => {
         <strong id="create-link-dialog-name">Create a new secret link</strong>
       </span>
     </template>
-    <CreateSecretLinkModal />
+    <CreateSecretLinkModal @submit="createSecretLink" />
   </Dialog>
   <Dialog
     class="p-2 mx-4"

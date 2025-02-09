@@ -2,48 +2,85 @@
 import { ref } from "vue";
 import SelectButton from "primevue/selectbutton";
 import InputText from "primevue/inputtext";
+import Message from "primevue/message";
 import Button from "primevue/button";
+import { z } from "zod";
+import { useForm } from "vee-validate";
+import { toTypedSchema } from "@vee-validate/zod";
+
+type Emits = {
+  (eventName: "submit", values: FormValues): void;
+};
+
+const emit = defineEmits<Emits>();
+
+const schema = z.object({
+  comment: z.string().min(1, { message: "You must provide a name for the link." }),
+  role: z.enum(["admin", "read"], { message: "You must select a link type." }),
+  password: z.string().optional(),
+});
+
+export type FormValues = z.infer<typeof schema>;
+
+const { defineField, errors, handleSubmit } = useForm<FormValues>({
+  validationSchema: toTypedSchema(schema),
+  initialValues: {
+    comment: "",
+    role: undefined,
+    password: "",
+  },
+});
+
+const [linkComment, linkCommentAttrs] = defineField("comment");
+const [linkRole, linkRoleAttrs] = defineField("role");
+const [linkPassword, linkPasswordAttrs] = defineField("password");
 
 const linkTypeOptions = ref([
   { label: "Admin", icon: "pi pi-shield", value: "admin" },
   { label: "Read-only", icon: "pi pi-eye", value: "read" },
 ]);
 
-const selectedLinkType = ref<"admin" | "read">();
-const linkName = ref<string>();
-const linkPassword = ref<string>();
+const submitForm = handleSubmit((values) => {
+  emit("submit", values);
+});
 </script>
 
 <template>
   <div class="flex flex-col max-w-2xl gap-6">
     <div class="flex flex-col gap-2">
-      <label for="secret-link-name-input" class="flex gap-2">
+      <label for="secret-link-comment-input" class="flex gap-2">
         <span>Who are you sharing this link with?</span>
         <span class="text-red-600 dark:text-red-500">*</span>
       </label>
       <InputText
-        id="secret-link-name-input"
-        v-model="linkName"
+        id="secret-link-comment-input"
+        v-model="linkComment"
+        v-bind="linkCommentAttrs"
         type="text"
-        aria-describedby="secret-link-name-help"
+        aria-describedby="secret-link-comment-help"
       />
-      <span id="secret-link-name-help" class="text-muted-color text-sm font-medium">
+      <Message v-if="errors.comment" severity="error" size="small" variant="simple">
+        {{ errors.comment }}
+      </Message>
+      <span id="secret-link-comment-help" class="text-muted-color text-sm font-medium">
         Enter the name of the person you're sharing this link with, so you can remember who has
         which link and revoke it later if you need to.
       </span>
     </div>
     <div class="flex flex-col gap-2">
-      <label for="secret-link-type-input" class="flex gap-2">
+      <label for="secret-link-role-input" class="flex gap-2">
         <span>What kind of link is this?</span>
         <span class="text-red-600 dark:text-red-500">*</span>
       </label>
       <SelectButton
-        id="secret-link-type-input"
-        v-model="selectedLinkType"
+        id="secret-link-role-input"
+        v-model="linkRole"
+        v-bind="linkRoleAttrs"
         :options="linkTypeOptions"
         optionLabel="label"
+        optionValue="value"
         dataKey="value"
-        aria-describedby="secret-link-type-help"
+        aria-describedby="secret-link-role-help"
       >
         <template #option="slotProps">
           <span class="flex gap-3 items-center">
@@ -52,7 +89,10 @@ const linkPassword = ref<string>();
           </span>
         </template>
       </SelectButton>
-      <span id="secret-link-type-help" class="text-muted-color text-sm font-medium">
+      <Message v-if="errors.role" severity="error" size="small" variant="simple">
+        {{ errors.role }}
+      </Message>
+      <span id="secret-link-role-help" class="text-muted-color text-sm font-medium">
         Read-only links can't be used to make edits or generate new secret links. Admin links can.
       </span>
     </div>
@@ -61,15 +101,19 @@ const linkPassword = ref<string>();
       <InputText
         id="secret-link-password-input"
         v-model="linkPassword"
+        v-bind="linkPasswordAttrs"
         type="text"
         aria-describedby="secret-link-password-help"
       />
+      <Message v-if="errors.password" severity="error" size="small" variant="simple">
+        {{ errors.password }}
+      </Message>
       <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
         For added security, you can set a password that the person you send this link to will need
         to know to access the page.
       </span>
     </div>
-    <Button type="submit" severity="primary" label="Create" class="max-w-24" />
+    <Button @click="submitForm" type="submit" severity="primary" label="Create" class="max-w-24" />
   </div>
 </template>
 
