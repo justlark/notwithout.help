@@ -27,7 +27,7 @@ const { defineField, errors, handleSubmit } = useForm<FormValues>({
   initialValues: {
     comment: "",
     role: undefined,
-    password: "",
+    password: undefined,
   },
 });
 
@@ -102,7 +102,7 @@ const submitForm = handleSubmit((values) => {
         id="secret-link-password-input"
         v-model="linkPassword"
         v-bind="linkPasswordAttrs"
-        type="text"
+        type="password"
         aria-describedby="secret-link-password-help"
       />
       <Message v-if="errors.password" severity="error" size="small" variant="simple">

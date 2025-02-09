@@ -1,4 +1,4 @@
-import _sodium from "libsodium-wrappers";
+import _sodium from "libsodium-wrappers-sumo";
 import * as ed from "@noble/ed25519";
 import type { Newtype } from "./types";
 
