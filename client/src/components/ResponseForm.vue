@@ -84,7 +84,7 @@ const resetForm = () => {
     </div>
     <div class="max-w-xl mx-auto flex flex-col gap-8">
       <div class="flex flex-col gap-2">
-        <label for="name-inpul" class="flex gap-2">
+        <label for="name-input" class="flex gap-2">
           <span>Your name</span>
           <span class="text-red-600 dark:text-red-500">*</span>
         </label>

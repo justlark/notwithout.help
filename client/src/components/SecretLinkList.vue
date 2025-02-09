@@ -3,9 +3,8 @@ import Panel from "primevue/panel";
 import SecretLinkListItem from "@/components/SecretLinkListItem.vue";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 import Divider from "primevue/divider";
-import InputText from "primevue/inputtext";
-import SplitButton from "primevue/splitbutton";
 import Dialog from "primevue/dialog";
+import Button from "primevue/button";
 import { isDone } from "@/types";
 import { computed, ref, watchEffect } from "vue";
 import api, { type AccessRole } from "@/api";
@@ -25,6 +24,7 @@ import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import { useToast } from "primevue";
 import { TOAST_ERROR_TTL } from "@/vars";
 import useForm from "@/composables/useForm";
+import CreateSecretLinkModal from "./CreateSecretLinkModal.vue";
 
 interface SecretKeyInfo {
   comment: string;
@@ -46,7 +46,8 @@ const count = computed(() => secretKeys.value.length);
 
 const newSecretLinkComment = ref("");
 const newSecretLinkParts = ref<{ clientKeyId: ClientKeyId; secretLinkKey: SecretLinkKey }>();
-const newSecretLinkModalIsVisible = computed<boolean>({
+const newSecretLinkCreateModalIsVisible = ref(false);
+const newSecretLinkViewModalIsVisible = computed<boolean>({
   get() {
     return newSecretLinkParts.value !== undefined;
   },
@@ -162,14 +163,6 @@ const createSecretLink = async (role: AccessRole) => {
 const removeSecretLinkFromList = (index: number) => {
   secretKeys.value.splice(index, 1);
 };
-
-const secretLinkActions = [
-  {
-    label: "Read-only",
-    icon: "pi pi-eye",
-    command: async () => createSecretLink("read"),
-  },
-];
 </script>
 
 <template>
@@ -220,33 +213,34 @@ const secretLinkActions = [
         </div>
         <div class="flex flex-col gap-2">
           <label for="new-link-comment" class="text-sm">Create a new secret link</label>
-          <span class="flex flex-col sm:flex-row gap-x-8 gap-y-2 justify-between">
-            <InputText
-              id="new-link-comment"
-              class="grow"
-              v-model="newSecretLinkComment"
-              type="text"
-              placeholder="Who are you sharing this link with?"
-              size="small"
-            />
-            <SplitButton
-              class="self-end"
-              @click="createSecretLink('admin')"
-              icon="pi pi-plus"
-              :button-props="{ 'aria-label': 'Create' }"
-              :menu-button-props="{ 'aria-label': 'More options' }"
-              :model="secretLinkActions"
-              :disabled="!newSecretLinkComment"
-              size="small"
-            />
-          </span>
+          <Button
+            @click="newSecretLinkCreateModalIsVisible = true"
+            icon="pi pi-plus"
+            label="Create"
+            :disabled="!newSecretLinkComment"
+            size="small"
+          />
         </div>
       </div>
     </Panel>
   </section>
   <Dialog
     class="p-2 mx-4"
-    v-model:visible="newSecretLinkModalIsVisible"
+    v-model:visible="newSecretLinkCreateModalIsVisible"
+    modal
+    aria-labelledby="create-link-dialog-name"
+  >
+    <template #header>
+      <span class="flex gap-3 text-xl items-center">
+        <i class="pi pi-lock"></i>
+        <strong id="create-link-dialog-name">Create a new secret link</strong>
+      </span>
+    </template>
+    <CreateSecretLinkModal />
+  </Dialog>
+  <Dialog
+    class="p-2 mx-4"
+    v-model:visible="newSecretLinkViewModalIsVisible"
     modal
     aria-labelledby="share-link-dialog-name"
   >
