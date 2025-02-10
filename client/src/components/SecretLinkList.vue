@@ -123,7 +123,9 @@ const createSecretLink = async (inputs: SecretLinkFormValues) => {
     derivedKeys.secretWrappingKey,
   );
 
-  let newClientKeyId;
+  let newClientKeyId: ClientKeyId;
+  let newMaybeProtectedSecretLinkKey: SecretLinkKey | ProtectedSecretLinkKey;
+
   try {
     const { clientKeyId } = await api.postKey({
       formId: props.formId,
@@ -135,6 +137,22 @@ const createSecretLink = async (inputs: SecretLinkFormValues) => {
     });
 
     newClientKeyId = clientKeyId;
+
+    if (inputs.password) {
+      const { key, params } = await protectSecretLinkKey(newSecretLinkKey, inputs.password);
+
+      await api.postPassword({
+        formId: props.formId,
+        clientKeyId,
+        salt: params.salt,
+        nonce: params.nonce,
+        accessToken: token,
+      });
+
+      newMaybeProtectedSecretLinkKey = key;
+    } else {
+      newMaybeProtectedSecretLinkKey = newSecretLinkKey;
+    }
   } catch {
     toast.add({
       severity: "error",
@@ -155,9 +173,7 @@ const createSecretLink = async (inputs: SecretLinkFormValues) => {
 
   newSecretLinkParts.value = {
     clientKeyId: newClientKeyId,
-    secretLinkKey: inputs.password
-      ? await protectSecretLinkKey(newSecretLinkKey, inputs.password)
-      : newSecretLinkKey,
+    secretLinkKey: newMaybeProtectedSecretLinkKey,
   };
 
   newSecretLinkCreateModalIsVisible.value = false;

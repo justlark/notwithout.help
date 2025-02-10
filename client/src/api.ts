@@ -566,4 +566,5 @@ export default {
   postSubmission,
   getSubmissions,
   getPassword,
+  postPassword,
 };

@@ -73,12 +73,16 @@ export const generateSecretLinkKey = async (): Promise<SecretLinkKey> => {
   return sodium.crypto_kdf_keygen() as SecretLinkKey;
 };
 
+export type ProtectedSecretLinkKeyParams = {
+  salt: SecretLinkPasswordSalt;
+  nonce: SecretLinkPasswordNonce;
+};
+
 export const protectSecretLinkKey = async (
   secretLinkKey: SecretLinkKey,
   password: string,
 ): Promise<{
-  salt: SecretLinkPasswordSalt;
-  nonce: SecretLinkPasswordNonce;
+  params: ProtectedSecretLinkKeyParams;
   key: ProtectedSecretLinkKey;
 }> => {
   const sodium = await getSodium();
@@ -97,8 +101,10 @@ export const protectSecretLinkKey = async (
   const ciphertext = sodium.crypto_secretbox_easy(secretLinkKey, nonce, encryptionKey);
 
   return {
-    salt: salt as SecretLinkPasswordSalt,
-    nonce: nonce as SecretLinkPasswordNonce,
+    params: {
+      salt: salt as SecretLinkPasswordSalt,
+      nonce: nonce as SecretLinkPasswordNonce,
+    },
     key: ciphertext as ProtectedSecretLinkKey,
   };
 };
