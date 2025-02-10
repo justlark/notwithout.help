@@ -7,13 +7,16 @@ import {
   type ClientKeyId,
   type FormId,
   type PrivateSigningKey,
+  type SecretLinkKey,
 } from "@/crypto";
-import { type Loadable } from "@/types";
+import { isDone, type Loadable } from "@/types";
 import api, { ApiError, type AccessRole, type ApiErrorKind } from "@/api";
-import { ref, readonly, watchEffect } from "vue";
+import { ref, readonly, watchEffect, inject, type Ref } from "vue";
 import { decodeBase64 } from "@/encoding";
 import { jwtDecode } from "jwt-decode";
 import { useSecretLink } from "./useSecretLink";
+import useSecretLinkKey from "./useSecretLinkKey";
+import { passwordKey } from "@/injectKeys";
 
 const cacheKey = (formId: FormId, clientKeyId: ClientKeyId) => `token:${formId}/${clientKeyId}`;
 
@@ -105,7 +108,9 @@ export const getAccessToken = async (
 export const useAccessToken = () => {
   const loadable = ref<Loadable<AccessTokenParts, ApiErrorKind>>({ state: "loading" });
 
-  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+  const { formId, clientKeyId } = useSecretLink();
+  const secretLinkKeySource = useSecretLinkKey();
+  const password = inject<Ref<string | undefined>>(passwordKey);
 
   watchEffect(async () => {
     const storedAccessToken = loadStoredAccessToken(formId.value, clientKeyId.value);
@@ -130,6 +135,36 @@ export const useAccessToken = () => {
       return;
     }
 
+    if (secretLinkKeySource.value.state === "error") {
+      loadable.value = {
+        state: "error",
+        error: secretLinkKeySource.value.error,
+      };
+
+      return;
+    }
+
+    if (!isDone(secretLinkKeySource.value)) {
+      return;
+    }
+
+    let secretLinkKey: SecretLinkKey;
+
+    if (secretLinkKeySource.value.value.protected) {
+      if (password === undefined || password.value === undefined) {
+        loadable.value = {
+          state: "error",
+          error: "unauthorized",
+        };
+
+        return;
+      }
+
+      secretLinkKey = await secretLinkKeySource.value.value.secretLinkKey(password.value);
+    } else {
+      secretLinkKey = secretLinkKeySource.value.value.secretLinkKey;
+    }
+
     // Keep track of whether we've started loading a given access token to
     // ensure this hook doesn't run more than once concurrently. We want to
     // make sure we don't go through the auth flow more than once per page
@@ -139,7 +174,7 @@ export const useAccessToken = () => {
     let privateSigningKey;
 
     try {
-      const { privateSigningKey: key } = await deriveKeys(secretLinkKey.value);
+      const { privateSigningKey: key } = await deriveKeys(secretLinkKey);
       privateSigningKey = key;
     } catch {
       loadable.value = {

@@ -502,11 +502,20 @@ export interface GetPasswordResponse {
   nonce: SecretLinkPasswordNonce;
 }
 
-const getPassword = async ({ formId, clientKeyId }: GetPasswordParams) => {
+const getPassword = async ({
+  formId,
+  clientKeyId,
+}: GetPasswordParams): Promise<GetPasswordResponse | undefined> => {
   const response = await fetch(`${API_URL}/passwords/${formId}/${clientKeyId}`);
 
   if (!response.ok) {
-    throw new ApiError(response);
+    const err = new ApiError(response);
+
+    if (err.kind === "not-found") {
+      return undefined;
+    }
+
+    throw err;
   }
 
   const { salt, nonce } = await response.json();

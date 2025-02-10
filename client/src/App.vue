@@ -1,11 +1,29 @@
 <script setup lang="ts">
 import { RouterView } from "vue-router";
 import Toast from "primevue/toast";
+import Dialog from "primevue/dialog";
 import { randomTitleLead } from "./vars";
-import { computed } from "vue";
+import { computed, provide, ref } from "vue";
 import icon from "./assets/icon.svg";
+import useSecretLinkKey from "./composables/useSecretLinkKey";
+import { isDone } from "./types";
+import PasswordInputModal from "./components/PasswordInputModal.vue";
+import { passwordKey } from "./injectKeys";
 
 const titleLead = computed(() => randomTitleLead());
+const secretLinkSource = useSecretLinkKey();
+
+let password = ref<string>();
+provide(passwordKey, password);
+
+const isProtected = computed(
+  () => isDone(secretLinkSource) && secretLinkSource.value.value.protected,
+);
+const passwordDialogVisible = computed(() => isProtected.value && !password.value);
+
+const submitPassword = (enteredPassword: string) => {
+  password.value = enteredPassword;
+};
 </script>
 
 <template>
@@ -20,6 +38,22 @@ const titleLead = computed(() => randomTitleLead());
   <RouterView />
 
   <Toast class="max-w-[90vw]" position="bottom-center" />
+
+  <Dialog
+    class="p-2 mx-4"
+    v-model:visible="passwordDialogVisible"
+    modal
+    :closable="false"
+    aria-labelledby="password-dialog-name"
+  >
+    <template #header>
+      <span class="flex gap-3 text-xl items-center">
+        <i class="pi pi-lock"></i>
+        <strong id="password-dialog-name">Enter password</strong>
+      </span>
+    </template>
+    <PasswordInputModal @submit="submitPassword" />
+  </Dialog>
 </template>
 
 <style scoped></style>
