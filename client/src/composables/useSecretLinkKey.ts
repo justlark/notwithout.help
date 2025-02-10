@@ -4,7 +4,6 @@ import { exposeSecretLinkKey, type ProtectedSecretLinkKey, type SecretLinkKey } 
 import type { Loadable } from "@/types";
 import useSecretLink from "./useSecretLink";
 import api, { ApiError } from "@/api";
-import { useRouter } from "vue-router";
 import { passwordKey } from "@/injectKeys";
 
 const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>> => {
@@ -12,21 +11,13 @@ const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>
 
   const password = inject<Ref<string | undefined>>(passwordKey);
 
-  const router = useRouter();
   const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
 
   watchEffect(async () => {
     // Touch these before the first await boundary to make sure they're
     // tracked.
     password?.value;
-    formId.value;
-    clientKeyId.value;
     maybeProtectedSecretLinkKey.value;
-
-    // If we don't wait for the router to be ready, the app will try and
-    // request the password params before the URL fragment (and therefore the
-    // Form ID and Client Key ID) is available.
-    await router.isReady();
 
     let passwordParams: GetPasswordResponse | undefined;
 
