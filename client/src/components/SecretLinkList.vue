@@ -17,6 +17,7 @@ import {
   wrapPrivatePrimaryKey,
   type ClientKeyId,
   type FormId,
+  type MaybeProtectedSecretLinkKey,
   type ProtectedSecretLinkKey,
   type SecretLinkKey,
 } from "@/crypto";
@@ -40,7 +41,7 @@ interface SecretKeyInfo {
 const props = defineProps<{
   formId: FormId;
   clientKeyId: ClientKeyId;
-  secretLinkKey: SecretLinkKey;
+  secretLinkKey: MaybeProtectedSecretLinkKey;
 }>();
 
 const toast = useToast();

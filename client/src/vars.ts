@@ -1,4 +1,10 @@
-import type { ClientKeyId, FormId, ProtectedSecretLinkKey, SecretLinkKey } from "./crypto";
+import type {
+  ClientKeyId,
+  FormId,
+  MaybeProtectedSecretLinkKey,
+  ProtectedSecretLinkKey,
+  SecretLinkKey,
+} from "./crypto";
 import { encodeBase64Url } from "./encoding";
 
 export const TOAST_INFO_TTL = 2500;
@@ -19,7 +25,7 @@ export const newSecretLink = (
 export const newEditLink = (
   formId: FormId,
   clientKeyId: ClientKeyId,
-  secretLinkKey: SecretLinkKey,
+  secretLinkKey: MaybeProtectedSecretLinkKey,
 ) =>
   new URL(
     `${window.location.origin}/edit/#/${formId}/${clientKeyId}/${encodeBase64Url(secretLinkKey)}`,

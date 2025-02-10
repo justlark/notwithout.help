@@ -8,7 +8,7 @@ export const encodeBase64Url = (bytes: Uint8Array): string =>
   encodeBase64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 
 export const decodeBase64Url = (base64Url: string): Uint8Array => {
-  const padding = 4 - (base64Url.length % 4);
+  const padding = (4 - (base64Url.length % 4)) % 4;
   const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(padding);
 
   return decodeBase64(base64);

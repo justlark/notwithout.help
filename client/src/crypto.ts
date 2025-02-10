@@ -35,6 +35,8 @@ export type PublicSigningKey = Newtype<Uint8Array, { readonly __tag: unique symb
 export type EncryptedSubmissionBody = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type EncryptedKeyComment = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 
+export type MaybeProtectedSecretLinkKey = SecretLinkKey | ProtectedSecretLinkKey;
+
 export type PrimaryKeypair = {
   private: PrivatePrimaryKey;
   public: PublicPrimaryKey;

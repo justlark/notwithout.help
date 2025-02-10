@@ -5,21 +5,16 @@ import Dialog from "primevue/dialog";
 import { randomTitleLead } from "./vars";
 import { computed, provide, ref } from "vue";
 import icon from "./assets/icon.svg";
-import useSecretLinkKey from "./composables/useSecretLinkKey";
-import { isDone } from "./types";
 import PasswordInputModal from "./components/PasswordInputModal.vue";
 import { passwordKey } from "./injectKeys";
 
 const titleLead = computed(() => randomTitleLead());
-const secretLinkSource = useSecretLinkKey();
 
 let password = ref<string>();
 provide(passwordKey, password);
 
-const isProtected = computed(
-  () => isDone(secretLinkSource) && secretLinkSource.value.value.protected,
-);
-const passwordDialogVisible = computed(() => isProtected.value && !password.value);
+// TODO
+const passwordDialogVisible = computed(() => !password.value);
 
 const submitPassword = (enteredPassword: string) => {
   password.value = enteredPassword;

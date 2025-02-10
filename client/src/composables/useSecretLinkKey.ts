@@ -1,23 +1,16 @@
-import { readonly, ref, toValue, watchEffect, type MaybeRefOrGetter, type Ref } from "vue";
+import { inject, readonly, ref, watchEffect, type Ref } from "vue";
 import type { ApiErrorKind, GetPasswordResponse } from "@/api";
 import { exposeSecretLinkKey, type ProtectedSecretLinkKey, type SecretLinkKey } from "@/crypto";
 import type { Loadable } from "@/types";
 import useSecretLink from "./useSecretLink";
 import api, { ApiError } from "@/api";
 import { useRouter } from "vue-router";
+import { passwordKey } from "@/injectKeys";
 
-export type SecretLinkSource =
-  | {
-      protected: false;
-      secretLinkKey: SecretLinkKey;
-    }
-  | {
-      protected: true;
-      secretLinkKey: (password: string) => Promise<SecretLinkKey>;
-    };
+const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>> => {
+  const loadable = ref<Loadable<SecretLinkKey, ApiErrorKind>>({ state: "loading" });
 
-const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkSource, ApiErrorKind>>> => {
-  const loadable = ref<Loadable<SecretLinkSource, ApiErrorKind>>({ state: "loading" });
+  const password = inject<Ref<string | undefined>>(passwordKey);
 
   const router = useRouter();
   const { formId, clientKeyId, secretLinkKey: maybeProtectedSecretLinkKey } = useSecretLink();
@@ -50,28 +43,25 @@ const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkSource, ApiErrorKin
       // This secret link *is not* password-protected.
       loadable.value = {
         state: "done",
-        value: {
-          protected: false,
-          secretLinkKey: maybeProtectedSecretLinkKey.value,
-        },
+        value: maybeProtectedSecretLinkKey.value as SecretLinkKey,
       };
 
+      return;
+    }
+
+    if (password?.value === undefined) {
       return;
     }
 
     // This secret link *is* password-protected.
     loadable.value = {
       state: "done",
-      value: {
-        protected: true,
-        secretLinkKey: (password: string) =>
-          exposeSecretLinkKey(
-            passwordParams.salt,
-            passwordParams.nonce,
-            maybeProtectedSecretLinkKey.value as unknown as ProtectedSecretLinkKey,
-            password,
-          ),
-      },
+      value: await exposeSecretLinkKey(
+        passwordParams.salt,
+        passwordParams.nonce,
+        maybeProtectedSecretLinkKey.value as ProtectedSecretLinkKey,
+        password.value,
+      ),
     };
   });
 

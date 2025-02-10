@@ -1,4 +1,4 @@
-import type { ClientKeyId, FormId, SecretLinkKey } from "@/crypto";
+import type { ClientKeyId, FormId, MaybeProtectedSecretLinkKey, SecretLinkKey } from "@/crypto";
 import { decodeBase64Url } from "@/encoding";
 import { readonly, ref, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useRoute } from "vue-router";
@@ -6,7 +6,7 @@ import { useRoute } from "vue-router";
 export interface SecretLinkParts {
   formId: DeepReadonly<Ref<FormId>>;
   clientKeyId: DeepReadonly<Ref<ClientKeyId>>;
-  secretLinkKey: DeepReadonly<Ref<SecretLinkKey>>;
+  secretLinkKey: DeepReadonly<Ref<MaybeProtectedSecretLinkKey>>;
 }
 
 export const useSecretLink = (): SecretLinkParts => {
@@ -19,12 +19,12 @@ export const useSecretLink = (): SecretLinkParts => {
   let secretLinkKey;
 
   try {
-    secretLinkKey = ref(decodeBase64Url(secretLinkKeyPart) as SecretLinkKey);
+    secretLinkKey = ref(decodeBase64Url(secretLinkKeyPart) as MaybeProtectedSecretLinkKey);
   } catch {
     // If the secret link key isn't a valid base64Url string, return an empty
     // array and the error will be handled by he downstream code that attempts
     // to derive keys from it.
-    secretLinkKey = ref(new Uint8Array() as SecretLinkKey);
+    secretLinkKey = ref(new Uint8Array() as MaybeProtectedSecretLinkKey);
   }
 
   watchEffect(() => {
@@ -34,9 +34,9 @@ export const useSecretLink = (): SecretLinkParts => {
     clientKeyId.value = clientKeyIdPart as ClientKeyId;
 
     try {
-      secretLinkKey.value = decodeBase64Url(secretLinkKeyPart) as SecretLinkKey;
+      secretLinkKey.value = decodeBase64Url(secretLinkKeyPart) as MaybeProtectedSecretLinkKey;
     } catch {
-      secretLinkKey.value = new Uint8Array() as SecretLinkKey;
+      secretLinkKey.value = new Uint8Array() as MaybeProtectedSecretLinkKey;
     }
   });
 

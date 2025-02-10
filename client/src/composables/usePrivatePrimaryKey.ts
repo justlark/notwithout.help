@@ -5,17 +5,19 @@ import { ref, readonly, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useSecretLink } from "./useSecretLink";
 import { useAccessToken } from "./useAccessToken";
 import api, { ApiError } from "@/api";
+import useSecretLinkKey from "./useSecretLinkKey";
 
 export const usePrivatePrimaryKey = (): DeepReadonly<
   Ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>
 > => {
   const loadable = ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>({ state: "loading" });
 
-  const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+  const { formId, clientKeyId } = useSecretLink();
   const accessToken = useAccessToken();
+  const secretLinkKey = useSecretLinkKey();
 
   watchEffect(async () => {
-    if (!isDone(accessToken)) {
+    if (!isDone(accessToken) || !isDone(secretLinkKey)) {
       return;
     }
 
@@ -28,7 +30,7 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
     let secretWrappingKey;
 
     try {
-      const { secretWrappingKey: key } = await deriveKeys(secretLinkKey.value);
+      const { secretWrappingKey: key } = await deriveKeys(secretLinkKey.value.value);
       secretWrappingKey = key;
     } catch {
       loadable.value = {

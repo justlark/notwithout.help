@@ -16,7 +16,7 @@ import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useRouter, RouterLink } from "vue-router";
+import { useRouter } from "vue-router";
 import useSecretLink from "@/composables/useSecretLink";
 import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
