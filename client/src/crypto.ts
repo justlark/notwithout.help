@@ -25,6 +25,8 @@ export type PrivatePrimaryKey = Newtype<Uint8Array, { readonly __tag: unique sym
 export type PublicPrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type SecretLinkKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type ProtectedSecretLinkKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type SecretLinkPasswordSalt = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
+export type SecretLinkPasswordNonce = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type SecretWrappingKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type WrappedPrivatePrimaryKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type PrivateSigningKey = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
@@ -32,11 +34,6 @@ export type PublicSigningKey = Newtype<Uint8Array, { readonly __tag: unique symb
 
 export type EncryptedSubmissionBody = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 export type EncryptedKeyComment = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
-
-// It should be safe to access constants before initializing libsodium.
-export const isSecretLinkKeyProtected = (
-  key: SecretLinkKey | ProtectedSecretLinkKey,
-): key is ProtectedSecretLinkKey => key.length > _sodium["crypto_kdf_KEYBYTES"];
 
 export type PrimaryKeypair = {
   private: PrivatePrimaryKey;
@@ -79,7 +76,11 @@ export const generateSecretLinkKey = async (): Promise<SecretLinkKey> => {
 export const protectSecretLinkKey = async (
   secretLinkKey: SecretLinkKey,
   password: string,
-): Promise<ProtectedSecretLinkKey> => {
+): Promise<{
+  salt: SecretLinkPasswordSalt;
+  nonce: SecretLinkPasswordNonce;
+  key: ProtectedSecretLinkKey;
+}> => {
   const sodium = await getSodium();
   const salt = sodium.randombytes_buf(sodium["crypto_pwhash_SALTBYTES"]);
 
@@ -95,34 +96,35 @@ export const protectSecretLinkKey = async (
   const nonce = sodium.randombytes_buf(sodium["crypto_secretbox_NONCEBYTES"]);
   const ciphertext = sodium.crypto_secretbox_easy(secretLinkKey, nonce, encryptionKey);
 
-  return new Uint8Array([...salt, ...nonce, ...ciphertext]) as ProtectedSecretLinkKey;
+  return {
+    salt: salt as SecretLinkPasswordSalt,
+    nonce: nonce as SecretLinkPasswordNonce,
+    key: ciphertext as ProtectedSecretLinkKey,
+  };
 };
 
 export const exposeSecretLinkKey = async (
+  secretLinkPasswordSalt: SecretLinkPasswordSalt,
+  secretLinkPasswordNonce: SecretLinkPasswordNonce,
   protectedSecretLinkKey: ProtectedSecretLinkKey,
   password: string,
 ): Promise<SecretLinkKey> => {
   const sodium = await getSodium();
 
-  const salt = protectedSecretLinkKey.slice(0, sodium["crypto_pwhash_SALTBYTES"]);
-  const nonce = protectedSecretLinkKey.slice(
-    sodium["crypto_pwhash_SALTBYTES"],
-    sodium["crypto_pwhash_SALTBYTES"] + sodium["crypto_secretbox_NONCEBYTES"],
-  );
-  const ciphertext = protectedSecretLinkKey.slice(
-    sodium["crypto_pwhash_SALTBYTES"] + sodium["crypto_secretbox_NONCEBYTES"],
-  );
-
   const encryptionKey = sodium.crypto_pwhash(
     sodium["crypto_secretbox_KEYBYTES"],
     password,
-    salt,
+    secretLinkPasswordSalt,
     sodium["crypto_pwhash_OPSLIMIT_INTERACTIVE"],
     sodium["crypto_pwhash_MEMLIMIT_INTERACTIVE"],
     sodium["crypto_pwhash_ALG_DEFAULT"],
   );
 
-  return sodium.crypto_secretbox_open_easy(ciphertext, nonce, encryptionKey) as SecretLinkKey;
+  return sodium.crypto_secretbox_open_easy(
+    protectedSecretLinkKey,
+    secretLinkPasswordNonce,
+    encryptionKey,
+  ) as SecretLinkKey;
 };
 
 export const generatePrimaryKeypair = async (): Promise<PrimaryKeypair> => {
