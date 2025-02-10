@@ -13,7 +13,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import defaultRoles from "@/assets/default-roles.json";
 
-const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
 const form = useForm();
 
@@ -37,7 +37,7 @@ const initialValues = computed(() =>
 );
 
 const secretLink = computed(() =>
-  newSecretLink(formId.value, clientKeyId.value, secretLinkKey.value),
+  newSecretLink(formId.value, clientKeyId.value, maybeProtectedSecretLinkKey.value),
 );
 
 const submitForm = async (values: FormValues, resetForm: () => void) => {

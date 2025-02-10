@@ -13,7 +13,7 @@ const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>
   const password = inject<Ref<string | undefined>>(passwordKey);
 
   const router = useRouter();
-  const { formId, clientKeyId, secretLinkKey: maybeProtectedSecretLinkKey } = useSecretLink();
+  const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
 
   watchEffect(async () => {
     // Touch these before the first await boundary to make sure they're

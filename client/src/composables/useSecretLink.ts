@@ -6,7 +6,7 @@ import { useRoute } from "vue-router";
 export interface SecretLinkParts {
   formId: DeepReadonly<Ref<FormId>>;
   clientKeyId: DeepReadonly<Ref<ClientKeyId>>;
-  secretLinkKey: DeepReadonly<Ref<MaybeProtectedSecretLinkKey>>;
+  maybeProtectedSecretLinkKey: DeepReadonly<Ref<MaybeProtectedSecretLinkKey>>;
 }
 
 export const useSecretLink = (): SecretLinkParts => {
@@ -43,7 +43,7 @@ export const useSecretLink = (): SecretLinkParts => {
   return {
     formId: readonly(formId),
     clientKeyId: readonly(clientKeyId),
-    secretLinkKey: readonly(secretLinkKey),
+    maybeProtectedSecretLinkKey: readonly(secretLinkKey),
   };
 };
 

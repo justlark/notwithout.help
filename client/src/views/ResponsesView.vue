@@ -40,11 +40,13 @@ const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
 
-const { formId, clientKeyId, secretLinkKey } = useSecretLink();
+const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
-const editLink = computed(() => newEditLink(formId.value, clientKeyId.value, secretLinkKey.value));
+const editLink = computed(() =>
+  newEditLink(formId.value, clientKeyId.value, maybeProtectedSecretLinkKey.value),
+);
 
 const isNotFound = computed(() => {
   return returnsError(
@@ -248,7 +250,7 @@ watchEffect(async () => {
           v-if="!isReadOnly"
           :form-id="formId"
           :client-key-id="clientKeyId"
-          :secret-link-key="secretLinkKey"
+          :secret-link-key="maybeProtectedSecretLinkKey"
         />
         <div class="xl:sticky top-6">
           <div
