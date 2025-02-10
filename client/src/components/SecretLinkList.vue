@@ -230,15 +230,13 @@ const removeSecretLinkFromList = (index: number) => {
             @revoke="removeSecretLinkFromList"
           />
         </div>
-        <div class="flex flex-col gap-2">
-          <label for="new-link-comment" class="text-sm">Create a new secret link</label>
-          <Button
-            @click="newSecretLinkCreateModalIsVisible = true"
-            icon="pi pi-plus"
-            label="Create"
-            size="small"
-          />
-        </div>
+        <Button
+          class="max-w-20"
+          @click="newSecretLinkCreateModalIsVisible = true"
+          icon="pi pi-plus"
+          label="New"
+          size="small"
+        />
       </div>
     </Panel>
   </section>
