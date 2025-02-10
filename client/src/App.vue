@@ -7,14 +7,19 @@ import { computed, provide, ref } from "vue";
 import icon from "./assets/icon.svg";
 import PasswordInputModal from "./components/PasswordInputModal.vue";
 import { passwordKey } from "./injectKeys";
+import useIsSecretLinkProtected from "./composables/useIsSecretLinkProtected";
+import { isDone } from "./types";
+
+const isSecretLinkProtected = useIsSecretLinkProtected();
 
 const titleLead = computed(() => randomTitleLead());
 
 let password = ref<string>();
 provide(passwordKey, password);
 
-// TODO
-const passwordDialogVisible = computed(() => !password.value);
+const passwordDialogVisible = computed(
+  () => isDone(isSecretLinkProtected) && isSecretLinkProtected.value.value && !password.value,
+);
 
 const submitPassword = (enteredPassword: string) => {
   password.value = enteredPassword;
