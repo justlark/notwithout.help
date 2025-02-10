@@ -16,6 +16,13 @@ const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>
   const { formId, clientKeyId, secretLinkKey: maybeProtectedSecretLinkKey } = useSecretLink();
 
   watchEffect(async () => {
+    // Touch these before the first await boundary to make sure they're
+    // tracked.
+    password?.value;
+    formId.value;
+    clientKeyId.value;
+    maybeProtectedSecretLinkKey.value;
+
     // If we don't wait for the router to be ready, the app will try and
     // request the password params before the URL fragment (and therefore the
     // Form ID and Client Key ID) is available.
