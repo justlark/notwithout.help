@@ -3,24 +3,28 @@ import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import { z } from "zod";
 import InputText from "primevue/inputtext";
-import Message from "primevue/message";
 import Button from "primevue/button";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
+import Message from "primevue/message";
+
+const props = defineProps<{
+  validator: (password: string) => Promise<boolean>;
+}>();
 
 type Emits = {
-  (eventName: "submit", values: FormValues["password"]): void;
+  (eventName: "submit", password: FormValues["password"]): void;
 };
 
 const emit = defineEmits<Emits>();
 
 const schema = z.object({
-  password: z.string().min(1),
+  password: z.string().min(1, { message: "Password cannot be empty." }),
 });
 
 export type FormValues = z.infer<typeof schema>;
 
-const { defineField, handleSubmit } = useForm<FormValues>({
+const { defineField, errors, handleSubmit } = useForm<FormValues>({
   validationSchema: toTypedSchema(schema),
   initialValues: {
     password: "",
@@ -29,8 +33,14 @@ const { defineField, handleSubmit } = useForm<FormValues>({
 
 const [password, passwordAttrs] = defineField("password");
 
-const submitForm = handleSubmit((values) => {
-  emit("submit", values.password);
+const submitForm = handleSubmit(async (values, actions) => {
+  if (await props.validator(values.password)) {
+    console.log("Password is correct.");
+    emit("submit", values.password);
+  } else {
+    console.log("Password is incorrect.");
+    actions.setErrors({ password: "The password is incorrect." });
+  }
 });
 </script>
 
@@ -57,6 +67,9 @@ const submitForm = handleSubmit((values) => {
         />
       </InputGroupAddon>
     </InputGroup>
+    <Message v-if="errors.password" severity="error" size="small" variant="simple">
+      {{ errors.password }}
+    </Message>
     <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
       This link is password-protected. Whoever gave you this link should have given you a password
       as well.
