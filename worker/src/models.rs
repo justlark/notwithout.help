@@ -196,6 +196,16 @@ impl From<String> for EncryptedSubmissionBody {
 #[serde(transparent)]
 pub struct EncryptedKeyComment(String);
 
+// This is opaque to the server, so no need to decode it.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SecretLinkPasswordSalt(String);
+
+// This is opaque to the server, so no need to decode it.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct SecretLinkPasswordNonce(String);
+
 // Fields which are added to this struct must have a `#[serde(default)]` attribute to ensure that
 // existing form templates don't break.
 #[derive(Debug, Serialize, Deserialize)]
@@ -235,6 +245,12 @@ pub struct ClientKeys {
     pub encrypted_comment: EncryptedKeyComment,
     pub role: AccessRole,
     pub accessed_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug)]
+pub struct SecretLinkPasswordParams {
+    pub salt: SecretLinkPasswordSalt,
+    pub nonce: SecretLinkPasswordNonce,
 }
 
 // Not to be confused with an "access role," part of the authentication system.

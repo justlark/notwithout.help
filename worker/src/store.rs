@@ -11,7 +11,8 @@ use crate::{
     keys::{EphemeralServerKey, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ChallengeId, ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody,
-        FormData, FormId, FormTemplate, FormUpdate, ServerKeyId, Submission, SubmissionId,
+        FormData, FormId, FormTemplate, FormUpdate, SecretLinkPasswordNonce,
+        SecretLinkPasswordParams, SecretLinkPasswordSalt, ServerKeyId, Submission, SubmissionId,
     },
 };
 
@@ -558,5 +559,69 @@ impl Store {
         stmt.run().await?.meta()?;
 
         Ok(())
+    }
+
+    #[worker::send]
+    pub async fn store_password_params(
+        &self,
+        form_id: &FormId,
+        key_id: &ClientKeyId,
+        salt: SecretLinkPasswordSalt,
+        nonce: SecretLinkPasswordNonce,
+    ) -> anyhow::Result<()> {
+        let stmt = query!(
+            &self.db,
+            "
+            INSERT INTO passwords (key, salt, nonce)
+            SELECT keys.id, ?3, ?4
+            FROM keys
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ?1 AND keys.key_index = ?2;
+            ",
+            form_id,
+            key_id,
+            salt,
+            nonce,
+        )?;
+
+        stmt.run().await?.meta()?;
+
+        Ok(())
+    }
+
+    #[worker::send]
+    pub async fn get_password_params(
+        &self,
+        form_id: &FormId,
+        key_id: &ClientKeyId,
+    ) -> anyhow::Result<Option<SecretLinkPasswordParams>> {
+        let stmt = query!(
+            &self.db,
+            "
+            SELECT salt, nonce
+            FROM passwords
+            JOIN keys ON passwords.key = keys.id
+            JOIN forms ON keys.form = forms.id
+            WHERE forms.form_id = ?1 AND keys.key_index = ?2;
+            ",
+            form_id,
+            key_id,
+        )?;
+
+        #[derive(Debug, Deserialize)]
+        struct Row {
+            salt: SecretLinkPasswordSalt,
+            nonce: SecretLinkPasswordNonce,
+        }
+
+        let row = stmt.first::<Row>(None).await?;
+
+        row.map(|row| -> anyhow::Result<_> {
+            Ok(SecretLinkPasswordParams {
+                salt: row.salt,
+                nonce: row.nonce,
+            })
+        })
+        .transpose()
     }
 }
