@@ -5,7 +5,7 @@ use crate::{
     keys::{ClientNonceSignature, PublicPrimaryKey, PublicSigningKey, WrappedPrivatePrimaryKey},
     models::{
         ClientKeyId, ClientKeys, EncryptedKeyComment, EncryptedSubmissionBody, FormData, FormId,
-        OrgRole, Submission,
+        OrgRole, SecretLinkPasswordNonce, SecretLinkPasswordSalt, Submission,
     },
 };
 
@@ -144,4 +144,16 @@ impl From<PostTokenRequest> for ApiChallengeResponse {
 #[derive(Debug, Serialize)]
 pub struct PostTokenResponse {
     pub token: SignedApiAccessToken,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PostPasswordRequest {
+    pub salt: SecretLinkPasswordSalt,
+    pub nonce: SecretLinkPasswordNonce,
+}
+
+#[derive(Debug, Serialize)]
+pub struct GetPasswordResponse {
+    pub salt: SecretLinkPasswordSalt,
+    pub nonce: SecretLinkPasswordNonce,
 }

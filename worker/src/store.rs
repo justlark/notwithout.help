@@ -566,8 +566,8 @@ impl Store {
         &self,
         form_id: &FormId,
         key_id: &ClientKeyId,
-        salt: SecretLinkPasswordSalt,
-        nonce: SecretLinkPasswordNonce,
+        salt: &SecretLinkPasswordSalt,
+        nonce: &SecretLinkPasswordNonce,
     ) -> anyhow::Result<()> {
         let stmt = query!(
             &self.db,

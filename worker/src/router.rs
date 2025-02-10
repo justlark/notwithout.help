@@ -13,10 +13,10 @@ use worker::console_error;
 
 use crate::{
     api::{
-        GetApiChallengeResponse, GetFormResponse, GetKeyResponse, ListKeysResponse,
-        ListSubmissionsResponse, PatchFormRequest, PatchKeyRequest, PostFormRequest,
-        PostFormResponse, PostKeyRequest, PostKeyResponse, PostSubmissionRequest, PostTokenRequest,
-        PostTokenResponse,
+        GetApiChallengeResponse, GetFormResponse, GetKeyResponse, GetPasswordResponse,
+        ListKeysResponse, ListSubmissionsResponse, PatchFormRequest, PatchKeyRequest,
+        PostFormRequest, PostFormResponse, PostKeyRequest, PostKeyResponse, PostPasswordRequest,
+        PostSubmissionRequest, PostTokenRequest, PostTokenResponse,
     },
     auth::{
         auth_layer, AccessRole, ApiChallenge, ApiChallengeResponse, AuthError, AuthErrorType,
@@ -61,6 +61,10 @@ pub fn new(state: AppState) -> Router {
         .route("/keys/:form_id", post(add_key))
         .route("/keys/:form_id/:client_key_id", patch(update_key))
         .route("/keys/:form_id/:client_key_id", delete(delete_key))
+        .route(
+            "/passwords/:form_id/:client_key_id",
+            post(set_password_params),
+        )
         .route_layer(auth_layer())
         // UNAUTHENTICATED ENDPOINTS
         .route("/forms/:form_id", get(get_form))
@@ -71,6 +75,10 @@ pub fn new(state: AppState) -> Router {
             post(request_challenge),
         )
         .route("/tokens", post(request_access_token))
+        .route(
+            "/passwords/:form_id/:client_key_id",
+            get(get_password_params),
+        )
         .layer(cors_layer())
         .layer(DefaultBodyLimit::max(config::max_request_body_len()))
         .with_state(Arc::new(state))
@@ -430,4 +438,43 @@ async fn delete_key(
         .map_err(internal_err)?;
 
     Ok(NoContent)
+}
+
+#[axum::debug_handler]
+async fn set_password_params(
+    State(state): State<Arc<AppState>>,
+    Extension(token): Extension<SignedApiAccessToken>,
+    Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
+    Json(body): Json<PostPasswordRequest>,
+) -> Result<StatusCode, ErrorResponse> {
+    let store = token
+        .validate(&state.store, &form_id, AccessRole::Admin)
+        .await
+        .map_err(auth_err)?;
+
+    store
+        .store_password_params(&form_id, &key_id, &body.salt, &body.nonce)
+        .await
+        .map_err(internal_err)?;
+
+    Ok(StatusCode::CREATED)
+}
+
+#[axum::debug_handler]
+async fn get_password_params(
+    State(state): State<Arc<AppState>>,
+    Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
+) -> Result<Json<GetPasswordResponse>, ErrorResponse> {
+    let store = state.store.without_authenticating();
+
+    let params = store
+        .get_password_params(&form_id, &key_id)
+        .await
+        .map_err(internal_err)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+
+    Ok(Json(GetPasswordResponse {
+        salt: params.salt,
+        nonce: params.nonce,
+    }))
 }
