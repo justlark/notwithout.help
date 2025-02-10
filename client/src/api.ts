@@ -8,6 +8,8 @@ import {
   type FormId,
   type PublicPrimaryKey,
   type PublicSigningKey,
+  type SecretLinkPasswordNonce,
+  type SecretLinkPasswordSalt,
   type WrappedPrivatePrimaryKey,
 } from "./crypto";
 import { decodeBase64, encodeBase64 } from "./encoding";
@@ -490,6 +492,65 @@ const getSubmissions = async ({
   }));
 };
 
+export interface GetPasswordParams {
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+}
+
+export interface GetPasswordResponse {
+  salt: SecretLinkPasswordSalt;
+  nonce: SecretLinkPasswordNonce;
+}
+
+const getPassword = async ({ formId, clientKeyId }: GetPasswordParams) => {
+  const response = await fetch(`${API_URL}/passwords/${formId}/${clientKeyId}`);
+
+  if (!response.ok) {
+    throw new ApiError(response);
+  }
+
+  const { salt, nonce } = await response.json();
+
+  return {
+    salt: decodeBase64(salt) as SecretLinkPasswordSalt,
+    nonce: decodeBase64(nonce) as SecretLinkPasswordNonce,
+  };
+};
+
+export interface PostPasswordParams {
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  salt: SecretLinkPasswordSalt;
+  nonce: SecretLinkPasswordNonce;
+  accessToken: ApiAccessToken;
+}
+
+const postPassword = async ({
+  formId,
+  clientKeyId,
+  salt,
+  nonce,
+  accessToken,
+}: PostPasswordParams) => {
+  const requestBody = {
+    salt: encodeBase64(salt),
+    nonce: encodeBase64(nonce),
+  };
+
+  const response = await fetch(`${API_URL}/passwords/${formId}/${clientKeyId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response);
+  }
+};
+
 export default {
   getForm,
   postForm,
@@ -504,4 +565,5 @@ export default {
   postAccessToken,
   postSubmission,
   getSubmissions,
+  getPassword,
 };
