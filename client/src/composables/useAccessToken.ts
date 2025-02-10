@@ -8,7 +8,7 @@ import {
   type FormId,
   type PrivateSigningKey,
 } from "@/crypto";
-import { isDone, type Loadable } from "@/types";
+import { isDone, propagatesError, type Loadable } from "@/types";
 import api, { ApiError, type AccessRole, type ApiErrorKind } from "@/api";
 import { ref, readonly, watchEffect } from "vue";
 import { decodeBase64 } from "@/encoding";
@@ -132,12 +132,7 @@ export const useAccessToken = () => {
       return;
     }
 
-    if (secretLinkKey.value.state === "error") {
-      loadable.value = {
-        state: "error",
-        error: secretLinkKey.value.error,
-      };
-
+    if (propagatesError(secretLinkKey, loadable)) {
       return;
     }
 

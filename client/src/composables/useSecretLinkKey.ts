@@ -51,15 +51,28 @@ const useSecretLinkKey = (): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>
       return;
     }
 
-    // This secret link *is* password-protected.
-    loadable.value = {
-      state: "done",
-      value: await exposeSecretLinkKey(
+    let secretLinkKey: SecretLinkKey;
+
+    try {
+      secretLinkKey = await exposeSecretLinkKey(
         passwordParams.salt,
         passwordParams.nonce,
         maybeProtectedSecretLinkKey.value as ProtectedSecretLinkKey,
         password.value,
-      ),
+      );
+    } catch {
+      loadable.value = {
+        state: "error",
+        error: "unauthorized",
+      };
+
+      return;
+    }
+
+    // This secret link *is* password-protected.
+    loadable.value = {
+      state: "done",
+      value: secretLinkKey,
     };
   });
 

@@ -31,3 +31,21 @@ export const returnsError = <E>(
     return value.state === "error" && kinds.includes(value.error);
   });
 };
+
+export const propagatesError = <E>(
+  from: MaybeRefOrGetter<Loadable<unknown, E>>,
+  to: Ref<Loadable<unknown, E>>,
+): boolean => {
+  const fromValue = toValue(from);
+
+  if (fromValue.state === "error") {
+    to.value = {
+      state: "error",
+      error: fromValue.error,
+    };
+
+    return true;
+  }
+
+  return false;
+};
