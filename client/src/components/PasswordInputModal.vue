@@ -8,10 +8,6 @@ import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import Message from "primevue/message";
 
-const props = defineProps<{
-  validator: (password: string) => Promise<boolean>;
-}>();
-
 type Emits = {
   (eventName: "submit", password: FormValues["password"]): void;
 };
@@ -33,12 +29,8 @@ const { defineField, errors, handleSubmit } = useForm<FormValues>({
 
 const [password, passwordAttrs] = defineField("password");
 
-const submitForm = handleSubmit(async (values, actions) => {
-  if (await props.validator(values.password)) {
-    emit("submit", values.password);
-  } else {
-    actions.setErrors({ password: "That password is incorrect." });
-  }
+const submitForm = handleSubmit(async (values) => {
+  emit("submit", values.password);
 });
 </script>
 

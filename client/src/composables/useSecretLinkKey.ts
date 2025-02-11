@@ -43,20 +43,6 @@ const loadStoredSecretLinkKey = (
   return secretLinkKey;
 };
 
-type SecretLinkKeyState = "loading" | "done";
-const secretLinkKeyState = ref(new Map<string, SecretLinkKeyState>());
-
-const setSecretLinkKeyState = (
-  formId: FormId,
-  clientKeyId: ClientKeyId,
-  value: SecretLinkKeyState,
-) => {
-  secretLinkKeyState.value.set(cacheKey(formId, clientKeyId), value);
-};
-
-const getSecretLinkKeyState = (formId: FormId, clientKeyId: ClientKeyId) =>
-  secretLinkKeyState.value.get(cacheKey(formId, clientKeyId));
-
 const useSecretLinkKey = (
   passwordRef: MaybeRefOrGetter<string | undefined>,
 ): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>> => {
@@ -79,22 +65,8 @@ const useSecretLinkKey = (
         value: storedSecretLinkKey,
       };
 
-      // Make sure the `watchEffect` tracks that we're done loading the secret
-      // link key, because it won't react to changes in the session storage.
-      setSecretLinkKeyState(formId.value, clientKeyId.value, "done");
-
       return;
     }
-
-    if (getSecretLinkKeyState(formId.value, clientKeyId.value) === "loading") {
-      return;
-    }
-
-    // Keep track of whether we've started loading a given secret link key to
-    // ensure this hook doesn't run more than once concurrently. We want to
-    // make sure we don't call the API endpoint and decrypt the protected
-    // secret link key more than once per page load; it's inefficient.
-    setSecretLinkKeyState(formId.value, clientKeyId.value, "loading");
 
     let passwordParams: GetPasswordResponse | undefined;
 
@@ -143,7 +115,6 @@ const useSecretLinkKey = (
     }
 
     storeSecretLinkKey(formId.value, clientKeyId.value, secretLinkKey);
-    setSecretLinkKeyState(formId.value, clientKeyId.value, "done");
 
     loadable.value = {
       state: "done",

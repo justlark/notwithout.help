@@ -7,19 +7,16 @@ import { computed, provide, ref } from "vue";
 import icon from "./assets/icon.svg";
 import PasswordInputModal from "./components/PasswordInputModal.vue";
 import { passwordKey } from "./injectKeys";
-import { isDone } from "./types";
-import useSecretLinkValidator from "./composables/useSecretLinkValidator";
-
-const secretLinkValidator = useSecretLinkValidator();
-
-const titleLead = computed(() => randomTitleLead());
+import useSecretLinkKey from "./composables/useSecretLinkKey";
 
 let password = ref<string>();
 provide(passwordKey, password);
 
-const passwordDialogVisible = computed(
-  () => isDone(secretLinkValidator) && secretLinkValidator.value.value.protected && !password.value,
-);
+const secretLinkKey = useSecretLinkKey(password);
+
+const titleLead = computed(() => randomTitleLead());
+
+const passwordDialogVisible = computed(() => secretLinkKey.value.state === "error");
 
 const submitPassword = (enteredPassword: string) => {
   password.value = enteredPassword;
@@ -52,11 +49,7 @@ const submitPassword = (enteredPassword: string) => {
         <strong id="password-dialog-name">Enter password</strong>
       </span>
     </template>
-    <PasswordInputModal
-      v-if="isDone(secretLinkValidator) && secretLinkValidator.value.protected"
-      :validator="secretLinkValidator.value.validator"
-      @submit="submitPassword"
-    />
+    <PasswordInputModal @submit="submitPassword" />
   </Dialog>
 </template>
 
