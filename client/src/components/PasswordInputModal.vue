@@ -35,11 +35,9 @@ const [password, passwordAttrs] = defineField("password");
 
 const submitForm = handleSubmit(async (values, actions) => {
   if (await props.validator(values.password)) {
-    console.log("Password is correct.");
     emit("submit", values.password);
   } else {
-    console.log("Password is incorrect.");
-    actions.setErrors({ password: "The password is incorrect." });
+    actions.setErrors({ password: "That password is incorrect." });
   }
 });
 </script>
