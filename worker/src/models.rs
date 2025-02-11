@@ -244,6 +244,7 @@ pub struct ClientKeys {
     pub wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
     pub encrypted_comment: EncryptedKeyComment,
     pub role: AccessRole,
+    pub protected: bool,
     pub accessed_at: Option<DateTime<Utc>>,
 }
 

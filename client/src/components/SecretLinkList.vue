@@ -35,6 +35,7 @@ interface SecretKeyInfo {
   comment: string;
   clientKeyId: ClientKeyId;
   role: AccessRole;
+  protected: boolean;
   accessedAt: Date | undefined;
 }
 
@@ -91,6 +92,7 @@ watchEffect(async () => {
           ),
         ),
         role: key.role,
+        protected: key.protected,
         clientKeyId: key.clientKeyId,
         accessedAt: key.accessedAt ? new Date(key.accessedAt) : undefined,
       })),
@@ -169,6 +171,7 @@ const createSecretLink = async (inputs: SecretLinkFormValues) => {
     comment: inputs.comment,
     role: inputs.role,
     clientKeyId: newClientKeyId,
+    protected: inputs.password !== undefined,
     accessedAt: undefined,
   });
 
@@ -227,6 +230,7 @@ const removeSecretLinkFromList = (index: number) => {
             :active-client-key-id="props.clientKeyId"
             :accessed-at="secretKey.accessedAt"
             :role="secretKey.role"
+            :protected="secretKey.protected"
             :count="count"
             @revoke="removeSecretLinkFromList"
           />

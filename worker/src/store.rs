@@ -268,6 +268,11 @@ impl Store {
                 keys.wrapped_private_primary_key,
                 keys.encrypted_comment,
                 keys.role,
+                EXISTS(
+                    SELECT id
+                    FROM passwords
+                    WHERE passwords.key = keys.id
+                ) AS protected,
                 (
                     SELECT MAX(access_log.accessed_at)
                     FROM access_log
@@ -288,6 +293,7 @@ impl Store {
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
             role: AccessRole,
+            protected: i32,
             accessed_at: Option<String>,
         }
 
@@ -300,6 +306,7 @@ impl Store {
                 wrapped_private_primary_key: row.wrapped_private_primary_key,
                 encrypted_comment: row.encrypted_comment,
                 role: row.role,
+                protected: row.protected != 0,
                 accessed_at: row
                     .accessed_at
                     .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))
@@ -321,6 +328,11 @@ impl Store {
                 keys.wrapped_private_primary_key,
                 keys.encrypted_comment,
                 keys.role,
+                EXISTS(
+                    SELECT id
+                    FROM passwords
+                    WHERE passwords.key = keys.id
+                ) AS protected,
                 (
                     SELECT MAX(access_log.accessed_at)
                     FROM access_log
@@ -342,6 +354,7 @@ impl Store {
             wrapped_private_primary_key: Option<WrappedPrivatePrimaryKey>,
             encrypted_comment: EncryptedKeyComment,
             role: AccessRole,
+            protected: i32,
             accessed_at: Option<String>,
         }
 
@@ -355,6 +368,7 @@ impl Store {
                     wrapped_private_primary_key: row.wrapped_private_primary_key,
                     encrypted_comment: row.encrypted_comment,
                     role: row.role,
+                    protected: row.protected != 0,
                     accessed_at: row
                         .accessed_at
                         .map(|s| NaiveDateTime::parse_from_str(&s, SQLITE_DATETIME_FORMAT))

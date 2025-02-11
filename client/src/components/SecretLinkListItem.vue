@@ -18,6 +18,7 @@ const props = defineProps<{
   activeClientKeyId: ClientKeyId;
   accessedAt: Date | undefined;
   role: AccessRole;
+  protected: boolean;
   count: number;
 }>();
 
@@ -107,6 +108,13 @@ const revokeSecretLink = async () => {
             class="text-xs text-nowrap"
             v-if="isReadOnly"
             value="read-only"
+            severity="secondary"
+            rounded
+          />
+          <Tag
+            class="text-xs text-nowrap"
+            v-if="props.protected"
+            value="password"
             severity="secondary"
             rounded
           />

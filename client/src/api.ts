@@ -361,6 +361,7 @@ export interface ListKeysResponse {
   clientKeyId: ClientKeyId;
   encryptedComment: EncryptedKeyComment;
   role: AccessRole;
+  protected: boolean;
   accessedAt: Date | undefined;
 }
 
@@ -381,12 +382,15 @@ const listKeys = async ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const keys: Array<any> = await response.json();
 
-  return keys.map(({ client_key_id, encrypted_comment, role, accessed_at }) => ({
-    clientKeyId: client_key_id,
-    encryptedComment: decodeBase64(encrypted_comment) as EncryptedKeyComment,
-    role: role,
-    accessedAt: accessed_at ? new Date(accessed_at) : undefined,
-  }));
+  return keys.map(
+    ({ client_key_id, encrypted_comment, role, protected: isProtected, accessed_at }) => ({
+      clientKeyId: client_key_id,
+      encryptedComment: decodeBase64(encrypted_comment) as EncryptedKeyComment,
+      role: role,
+      protected: isProtected,
+      accessedAt: accessed_at ? new Date(accessed_at) : undefined,
+    }),
+  );
 };
 
 export interface DeleteKeyParams {
