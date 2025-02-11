@@ -8,7 +8,7 @@ import {
   type SecretLinkKey,
 } from "@/crypto";
 import { decodeBase64, encodeBase64 } from "@/encoding";
-import type { Loadable } from "@/types";
+import { isDone, type Loadable } from "@/types";
 import useSecretLink from "./useSecretLink";
 import api, { ApiError } from "@/api";
 
@@ -48,16 +48,18 @@ const useSecretLinkKey = (
 ): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind>>> => {
   const loadable = ref<Loadable<SecretLinkKey, ApiErrorKind>>({ state: "loading" });
 
-  const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
+  const secretLinkParts = useSecretLink();
 
   watchEffect(async () => {
+    if (!isDone(secretLinkParts)) {
+      return;
+    }
+
+    const { formId, clientKeyId, maybeProtectedSecretLinkKey } = secretLinkParts.value.value;
+
     const password = toValue(passwordRef);
 
-    // Touch these before the first await boundary to make sure they're
-    // tracked.
-    maybeProtectedSecretLinkKey.value;
-
-    const storedSecretLinkKey = loadStoredSecretLinkKey(formId.value, clientKeyId.value);
+    const storedSecretLinkKey = loadStoredSecretLinkKey(formId, clientKeyId);
 
     if (storedSecretLinkKey !== undefined) {
       loadable.value = {
@@ -72,8 +74,8 @@ const useSecretLinkKey = (
 
     try {
       passwordParams = await api.getPassword({
-        formId: formId.value,
-        clientKeyId: clientKeyId.value,
+        formId: formId,
+        clientKeyId: clientKeyId,
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -90,7 +92,7 @@ const useSecretLinkKey = (
 
     if (passwordParams === undefined) {
       // This secret link *is not* password-protected.
-      secretLinkKey = maybeProtectedSecretLinkKey.value as SecretLinkKey;
+      secretLinkKey = maybeProtectedSecretLinkKey as SecretLinkKey;
     } else {
       // This secret link *is* password-protected.
       if (password === undefined) {
@@ -101,7 +103,7 @@ const useSecretLinkKey = (
         secretLinkKey = await exposeSecretLinkKey(
           passwordParams.salt,
           passwordParams.nonce,
-          maybeProtectedSecretLinkKey.value as ProtectedSecretLinkKey,
+          maybeProtectedSecretLinkKey as ProtectedSecretLinkKey,
           password,
         );
       } catch {
@@ -114,7 +116,7 @@ const useSecretLinkKey = (
       }
     }
 
-    storeSecretLinkKey(formId.value, clientKeyId.value, secretLinkKey);
+    storeSecretLinkKey(formId, clientKeyId, secretLinkKey);
 
     loadable.value = {
       state: "done",

@@ -9,7 +9,7 @@ import PasswordInputModal from "./components/PasswordInputModal.vue";
 import { passwordKey } from "./injectKeys";
 import useSecretLinkKey from "./composables/useSecretLinkKey";
 
-let password = ref<string>();
+const password = ref<string>();
 provide(passwordKey, password);
 
 const secretLinkKey = useSecretLinkKey(password);

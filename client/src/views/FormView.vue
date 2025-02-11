@@ -13,7 +13,7 @@ import { computed } from "vue";
 
 const toast = useToast();
 
-const { formId } = useLink();
+const shareLinkParts = useLink();
 const form = useForm();
 
 const isNotFound = computed(() => {
@@ -21,11 +21,12 @@ const isNotFound = computed(() => {
 });
 
 const postSubmission = async (values: FormValues, resetForm: () => void) => {
-  if (!isDone(form)) {
+  if (!isDone(form) || !isDone(shareLinkParts)) {
     return;
   }
 
   const { publicPrimaryKey } = form.value.value;
+  const { formId } = shareLinkParts.value.value;
 
   const submissionBody: SubmissionBody = {
     version: CURRENT_VERSION,
@@ -42,7 +43,7 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
   );
 
   try {
-    await api.postSubmission({ formId: formId.value, encryptedBody });
+    await api.postSubmission({ formId, encryptedBody });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "not-found") {
       toast.add({
@@ -88,10 +89,10 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
       title="Not found"
       message="Either this is an invalid link, or the group is no longer accepting responses."
     />
-    <div v-else-if="isDone(form)">
+    <div v-else-if="isDone(form) && isDone(shareLinkParts)">
       <ResponseForm
         @submit="postSubmission"
-        :storage-key="`form:${formId}`"
+        :storage-key="`form:${shareLinkParts.value.formId}`"
         :contact-methods="[...form.value.contactMethods]"
         aria-labelledby="main-heading"
         :roles="form.value.roles.map((role) => ({ ...role, details: [...role.details] }))"

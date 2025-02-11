@@ -107,11 +107,17 @@ export const getAccessToken = async (
 export const useAccessToken = () => {
   const loadable = ref<Loadable<AccessTokenParts, ApiErrorKind>>({ state: "loading" });
 
-  const { formId, clientKeyId } = useSecretLink();
+  const secretLinkParts = useSecretLink();
   const secretLinkKey = useSecretLinkKey(injectPassword());
 
   watchEffect(async () => {
-    const storedAccessToken = loadStoredAccessToken(formId.value, clientKeyId.value);
+    if (!isDone(secretLinkParts.value)) {
+      return;
+    }
+
+    const { formId, clientKeyId } = secretLinkParts.value.value;
+
+    const storedAccessToken = loadStoredAccessToken(formId, clientKeyId);
 
     if (storedAccessToken !== undefined) {
       loadable.value = {
@@ -124,16 +130,16 @@ export const useAccessToken = () => {
 
       // Make sure the `watchEffect` tracks that we're done loading the access
       // token, because it won't react to changes in the session storage.
-      setTokenState(formId.value, clientKeyId.value, "done");
+      setTokenState(formId, clientKeyId, "done");
 
       return;
     }
 
-    if (getTokenState(formId.value, clientKeyId.value) === "loading") {
+    if (getTokenState(formId, clientKeyId) === "loading") {
       return;
     }
 
-    if (propagatesError(secretLinkKey, loadable)) {
+    if (propagatesError(loadable, secretLinkKey)) {
       return;
     }
 
@@ -145,7 +151,7 @@ export const useAccessToken = () => {
     // ensure this hook doesn't run more than once concurrently. We want to
     // make sure we don't go through the auth flow more than once per page
     // load.
-    setTokenState(formId.value, clientKeyId.value, "loading");
+    setTokenState(formId, clientKeyId, "loading");
 
     let privateSigningKey;
 
@@ -162,16 +168,16 @@ export const useAccessToken = () => {
     }
 
     try {
-      const accessToken = await getAccessToken(formId.value, clientKeyId.value, privateSigningKey);
+      const accessToken = await getAccessToken(formId, clientKeyId, privateSigningKey);
 
-      storeAccessToken(formId.value, clientKeyId.value, accessToken);
-      setTokenState(formId.value, clientKeyId.value, "done");
+      storeAccessToken(formId, clientKeyId, accessToken);
+      setTokenState(formId, clientKeyId, "done");
 
       // Once the token expires, trigger the `watchEffect` to request a new one.
       const tokenTtl = extractExp(accessToken).getTime() - Date.now();
       setTimeout(() => {
         console.warn("Access token has expired. Requesting a new one.");
-        setTokenState(formId.value, clientKeyId.value, "expired");
+        setTokenState(formId, clientKeyId, "expired");
       }, tokenTtl);
 
       loadable.value = {

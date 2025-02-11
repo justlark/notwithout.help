@@ -13,29 +13,26 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
 > => {
   const loadable = ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>({ state: "loading" });
 
-  const { formId, clientKeyId } = useSecretLink();
+  const secretLinkParts = useSecretLink();
   const accessToken = useAccessToken();
   const secretLinkKey = useSecretLinkKey(injectPassword());
 
   watchEffect(async () => {
-    if (propagatesError(accessToken, loadable)) {
+    if (propagatesError(loadable, accessToken, secretLinkKey)) {
       return;
     }
 
-    if (propagatesError(secretLinkKey, loadable)) {
-      return;
-    }
-
-    if (!isDone(accessToken) || !isDone(secretLinkKey)) {
+    if (!isDone(accessToken) || !isDone(secretLinkKey) || !isDone(secretLinkParts)) {
       return;
     }
 
     const { token } = accessToken.value.value;
+    const { formId, clientKeyId } = secretLinkParts.value.value;
 
     // Touch these before the first await boundary to make sure they're
     // tracked.
-    const formIdValue = formId.value;
-    const clientKeyIdValue = clientKeyId.value;
+    const formIdValue = formId;
+    const clientKeyIdValue = clientKeyId;
     let secretWrappingKey;
 
     try {

@@ -1,7 +1,7 @@
 import type { ApiErrorKind, OrgRole } from "@/api";
 import api, { ApiError } from "@/api";
 import type { PublicPrimaryKey } from "@/crypto";
-import type { Loadable } from "@/types";
+import { isDone, type Loadable } from "@/types";
 import { ref, watchEffect, type DeepReadonly, type Ref } from "vue";
 import { useLink } from "./useLink";
 
@@ -17,11 +17,17 @@ export interface Form {
 export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
   const form = ref<Loadable<Form, ApiErrorKind>>({ state: "loading" });
 
-  const { formId } = useLink();
+  const shareLinkParts = useLink();
 
   watchEffect(async () => {
+    if (!isDone(shareLinkParts)) {
+      return;
+    }
+
+    const { formId } = shareLinkParts.value.value;
+
     try {
-      const response = await api.getForm({ formId: formId.value });
+      const response = await api.getForm({ formId });
 
       form.value = {
         state: "done",

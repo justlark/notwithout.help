@@ -15,7 +15,7 @@ import { unsealSubmissionBody } from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 import { useRouter } from "vue-router";
 import useSecretLink from "@/composables/useSecretLink";
 import useAccessToken from "@/composables/useAccessToken";
@@ -40,12 +40,18 @@ const router = useRouter();
 const confirm = useConfirm();
 const toast = useToast();
 
-const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
+const secretLinkParts = useSecretLink();
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
 const editLink = computed(() =>
-  newEditLink(formId.value, clientKeyId.value, maybeProtectedSecretLinkKey.value),
+  isDone(secretLinkParts)
+    ? newEditLink(
+        secretLinkParts.value.value.formId,
+        secretLinkParts.value.value.clientKeyId,
+        secretLinkParts.value.value.maybeProtectedSecretLinkKey,
+      )
+    : undefined,
 );
 
 const isNotFound = computed(() => {
@@ -89,14 +95,15 @@ const csvFileObjectUrl = computed(() => {
 });
 
 const doDelete = async () => {
-  if (!isDone(accessToken)) {
+  if (!isDone(accessToken) || !isDone(secretLinkParts)) {
     return;
   }
 
   const { token } = accessToken.value.value;
+  const { formId } = secretLinkParts.value.value;
 
   try {
-    await api.deleteForm({ formId: formId.value, accessToken: token });
+    await api.deleteForm({ formId: formId, accessToken: token });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "forbidden") {
       toast.add({
@@ -167,15 +174,21 @@ watchEffect(async () => {
   submissionsState.value;
 
   // Ensure all of these are tracked by Vue before the first await boundary.
-  if (!isDone(accessToken) || !isDone(privatePrimaryKey) || !isDone(form)) {
+  if (
+    !isDone(accessToken) ||
+    !isDone(privatePrimaryKey) ||
+    !isDone(form) ||
+    !isDone(secretLinkParts)
+  ) {
     return;
   }
 
   const { token } = accessToken.value.value;
   const { publicPrimaryKey } = form.value.value;
+  const { formId } = secretLinkParts.value.value;
 
   const encryptedSubmissions = await api.getSubmissions({
-    formId: formId.value,
+    formId: formId,
     accessToken: token,
   });
 
@@ -247,10 +260,10 @@ watchEffect(async () => {
       </div>
       <div class="flex flex-col gap-4">
         <SecretLinkList
-          v-if="!isReadOnly"
-          :form-id="formId"
-          :client-key-id="clientKeyId"
-          :secret-link-key="maybeProtectedSecretLinkKey"
+          v-if="!isReadOnly && isDone(secretLinkParts)"
+          :form-id="secretLinkParts.value.formId"
+          :client-key-id="secretLinkParts.value.clientKeyId"
+          :secret-link-key="secretLinkParts.value.maybeProtectedSecretLinkKey"
         />
         <div class="xl:sticky top-6">
           <div
@@ -340,7 +353,7 @@ watchEffect(async () => {
               raised
             />
             <Button
-              v-if="!isReadOnly"
+              v-if="!isReadOnly && editLink !== undefined"
               class="!justify-start"
               as="router-link"
               :to="{ path: editLink.pathname, hash: editLink.hash }"
@@ -385,7 +398,7 @@ watchEffect(async () => {
           <strong id="share-link-modal-name">Share this link</strong>
         </span>
       </template>
-      <ShareLinkAdmonition :form-id="formId" />
+      <ShareLinkAdmonition v-if="isDone(secretLinkParts)" :form-id="secretLinkParts.value.formId" />
     </Dialog>
     <ConfirmDialog class="max-w-xl mx-6" />
   </main>

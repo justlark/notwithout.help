@@ -1,50 +1,50 @@
-import type { ClientKeyId, FormId, MaybeProtectedSecretLinkKey, SecretLinkKey } from "@/crypto";
+import type { ClientKeyId, FormId, MaybeProtectedSecretLinkKey } from "@/crypto";
 import { decodeBase64Url } from "@/encoding";
-import { readonly, ref, watchEffect, type DeepReadonly, type Ref } from "vue";
-import { useRoute } from "vue-router";
+import type { Loadable } from "@/types";
+import { ref, watchEffect, type Ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 export interface SecretLinkParts {
-  formId: DeepReadonly<Ref<FormId>>;
-  clientKeyId: DeepReadonly<Ref<ClientKeyId>>;
-  maybeProtectedSecretLinkKey: DeepReadonly<Ref<MaybeProtectedSecretLinkKey>>;
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+  maybeProtectedSecretLinkKey: MaybeProtectedSecretLinkKey;
 }
 
-export const useSecretLink = (): SecretLinkParts => {
+export const useSecretLink = (): Readonly<Ref<Loadable<SecretLinkParts, never>>> => {
+  const loadable = ref<Loadable<SecretLinkParts, never>>({ state: "loading" });
+
   const route = useRoute();
-  const [, formIdPart, clientKeyIdPart, secretLinkKeyPart] = route.hash.split("/");
+  const router = useRouter();
 
-  const formId = ref(formIdPart as FormId);
-  const clientKeyId = ref(clientKeyIdPart as ClientKeyId);
+  watchEffect(async () => {
+    const fragment = route.hash;
 
-  let secretLinkKey;
+    await router.isReady();
 
-  try {
-    secretLinkKey = ref(decodeBase64Url(secretLinkKeyPart) as MaybeProtectedSecretLinkKey);
-  } catch {
-    // If the secret link key isn't a valid base64Url string, return an empty
-    // array and the error will be handled by he downstream code that attempts
-    // to derive keys from it.
-    secretLinkKey = ref(new Uint8Array() as MaybeProtectedSecretLinkKey);
-  }
+    const [, formIdPart, clientKeyIdPart, secretLinkKeyPart] = fragment.split("/");
 
-  watchEffect(() => {
-    const [, formIdPart, clientKeyIdPart, secretLinkKeyPart] = route.hash.split("/");
-
-    formId.value = formIdPart as FormId;
-    clientKeyId.value = clientKeyIdPart as ClientKeyId;
+    let secretLinkKey;
 
     try {
-      secretLinkKey.value = decodeBase64Url(secretLinkKeyPart) as MaybeProtectedSecretLinkKey;
+      secretLinkKey = decodeBase64Url(secretLinkKeyPart) as MaybeProtectedSecretLinkKey;
     } catch {
-      secretLinkKey.value = new Uint8Array() as MaybeProtectedSecretLinkKey;
+      // If the secret link key isn't a valid base64Url string, return an empty
+      // array and the error will be handled by he downstream code that
+      // attempts to derive keys from it.
+      secretLinkKey = new Uint8Array() as MaybeProtectedSecretLinkKey;
     }
+
+    loadable.value = {
+      state: "done",
+      value: {
+        formId: formIdPart as FormId,
+        clientKeyId: clientKeyIdPart as ClientKeyId,
+        maybeProtectedSecretLinkKey: secretLinkKey,
+      },
+    };
   });
 
-  return {
-    formId: readonly(formId),
-    clientKeyId: readonly(clientKeyId),
-    maybeProtectedSecretLinkKey: readonly(secretLinkKey),
-  };
+  return loadable;
 };
 
 export default useSecretLink;

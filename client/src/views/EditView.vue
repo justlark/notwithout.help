@@ -13,7 +13,7 @@ import { computed } from "vue";
 import { useRouter } from "vue-router";
 import defaultRoles from "@/assets/default-roles.json";
 
-const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
+const secretLinkParts = useSecretLink();
 const accessToken = useAccessToken();
 const form = useForm();
 
@@ -37,17 +37,25 @@ const initialValues = computed(() =>
 );
 
 const secretLink = computed(() =>
-  newSecretLink(formId.value, clientKeyId.value, maybeProtectedSecretLinkKey.value),
+  isDone(secretLinkParts)
+    ? newSecretLink(
+        secretLinkParts.value.value.formId,
+        secretLinkParts.value.value.clientKeyId,
+        secretLinkParts.value.value.maybeProtectedSecretLinkKey,
+      )
+    : undefined,
 );
 
 const submitForm = async (values: FormValues, resetForm: () => void) => {
-  if (!isDone(accessToken)) {
+  if (!isDone(accessToken) || !isDone(secretLinkParts) || secretLink.value === undefined) {
     return;
   }
 
+  const { formId } = secretLinkParts.value.value;
+
   try {
     await api.patchForm({
-      formId: formId.value,
+      formId: formId,
       orgName: values.title,
       description: values.description,
       contactMethods: values.contactMethods,
@@ -98,8 +106,8 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       message="Either this is an invalid link, the group has been deleted, or you don't have access to it anymore."
     />
     <FormBuilder
-      v-if="initialValues && !isNotFound"
-      :storage-key="`edit:${formId}`"
+      v-if="isDone(secretLinkParts) && initialValues && !isNotFound"
+      :storage-key="`edit:${secretLinkParts.value.formId}`"
       :initial-values="initialValues"
       cancelable
       @submit="submitForm"

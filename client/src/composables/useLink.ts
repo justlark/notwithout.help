@@ -1,26 +1,34 @@
 import type { FormId } from "@/crypto";
-import { readonly, ref, watchEffect, type DeepReadonly, type Ref } from "vue";
-import { useRoute } from "vue-router";
+import type { Loadable } from "@/types";
+import { ref, watchEffect, type Ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 export interface ShareLinkParts {
-  formId: DeepReadonly<Ref<FormId>>;
+  formId: FormId;
 }
 
-export const useLink = (): ShareLinkParts => {
+export const useLink = (): Readonly<Ref<Loadable<ShareLinkParts, never>>> => {
+  const loadable = ref<Loadable<ShareLinkParts, never>>({ state: "loading" });
+
   const route = useRoute();
-  const [, formIdPart] = route.hash.split("/");
+  const router = useRouter();
 
-  const formId = ref(formIdPart as FormId);
+  watchEffect(async () => {
+    const fragment = route.hash;
 
-  watchEffect(() => {
-    const [, formIdPart] = route.hash.split("/");
+    await router.isReady();
 
-    formId.value = formIdPart as FormId;
+    const [, formIdPart] = fragment.split("/");
+
+    loadable.value = {
+      state: "done",
+      value: {
+        formId: formIdPart as FormId,
+      },
+    };
   });
 
-  return {
-    formId: readonly(formId),
-  };
+  return loadable;
 };
 
 export default useLink;

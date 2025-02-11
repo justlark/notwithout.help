@@ -1,5 +1,5 @@
 import type { ApiErrorKind, GetPasswordResponse } from "@/api";
-import type { Loadable } from "@/types";
+import { isDone, type Loadable } from "@/types";
 import { readonly, ref, watchEffect, type Ref } from "vue";
 import useSecretLink from "./useSecretLink";
 import api, { ApiError } from "@/api";
@@ -17,15 +17,21 @@ export type SecretLinkValidator =
 const useSecretLinkValidator = (): Readonly<Ref<Loadable<SecretLinkValidator, ApiErrorKind>>> => {
   const loadable = ref<Loadable<SecretLinkValidator, ApiErrorKind>>({ state: "loading" });
 
-  const { formId, clientKeyId, maybeProtectedSecretLinkKey } = useSecretLink();
+  const secretLinkParts = useSecretLink();
 
   watchEffect(async () => {
+    if (!isDone(secretLinkParts)) {
+      return;
+    }
+
+    const { formId, clientKeyId, maybeProtectedSecretLinkKey } = secretLinkParts.value.value;
+
     let passwordParams: GetPasswordResponse | undefined;
 
     try {
       passwordParams = await api.getPassword({
-        formId: formId.value,
-        clientKeyId: clientKeyId.value,
+        formId,
+        clientKeyId,
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -56,7 +62,7 @@ const useSecretLinkValidator = (): Readonly<Ref<Loadable<SecretLinkValidator, Ap
             await exposeSecretLinkKey(
               passwordParams.salt,
               passwordParams.nonce,
-              maybeProtectedSecretLinkKey.value as ProtectedSecretLinkKey,
+              maybeProtectedSecretLinkKey as ProtectedSecretLinkKey,
               password,
             );
 

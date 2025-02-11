@@ -33,18 +33,20 @@ export const returnsError = <E>(
 };
 
 export const propagatesError = <E>(
-  from: MaybeRefOrGetter<Loadable<unknown, E>>,
   to: Ref<Loadable<unknown, E>>,
+  ...from: Array<MaybeRefOrGetter<Loadable<unknown, E>>>
 ): boolean => {
-  const fromValue = toValue(from);
+  for (const fromMaybeRef of from) {
+    const fromValue = toValue(fromMaybeRef);
 
-  if (fromValue.state === "error") {
-    to.value = {
-      state: "error",
-      error: fromValue.error,
-    };
+    if (fromValue.state === "error") {
+      to.value = {
+        state: "error",
+        error: fromValue.error,
+      };
 
-    return true;
+      return true;
+    }
   }
 
   return false;
