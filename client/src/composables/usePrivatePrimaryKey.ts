@@ -6,6 +6,7 @@ import { useSecretLink } from "./useSecretLink";
 import { useAccessToken } from "./useAccessToken";
 import api, { ApiError } from "@/api";
 import useSecretLinkKey from "./useSecretLinkKey";
+import { injectPassword } from "@/injectKeys";
 
 export const usePrivatePrimaryKey = (): DeepReadonly<
   Ref<Loadable<PrivatePrimaryKey, ApiErrorKind>>
@@ -14,7 +15,7 @@ export const usePrivatePrimaryKey = (): DeepReadonly<
 
   const { formId, clientKeyId } = useSecretLink();
   const accessToken = useAccessToken();
-  const secretLinkKey = useSecretLinkKey();
+  const secretLinkKey = useSecretLinkKey(injectPassword());
 
   watchEffect(async () => {
     if (propagatesError(accessToken, loadable)) {

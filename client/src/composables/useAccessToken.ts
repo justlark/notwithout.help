@@ -15,6 +15,7 @@ import { decodeBase64 } from "@/encoding";
 import { jwtDecode } from "jwt-decode";
 import { useSecretLink } from "./useSecretLink";
 import useSecretLinkKey from "./useSecretLinkKey";
+import { injectPassword } from "@/injectKeys";
 
 const cacheKey = (formId: FormId, clientKeyId: ClientKeyId) => `token:${formId}/${clientKeyId}`;
 
@@ -107,7 +108,7 @@ export const useAccessToken = () => {
   const loadable = ref<Loadable<AccessTokenParts, ApiErrorKind>>({ state: "loading" });
 
   const { formId, clientKeyId } = useSecretLink();
-  const secretLinkKey = useSecretLinkKey();
+  const secretLinkKey = useSecretLinkKey(injectPassword());
 
   watchEffect(async () => {
     const storedAccessToken = loadStoredAccessToken(formId.value, clientKeyId.value);
