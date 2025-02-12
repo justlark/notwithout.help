@@ -8,6 +8,7 @@ import icon from "./assets/icon.svg";
 import PasswordInputModal from "./components/PasswordInputModal.vue";
 import { passwordKey } from "./injectKeys";
 import useSecretLinkKey from "./composables/useSecretLinkKey";
+import { returnsError } from "./types";
 
 const password = ref<string>();
 provide(passwordKey, password);
@@ -16,8 +17,8 @@ const secretLinkKey = useSecretLinkKey(password);
 
 const titleLead = computed(() => randomTitleLead());
 
-const passwordDialogVisible = computed(
-  () => secretLinkKey.value.state === "error" && secretLinkKey.value.error === "no-password",
+const passwordDialogVisible = computed(() =>
+  returnsError(["no-password", "invalid-password"], secretLinkKey),
 );
 
 const submitPassword = (enteredPassword: string) => {
@@ -51,7 +52,10 @@ const submitPassword = (enteredPassword: string) => {
         <strong id="password-dialog-name">Enter password</strong>
       </span>
     </template>
-    <PasswordInputModal @submit="submitPassword" />
+    <PasswordInputModal
+      :isInvalid="returnsError('invalid-password', secretLinkKey)"
+      @submit="submitPassword"
+    />
   </Dialog>
 </template>
 

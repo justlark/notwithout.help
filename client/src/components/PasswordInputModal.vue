@@ -7,6 +7,11 @@ import Button from "primevue/button";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import Message from "primevue/message";
+import { toValue, watchEffect, type MaybeRefOrGetter } from "vue";
+
+const props = defineProps<{
+  isInvalid: boolean;
+}>();
 
 type Emits = {
   (eventName: "submit", password: FormValues["password"]): void;
@@ -31,6 +36,12 @@ const [password, passwordAttrs] = defineField("password");
 
 const submitForm = handleSubmit(async (values) => {
   emit("submit", values.password);
+});
+
+watchEffect(() => {
+  if (props.isInvalid) {
+    errors.value.password = "This password is incorrect.";
+  }
 });
 </script>
 

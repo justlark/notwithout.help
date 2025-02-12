@@ -43,10 +43,14 @@ const loadStoredSecretLinkKey = (
   return secretLinkKey;
 };
 
+type PasswordErrorKind = "no-password" | "invalid-password";
+
 const useSecretLinkKey = (
   passwordRef: MaybeRefOrGetter<string | undefined>,
-): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind | "no-password">>> => {
-  const loadable = ref<Loadable<SecretLinkKey, ApiErrorKind | "no-password">>({ state: "loading" });
+): Readonly<Ref<Loadable<SecretLinkKey, ApiErrorKind | PasswordErrorKind>>> => {
+  const loadable = ref<Loadable<SecretLinkKey, ApiErrorKind | PasswordErrorKind>>({
+    state: "loading",
+  });
 
   const secretLinkParts = useSecretLink();
 
@@ -111,7 +115,7 @@ const useSecretLinkKey = (
       } catch {
         loadable.value = {
           state: "error",
-          error: "unauthorized",
+          error: "invalid-password",
         };
 
         return;
