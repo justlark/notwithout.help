@@ -105,14 +105,14 @@ const revokeSecretLink = async () => {
             rounded
           />
           <Tag
-            class="text-xs text-nowrap"
+            class="text-xs text-nowrap me-2"
             v-if="isReadOnly"
             value="read-only"
             severity="secondary"
             rounded
           />
           <Tag
-            class="text-xs text-nowrap"
+            class="text-xs text-nowrap me-2"
             v-if="props.protected"
             value="password"
             severity="secondary"
