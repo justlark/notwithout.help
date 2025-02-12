@@ -23,7 +23,6 @@ Rust](https://www.rust-lang.org/tools/install) and run:
 
 ```shell
 cd ./worker/
-npm install
 npx wrangler deploy --env dev
 npx wrangler deploy --env prod
 ```
@@ -43,7 +42,6 @@ worker. It must be running on port `8787`.
 
 ```shell
 cd ./worker/
-npm install
 npx wrangler dev --env dev
 ```
 
