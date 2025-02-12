@@ -40,7 +40,7 @@ const submitForm = handleSubmit(async (values) => {
 
 watchEffect(() => {
   if (props.isInvalid) {
-    errors.value.password = "This password is incorrect.";
+    errors.value.password = "That password is incorrect.";
   }
 });
 </script>
