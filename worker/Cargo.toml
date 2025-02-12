@@ -40,6 +40,7 @@ ed25519-dalek = "2.1.1"
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
 
 [lints.rust]
+# https://github.com/rustwasm/wasm-bindgen/issues/4283
 unexpected_cfgs = { level = "warn", check-cfg = [
   "cfg(wasm_bindgen_unstable_test_coverage)",
 ] }
