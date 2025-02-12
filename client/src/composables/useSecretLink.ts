@@ -10,8 +10,8 @@ export interface SecretLinkParts {
   maybeProtectedSecretLinkKey: MaybeProtectedSecretLinkKey;
 }
 
-export const useSecretLink = (): Readonly<Ref<Loadable<SecretLinkParts, never>>> => {
-  const loadable = ref<Loadable<SecretLinkParts, never>>({ state: "loading" });
+export const useSecretLink = (): Readonly<Ref<Loadable<SecretLinkParts, "invalid">>> => {
+  const loadable = ref<Loadable<SecretLinkParts, "invalid">>({ state: "loading" });
 
   const route = useRoute();
   const router = useRouter();
@@ -28,10 +28,12 @@ export const useSecretLink = (): Readonly<Ref<Loadable<SecretLinkParts, never>>>
     try {
       secretLinkKey = decodeBase64Url(secretLinkKeyPart) as MaybeProtectedSecretLinkKey;
     } catch {
-      // If the secret link key isn't a valid base64Url string, return an empty
-      // array and the error will be handled by he downstream code that
-      // attempts to derive keys from it.
-      secretLinkKey = new Uint8Array() as MaybeProtectedSecretLinkKey;
+      loadable.value = {
+        state: "error",
+        error: "invalid",
+      };
+
+      return;
     }
 
     loadable.value = {

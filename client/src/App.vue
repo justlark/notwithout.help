@@ -16,7 +16,9 @@ const secretLinkKey = useSecretLinkKey(password);
 
 const titleLead = computed(() => randomTitleLead());
 
-const passwordDialogVisible = computed(() => secretLinkKey.value.state === "error");
+const passwordDialogVisible = computed(
+  () => secretLinkKey.value.state === "error" && secretLinkKey.value.error === "no-password",
+);
 
 const submitPassword = (enteredPassword: string) => {
   password.value = enteredPassword;
