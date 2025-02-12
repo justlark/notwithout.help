@@ -38,3 +38,8 @@ jsonwebtoken = "9.3.0"
 secrecy = "0.10.3"
 ed25519-dalek = "2.1.1"
 uuid = { version = "1.11.0", features = ["v4", "serde"] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  "cfg(wasm_bindgen_unstable_test_coverage)",
+] }
