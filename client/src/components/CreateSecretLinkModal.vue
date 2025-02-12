@@ -57,6 +57,7 @@ const submitForm = handleSubmit((values) => {
         v-model="linkComment"
         v-bind="linkCommentAttrs"
         type="text"
+        placeholder="Alice"
         aria-describedby="secret-link-comment-help"
       />
       <Message v-if="errors.comment" severity="error" size="small" variant="simple">
@@ -83,7 +84,7 @@ const submitForm = handleSubmit((values) => {
         aria-describedby="secret-link-role-help"
       >
         <template #option="slotProps">
-          <span class="flex gap-3 items-center">
+          <span class="flex gap-2 items-center">
             <i :class="slotProps.option.icon"></i>
             <span>{{ slotProps.option.label }}</span>
           </span>
@@ -93,7 +94,7 @@ const submitForm = handleSubmit((values) => {
         {{ errors.role }}
       </Message>
       <span id="secret-link-role-help" class="text-muted-color text-sm font-medium">
-        Read-only links can't be used to make edits or generate new secret links. Admin links can.
+        Read-only users can't make edits or generate new secret links. Admin users can.
       </span>
     </div>
     <div class="flex flex-col gap-2">
