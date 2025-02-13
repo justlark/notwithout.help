@@ -11,16 +11,20 @@ import Card from "primevue/card";
 import DatePicker from "primevue/datepicker";
 import RoleList from "./RoleList.vue";
 import Panel from "primevue/panel";
-import { CONTACT_METHODS } from "@/vars";
+import { CONTACT_METHODS, TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { deleteState, loadState, persistState } from "@/state";
 import { z } from "zod";
 import { serializeDate, deserializeDate } from "@/encoding";
 import { toTypedSchema } from "@vee-validate/zod";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
 import defaultRoles from "@/assets/default-roles.json";
 import { useRouter } from "vue-router";
 import { parseRolesFile } from "@/orgRoles";
 import type { OrgRole } from "@/api";
+import { useToast } from "primevue";
+import { isDone, returnsError } from "@/types";
+
+const toast = useToast();
 
 type Emits = {
   (
@@ -143,9 +147,52 @@ const addCustomContactMethod = () => {
 };
 
 const customRolesFile = ref<string>();
-const customRoles = computed(() =>
-  customRolesFile.value === undefined ? undefined : parseRolesFile(customRolesFile.value),
-);
+const customRoles = ref<Array<OrgRole>>();
+
+watchEffect(() => {
+  if (customRolesFile.value === undefined) {
+    customRoles.value = undefined;
+    return;
+  }
+
+  const roles = parseRolesFile(customRolesFile.value);
+
+  if (returnsError("empty", roles)) {
+    toast.add({
+      severity: "error",
+      summary: "Failed to upload custom roles",
+      detail: "This file is empty!",
+      life: TOAST_ERROR_TTL,
+    });
+
+    customRoles.value = undefined;
+    return;
+  }
+
+  if (returnsError("duplicates", roles)) {
+    toast.add({
+      severity: "error",
+      summary: "Failed to upload custom roles",
+      detail: "You have two or more roles with the same name in this file.",
+      life: TOAST_ERROR_TTL,
+    });
+
+    customRoles.value = undefined;
+    return;
+  }
+
+  if (isDone(roles)) {
+    toast.add({
+      severity: "success",
+      summary: "Successfully uploaded custom roles",
+      detail: "You can now preview them below.",
+      life: TOAST_INFO_TTL,
+    });
+
+    customRoles.value = roles.value;
+    return;
+  }
+});
 
 const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
   const reader = new FileReader();
@@ -263,7 +310,7 @@ const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
                 />
                 <label class="font-medium" for="roles-preset-none-input">None</label>
               </div>
-              <span>Don't offer users any roles.</span>
+              <span>Don't offer respondents any roles to choose from.</span>
             </div>
           </template>
         </Card>
@@ -303,7 +350,7 @@ const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
         <Card>
           <template #content>
             <div class="flex flex-col gap-2">
-              <div class="flex justify-between items-start gap-2">
+              <div class="flex justify-between items-center gap-2">
                 <div class="flex flex-col gap-2">
                   <div class="flex gap-3 items-center">
                     <RadioButton
@@ -322,7 +369,6 @@ const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
                 </div>
                 <FileUpload
                   mode="basic"
-                  accept="text/plain"
                   chooseLabel="Upload"
                   chooseIcon="pi pi-upload"
                   custom-upload
