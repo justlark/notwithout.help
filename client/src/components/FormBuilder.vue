@@ -337,7 +337,7 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
                 <label class="font-medium" for="roles-preset-default-input">Default</label>
               </div>
               <span>
-                Use a preset list of roles aimed at activist groups. Credit to
+                Offer a preset list of roles aimed at activist groups. Credit to
                 <a
                   href="https://drdevonprice.substack.com/p/burning-it-all-down-without-burning?open=false#%C2%A7figure-out-your-activist-character-class"
                   target="_blank"
@@ -372,7 +372,7 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
                     <label class="font-medium" for="roles-preset-custom-input">Custom</label>
                   </div>
                   <span>
-                    Create your own list of roles. See here for instructions on how to do this.
+                    Upload your own list of roles. See here for instructions on how to do this.
                   </span>
                 </div>
                 <FileUpload
