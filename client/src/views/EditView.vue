@@ -24,17 +24,27 @@ const isNotFound = computed(() => {
 const router = useRouter();
 const toast = useToast();
 
-const initialValues = computed(() =>
-  isDone(form)
-    ? {
-        title: form.value.value.orgName,
-        description: form.value.value.description,
-        contactMethods: form.value.value.contactMethods as [string, ...Array<string>],
-        expirationDate: form.value.value.expirationDate,
-        showRoles: form.value.value.roles.length > 0,
-      }
-    : undefined,
-);
+const initialValues = computed(() => {
+  if (!isDone(form)) {
+    return undefined;
+  }
+
+  let rolesPreset: FormValues["rolesPreset"] = "none";
+
+  if (form.value.value.roles === defaultRoles) {
+    rolesPreset = "default";
+  } else if (form.value.value.roles.length > 0) {
+    rolesPreset = "custom";
+  }
+
+  return {
+    title: form.value.value.orgName,
+    description: form.value.value.description,
+    contactMethods: form.value.value.contactMethods as [string, ...Array<string>],
+    expirationDate: form.value.value.expirationDate,
+    rolesPreset,
+  };
+});
 
 const secretLink = computed(() =>
   isDone(secretLinkParts)
@@ -61,7 +71,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       contactMethods: values.contactMethods,
       expirationDate: values.expirationDate,
       accessToken: accessToken.value.value.token,
-      roles: values.showRoles ? defaultRoles : [],
+      roles: values.rolesPreset === "default" ? defaultRoles : [],
     });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "content-too-large") {

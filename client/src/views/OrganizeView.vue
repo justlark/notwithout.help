@@ -49,7 +49,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       description: values.description,
       contactMethods: values.contactMethods,
       expirationDate: values.expirationDate,
-      roles: values.showRoles ? defaultRoles : [],
+      roles: values.rolesPreset === "default" ? defaultRoles : [],
     });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "content-too-large") {
