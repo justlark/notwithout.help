@@ -20,16 +20,21 @@ import { computed, ref, watch } from "vue";
 import defaultRoles from "@/assets/default-roles.json";
 import { useRouter } from "vue-router";
 import { parseRolesFile } from "@/orgRoles";
+import type { OrgRole } from "@/api";
 
 type Emits = {
-  (eventName: "submit", values: FormValues, resetForm: () => void): void;
+  (
+    eventName: "submit",
+    values: InnerFormValues & { roles: Array<OrgRole> },
+    resetForm: () => void,
+  ): void;
 };
 
 const emit = defineEmits<Emits>();
 
 const props = defineProps<{
   storageKey: string;
-  initialValues?: FormValues;
+  initialValues?: InnerFormValues;
   cancelable?: boolean;
 }>();
 
@@ -47,10 +52,12 @@ const schema = z.object({
   rolesPreset: z.enum(["none", "default", "custom"]),
 });
 
-export type FormValues = z.infer<typeof schema>;
+type InnerFormValues = z.infer<typeof schema>;
+
+export type FormValues = InnerFormValues & { roles: Array<OrgRole> };
 
 const loadInitialValues = () =>
-  loadState<FormValues>(props.storageKey, (values) => ({
+  loadState<InnerFormValues>(props.storageKey, (values) => ({
     title: values.title ?? props.initialValues?.title ?? "",
     description: values.description ?? props.initialValues?.description ?? "",
     contactMethods: values.contactMethods ?? props.initialValues?.contactMethods ?? [],
@@ -66,7 +73,7 @@ const {
   defineField,
   resetForm: resetFormInner,
   handleSubmit,
-} = useForm<FormValues>({
+} = useForm<InnerFormValues>({
   validationSchema: toTypedSchema(schema),
   initialValues: loadInitialValues(),
 });
@@ -102,7 +109,15 @@ const submitForm = handleSubmit((values) => {
     resetForm();
   };
 
-  emit("submit", values, finalizeForm);
+  let roles: Array<OrgRole> = [];
+
+  if (values.rolesPreset === "default") {
+    roles = defaultRoles;
+  } else if (values.rolesPreset === "custom") {
+    roles = customRoles.value ?? [];
+  }
+
+  emit("submit", { roles, ...values }, finalizeForm);
 });
 
 const router = useRouter();
