@@ -194,12 +194,21 @@ watchEffect(() => {
   }
 });
 
-const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
-  const reader = new FileReader();
-  reader.readAsText(Array.isArray(event.files) ? event.files[0] : event.files);
-  reader.onload = async () => {
-    customRolesFile.value = reader.result as string;
-  };
+const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) => {
+  const file = Array.isArray(event.files) ? event.files[0] : event.files;
+  const buf = await file.arrayBuffer();
+
+  try {
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(buf));
+    customRolesFile.value = text;
+  } catch {
+    toast.add({
+      severity: "error",
+      summary: "Failed to upload custom roles",
+      detail: "This file is not a text file!",
+      life: TOAST_ERROR_TTL,
+    });
+  }
 };
 </script>
 
@@ -362,12 +371,12 @@ const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
                     />
                     <label class="font-medium" for="roles-preset-custom-input">Custom</label>
                   </div>
-                  <span
-                    >Create your own list of roles. See here for instructions on how to do
-                    this.</span
-                  >
+                  <span>
+                    Create your own list of roles. See here for instructions on how to do this.
+                  </span>
                 </div>
                 <FileUpload
+                  v-if="rolesPreset === 'custom'"
                   mode="basic"
                   chooseLabel="Upload"
                   chooseIcon="pi pi-upload"
