@@ -401,16 +401,7 @@ impl Store {
             )
             SELECT
                 forms.id,
-                COALESCE(
-                    (
-                        SELECT MAX(keys.key_index) + 1
-                        FROM keys
-                        JOIN forms ON keys.form = forms.id
-                        WHERE forms.form_id = ?1
-                        GROUP BY forms.id
-                    ),
-                    0
-                ),
+                forms.next_key_index,
                 ?2,
                 ?3,
                 ?4,
