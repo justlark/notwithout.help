@@ -75,12 +75,6 @@ const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
 const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 const [rolesPreset, rolesPresetAttrs] = defineField("rolesPreset");
 
-const rolesPresetOptions = ref([
-  { label: "None", value: "none" },
-  { label: "Default", value: "default" },
-  { label: "Custom", value: "custom" },
-]);
-
 const stopPersistStateWatch = watch(values, () => {
   persistState(props.storageKey, values, (values) => ({
     ...values,
