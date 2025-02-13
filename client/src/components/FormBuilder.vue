@@ -6,6 +6,7 @@ import Message from "primevue/message";
 import MultiSelect from "primevue/multiselect";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
+import FileUpload, { type FileUploadUploadEvent } from "primevue/fileupload";
 import Card from "primevue/card";
 import DatePicker from "primevue/datepicker";
 import RoleList from "./RoleList.vue";
@@ -18,6 +19,7 @@ import { toTypedSchema } from "@vee-validate/zod";
 import { computed, ref, watch } from "vue";
 import defaultRoles from "@/assets/default-roles.json";
 import { useRouter } from "vue-router";
+import { parseRolesFile } from "@/orgRoles";
 
 type Emits = {
   (eventName: "submit", values: FormValues, resetForm: () => void): void;
@@ -123,6 +125,19 @@ const addCustomContactMethod = () => {
   contactMethodOptions.value.push(newCustomContactMethod.value);
   contactMethods.value.push(newCustomContactMethod.value);
   newCustomContactMethod.value = "";
+};
+
+const customRolesFile = ref<string>();
+const customRoles = computed(() =>
+  customRolesFile.value === undefined ? undefined : parseRolesFile(customRolesFile.value),
+);
+
+const uploadCustomRoles = (event: Pick<FileUploadUploadEvent, "files">) => {
+  const reader = new FileReader();
+  reader.readAsText(Array.isArray(event.files) ? event.files[0] : event.files);
+  reader.onload = async () => {
+    customRolesFile.value = reader.result as string;
+  };
 };
 </script>
 
@@ -290,20 +305,23 @@ const addCustomContactMethod = () => {
                     this.</span
                   >
                 </div>
-                <Button
-                  v-if="rolesPreset === 'custom'"
-                  severity="primary"
-                  icon="pi pi-upload"
-                  label="Upload"
+                <FileUpload
+                  mode="basic"
+                  accept="text/plain"
+                  chooseLabel="Upload"
+                  chooseIcon="pi pi-upload"
+                  custom-upload
+                  auto
+                  @uploader="uploadCustomRoles"
                 />
               </div>
               <Panel
-                v-if="rolesPreset === 'custom'"
+                v-if="rolesPreset === 'custom' && customRoles !== undefined"
                 header="Preview custom roles"
                 toggleable
                 collapsed
               >
-                <RoleList :roles="defaultRoles" preview />
+                <RoleList :roles="customRoles" preview />
               </Panel>
             </div>
           </template>
