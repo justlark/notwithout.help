@@ -229,6 +229,7 @@ const addCustomContactMethod = () => {
                   v-model="rolesPreset"
                   v-bind="rolesPresetAttrs"
                   value="none"
+                  size="large"
                 />
                 <label class="font-medium" for="roles-preset-none-input">None</label>
               </div>
@@ -245,6 +246,7 @@ const addCustomContactMethod = () => {
                   v-model="rolesPreset"
                   v-bind="rolesPresetAttrs"
                   value="default"
+                  size="large"
                 />
                 <label class="font-medium" for="roles-preset-default-input">Default</label>
               </div>
@@ -279,6 +281,7 @@ const addCustomContactMethod = () => {
                       v-model="rolesPreset"
                       v-bind="rolesPresetAttrs"
                       value="custom"
+                      size="large"
                     />
                     <label class="font-medium" for="roles-preset-custom-input">Custom</label>
                   </div>
