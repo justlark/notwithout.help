@@ -43,6 +43,10 @@ const initialValues = computed(() => {
     contactMethods: form.value.value.contactMethods as [string, ...Array<string>],
     expirationDate: form.value.value.expirationDate,
     rolesPreset,
+    roles: form.value.value.roles.map((role) => ({
+      ...role,
+      details: [...role.details],
+    })),
   };
 });
 
@@ -71,7 +75,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       contactMethods: values.contactMethods,
       expirationDate: values.expirationDate,
       accessToken: accessToken.value.value.token,
-      roles: values.rolesPreset === "default" ? defaultRoles : [],
+      roles: values.roles,
     });
   } catch (error) {
     if (error instanceof ApiError && error.kind === "content-too-large") {
