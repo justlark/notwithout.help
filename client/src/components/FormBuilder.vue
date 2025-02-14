@@ -27,18 +27,14 @@ import { isDone, returnsError } from "@/types";
 const toast = useToast();
 
 type Emits = {
-  (
-    eventName: "submit",
-    values: InnerFormValues & { roles: Array<OrgRole> },
-    resetForm: () => void,
-  ): void;
+  (eventName: "submit", values: FormValues, resetForm: () => void): void;
 };
 
 const emit = defineEmits<Emits>();
 
 const props = defineProps<{
   storageKey: string;
-  initialValues?: InnerFormValues;
+  initialValues?: FormValues;
   cancelable?: boolean;
 }>();
 
@@ -54,14 +50,13 @@ const schema = z.object({
     .optional()
     .transform((value) => value ?? undefined),
   rolesPreset: z.enum(["none", "default", "custom"]),
+  roles: z.array(z.object({ id: z.string(), name: z.string(), details: z.array(z.string()) })),
 });
 
-type InnerFormValues = z.infer<typeof schema>;
-
-export type FormValues = InnerFormValues & { roles: Array<OrgRole> };
+export type FormValues = z.infer<typeof schema>;
 
 const loadInitialValues = () =>
-  loadState<InnerFormValues>(props.storageKey, (values) => ({
+  loadState<FormValues>(props.storageKey, (values) => ({
     title: values.title ?? props.initialValues?.title ?? "",
     description: values.description ?? props.initialValues?.description ?? "",
     contactMethods: values.contactMethods ?? props.initialValues?.contactMethods ?? [],
@@ -69,6 +64,7 @@ const loadInitialValues = () =>
       ? deserializeDate(values.expirationDate)
       : props.initialValues?.expirationDate,
     rolesPreset: values.rolesPreset ?? props.initialValues?.rolesPreset ?? "none",
+    roles: values.roles ?? props.initialValues?.roles ?? [],
   }));
 
 const {
@@ -77,7 +73,7 @@ const {
   defineField,
   resetForm: resetFormInner,
   handleSubmit,
-} = useForm<InnerFormValues>({
+} = useForm<FormValues>({
   validationSchema: toTypedSchema(schema),
   initialValues: loadInitialValues(),
 });
@@ -87,6 +83,17 @@ const [description, descriptionAttrs] = defineField("description");
 const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
 const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 const [rolesPreset, rolesPresetAttrs] = defineField("rolesPreset");
+const [roles] = defineField("roles");
+
+watchEffect(() => {
+  if (values.rolesPreset === "default") {
+    roles.value = defaultRoles;
+  } else if (values.rolesPreset === "custom") {
+    roles.value = customRoles.value ?? [];
+  } else if (values.rolesPreset === "none") {
+    roles.value = [];
+  }
+});
 
 const stopPersistStateWatch = watch(values, () => {
   persistState(props.storageKey, values, (values) => ({
@@ -113,15 +120,7 @@ const submitForm = handleSubmit((values) => {
     resetForm();
   };
 
-  let roles: Array<OrgRole> = [];
-
-  if (values.rolesPreset === "default") {
-    roles = defaultRoles;
-  } else if (values.rolesPreset === "custom") {
-    roles = customRoles.value ?? [];
-  }
-
-  emit("submit", { roles, ...values }, finalizeForm);
+  emit("submit", values, finalizeForm);
 });
 
 const router = useRouter();
