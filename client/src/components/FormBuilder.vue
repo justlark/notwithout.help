@@ -85,6 +85,9 @@ const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 const [rolesPreset, rolesPresetAttrs] = defineField("rolesPreset");
 const [roles] = defineField("roles");
 
+const customRolesFile = ref<string>();
+const customRoles = ref<Array<OrgRole>>();
+
 watchEffect(() => {
   if (values.rolesPreset === "default") {
     roles.value = defaultRoles;
@@ -145,18 +148,15 @@ const addCustomContactMethod = () => {
   newCustomContactMethod.value = "";
 };
 
-const customRolesFile = ref<string>();
-const customRoles = ref<Array<OrgRole>>();
-
 watchEffect(() => {
   if (customRolesFile.value === undefined) {
     customRoles.value = undefined;
     return;
   }
 
-  const roles = parseRolesFile(customRolesFile.value);
+  const parsedRoles = parseRolesFile(customRolesFile.value);
 
-  if (returnsError("empty", roles)) {
+  if (returnsError("empty", parsedRoles)) {
     toast.add({
       severity: "error",
       summary: "Failed to upload custom roles",
@@ -168,7 +168,7 @@ watchEffect(() => {
     return;
   }
 
-  if (returnsError("duplicates", roles)) {
+  if (returnsError("duplicates", parsedRoles)) {
     toast.add({
       severity: "error",
       summary: "Failed to upload custom roles",
@@ -180,7 +180,7 @@ watchEffect(() => {
     return;
   }
 
-  if (isDone(roles)) {
+  if (isDone(parsedRoles)) {
     toast.add({
       severity: "success",
       summary: "Successfully uploaded custom roles",
@@ -188,7 +188,7 @@ watchEffect(() => {
       life: TOAST_INFO_TTL,
     });
 
-    customRoles.value = roles.value;
+    customRoles.value = parsedRoles.value;
     return;
   }
 });
@@ -207,6 +207,9 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
       detail: "This file is not a text file!",
       life: TOAST_ERROR_TTL,
     });
+
+    customRolesFile.value = undefined;
+    customRoles.value = undefined;
   }
 };
 </script>
@@ -385,12 +388,12 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
                 />
               </div>
               <Panel
-                v-if="rolesPreset === 'custom' && customRoles !== undefined"
+                v-if="rolesPreset === 'custom' && roles.length > 0"
                 header="Preview custom roles"
                 toggleable
                 collapsed
               >
-                <RoleList :roles="customRoles" preview />
+                <RoleList :roles="roles" preview />
               </Panel>
             </div>
           </template>

@@ -5,7 +5,7 @@ const randomDigits = (length: number): string =>
   Array.from({ length }, () => Math.floor(Math.random() * 10)).join("");
 
 const nameToSlug = (name: string): string => {
-  return name.toLowerCase().replace(/\s+/g, "-") + randomDigits(4);
+  return `${name.toLowerCase().replace(/\s+/g, "-")}-${randomDigits(4)}`;
 };
 
 export type RolesParseError = "empty" | "duplicates";
