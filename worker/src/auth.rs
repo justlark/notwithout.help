@@ -42,18 +42,8 @@ fn new_jwt_validation() -> jwt::Validation {
         .iter()
         .map(|claim| claim.to_string())
         .collect();
-    validation.aud = Some(
-        config::api_allowed_origins()
-            .into_iter()
-            .map(String::from)
-            .collect(),
-    );
-    validation.iss = Some(
-        config::api_allowed_origins()
-            .into_iter()
-            .map(String::from)
-            .collect(),
-    );
+    validation.aud = Some(config::api_allowed_origins().into_iter().collect());
+    validation.iss = Some(config::api_allowed_origins().into_iter().collect());
     validation.algorithms = vec![JWT_ALGORITHM];
 
     validation
