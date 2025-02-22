@@ -26,36 +26,30 @@ resource "cloudflare_zero_trust_access_policy" "site_preview" {
   }
 }
 
-# Typically, creating the redirect list would not be enough; you would also
-# need to create the bulk redirect rule as well.
+# This is defined in a Terraform module from a different unrelated project; we
+# only have one of these for the whole account.
 #
-# However, Cloudflare seems to requires that all bulk redirect rules be
-# contained within a single ruleset, which is a problem for us because this
-# project shares a Cloudflare account with other projects, each having their
-# own bulk redirect rules.
-#
-# So, that logic is being handled elsewhere, in another codebase, and we don't
-# need to worry about it here.
+# That project defines a bulk redirect rule for redirecting the *.pages.dev
+# domains to the main domain.
 #
 # If you're trying to deploy your own instance of this app, be aware that
-# you'll need to create the bulk redirect rule yourself.
-resource "cloudflare_list" "pages_dev_domains" {
-  account_id  = var.cloudflare_account_id
-  kind        = "redirect"
-  name        = "notwithouthelp_pages_dev_domains"
-  description = "List of *.notwithouthelp.pages.dev domains"
+# you'll need to create that bulk redirect rule yourself.
+data "cloudflare_list" "pages_dev_domains" {
+  account_id = var.cloudflare_account_id
+  name       = "pages_dev_domains"
+}
 
-  item {
-    value {
-      redirect {
-        source_url            = "${cloudflare_pages_project.site.subdomain}/"
-        target_url            = "https://${cloudflare_pages_domain.site.domain}"
-        status_code           = 301
-        include_subdomains    = "enabled"
-        preserve_query_string = "enabled"
-        subpath_matching      = "enabled"
-        preserve_path_suffix  = "enabled"
-      }
-    }
+resource "cloudflare_list_item" "site_pages_dev_domain" {
+  account_id = var.cloudflare_account_id
+  list_id    = data.cloudflare_list.pages_dev_domains.id
+
+  redirect {
+    source_url            = "${cloudflare_pages_project.site.subdomain}/"
+    target_url            = "https://${cloudflare_pages_domain.site.domain}"
+    status_code           = 301
+    include_subdomains    = true
+    preserve_query_string = true
+    subpath_matching      = true
+    preserve_path_suffix  = true
   }
 }
