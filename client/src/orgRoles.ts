@@ -1,11 +1,8 @@
 import type { OrgRole } from "./api";
 import type { Loadable } from "./types";
 
-const randomDigits = (length: number): string =>
-  Array.from({ length }, () => Math.floor(Math.random() * 10)).join("");
-
-const nameToSlug = (name: string): string => {
-  return `${name.toLowerCase().replace(/\s+/g, "-")}-${randomDigits(4)}`;
+const slugifyName = (name: string): string => {
+  return name.toLowerCase().replace(/\s+/g, "-");
 };
 
 export type RolesParseError = "empty" | "duplicates";
@@ -18,7 +15,7 @@ export const parseRolesFile = (rolesFile: string): Loadable<Array<OrgRole>, Role
   const lines = rolesFile.split(/\r?\n/);
 
   const roles: Array<OrgRole> = [];
-  const roleNames = new Set();
+  const roleSlugs = new Set();
   let role: OrgRole | undefined;
 
   for (const line of lines) {
@@ -37,17 +34,17 @@ export const parseRolesFile = (rolesFile: string): Loadable<Array<OrgRole>, Role
     }
 
     if (role === undefined) {
-      if (roleNames.has(line)) {
+      if (roleSlugs.has(slugifyName(line))) {
         return { state: "error", error: "duplicates" };
       }
 
       role = {
-        id: nameToSlug(line),
+        id: slugifyName(line),
         name: line,
         details: [],
       };
 
-      roleNames.add(role.name);
+      roleSlugs.add(slugifyName(role.name));
 
       continue;
     }
