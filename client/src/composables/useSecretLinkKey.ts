@@ -1,4 +1,12 @@
-import { readonly, ref, toValue, watchEffect, type MaybeRefOrGetter, type Ref } from "vue";
+import {
+  onMounted,
+  readonly,
+  ref,
+  toValue,
+  watchEffect,
+  type MaybeRefOrGetter,
+  type Ref,
+} from "vue";
 import type { ApiErrorKind, GetPasswordResponse } from "@/api";
 import {
   exposeSecretLinkKey,
@@ -11,8 +19,42 @@ import { decodeBase64, encodeBase64 } from "@/encoding";
 import { isDone, type Loadable } from "@/types";
 import useSecretLink from "./useSecretLink";
 import api, { ApiError } from "@/api";
+import { onUnmounted } from "vue";
 
 const cacheKey = (formId: FormId, clientKeyId: ClientKeyId) => `key:${formId}/${clientKeyId}`;
+
+// Window events that we listen for to reset the user idle timeout.
+const IDLE_WINDOW_EVENTES = ["mousemove", "keydown", "scroll", "click", "touchstart"];
+
+// After this many seconds of inactivity, we clear the secret link key from the
+// session storage, requiring the user to re-enter their password.
+const INVACTIVE_PASSWORD_SESSION_TIMEOUT_SECONDS = 15 * 60;
+
+const idleTimeoutId = ref<ReturnType<typeof setTimeout>>();
+const passwordTimedOut = ref(false);
+
+const resetIdleTimeout = () => {
+  passwordTimedOut.value = false;
+  clearTimeout(toValue(idleTimeoutId));
+  idleTimeoutId.value = undefined;
+};
+
+const restartIdleTimeout = ({
+  timeoutSeconds,
+  formId,
+  clientKeyId,
+}: {
+  timeoutSeconds: number;
+  formId: FormId;
+  clientKeyId: ClientKeyId;
+}) => {
+  resetIdleTimeout();
+
+  idleTimeoutId.value = setTimeout(() => {
+    sessionStorage.removeItem(cacheKey(formId, clientKeyId));
+    passwordTimedOut.value = true;
+  }, timeoutSeconds * 1000);
+};
 
 const storeSecretLinkKey = (
   formId: FormId,
@@ -43,7 +85,7 @@ const loadStoredSecretLinkKey = (
   return secretLinkKey;
 };
 
-type PasswordErrorKind = "no-password" | "invalid-password";
+type PasswordErrorKind = "no-password" | "invalid-password" | "idle-timeout";
 
 const useSecretLinkKey = (
   passwordRef: MaybeRefOrGetter<string | undefined>,
@@ -54,8 +96,29 @@ const useSecretLinkKey = (
 
   const secretLinkParts = useSecretLink();
 
+  const restartIdleTimeoutAction = () => {
+    if (!isDone(secretLinkParts)) {
+      return;
+    }
+
+    restartIdleTimeout({
+      timeoutSeconds: INVACTIVE_PASSWORD_SESSION_TIMEOUT_SECONDS,
+      formId: secretLinkParts.value.value.formId,
+      clientKeyId: secretLinkParts.value.value.clientKeyId,
+    });
+  };
+
   watchEffect(async () => {
     if (!isDone(secretLinkParts)) {
+      return;
+    }
+
+    if (passwordTimedOut.value) {
+      loadable.value = {
+        state: "error",
+        error: "idle-timeout",
+      };
+
       return;
     }
 
@@ -123,11 +186,24 @@ const useSecretLinkKey = (
     }
 
     storeSecretLinkKey(formId, clientKeyId, secretLinkKey);
+    restartIdleTimeoutAction();
 
     loadable.value = {
       state: "done",
       value: secretLinkKey,
     };
+  });
+
+  onMounted(() => {
+    IDLE_WINDOW_EVENTES.forEach((event) => {
+      window.addEventListener(event, restartIdleTimeoutAction);
+    });
+  });
+
+  onUnmounted(() => {
+    IDLE_WINDOW_EVENTES.forEach((event) => {
+      window.removeEventListener(event, restartIdleTimeoutAction);
+    });
   });
 
   return readonly(loadable);

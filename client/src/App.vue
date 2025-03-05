@@ -3,7 +3,7 @@ import { RouterView } from "vue-router";
 import Toast from "primevue/toast";
 import Dialog from "primevue/dialog";
 import { randomTitleLead } from "./vars";
-import { computed, provide, ref } from "vue";
+import { computed, provide, ref, watchEffect } from "vue";
 import icon from "./assets/icon.svg";
 import PasswordInputModal from "./components/PasswordInputModal.vue";
 import { passwordKey } from "./injectKeys";
@@ -18,8 +18,14 @@ const secretLinkKey = useSecretLinkKey(password);
 const titleLead = computed(() => randomTitleLead());
 
 const passwordDialogVisible = computed(() =>
-  returnsError(["no-password", "invalid-password"], secretLinkKey),
+  returnsError(["no-password", "invalid-password", "idle-timeout"], secretLinkKey),
 );
+
+watchEffect(() => {
+  if (returnsError("idle-timeout", secretLinkKey)) {
+    password.value = undefined;
+  }
+});
 
 const submitPassword = (enteredPassword: string) => {
   password.value = enteredPassword;
@@ -53,7 +59,7 @@ const submitPassword = (enteredPassword: string) => {
       </span>
     </template>
     <PasswordInputModal
-      :isInvalid="returnsError('invalid-password', secretLinkKey)"
+      :is-invalid="returnsError('invalid-password', secretLinkKey)"
       @submit="submitPassword"
     />
   </Dialog>
