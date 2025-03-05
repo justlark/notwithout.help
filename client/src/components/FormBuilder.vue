@@ -374,7 +374,13 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
                     <label class="font-medium" for="roles-preset-custom-input">Custom</label>
                   </div>
                   <span>
-                    Upload your own list of roles. See here for instructions on how to do this.
+                    Upload your own list of roles. See
+                    <a
+                      href="https://github.com/justlark/notwithout.help/blob/main/docs/custom-roles.md"
+                      target="_blank"
+                      >here</a
+                    >
+                    for instructions on how to do this.
                   </span>
                 </div>
                 <FileUpload
