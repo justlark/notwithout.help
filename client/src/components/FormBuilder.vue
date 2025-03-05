@@ -88,12 +88,13 @@ const [roles] = defineField("roles");
 const customRolesFile = ref<string>();
 const customRoles = ref<Array<OrgRole>>();
 
-watchEffect(() => {
-  if (values.rolesPreset === "default") {
+watch([rolesPreset, customRoles], ([newPreset]) => {
+  console.log(newPreset);
+  if (newPreset === "default") {
     roles.value = defaultRoles;
-  } else if (values.rolesPreset === "custom") {
+  } else if (newPreset === "custom") {
     roles.value = customRoles.value ?? [];
-  } else if (values.rolesPreset === "none") {
+  } else if (newPreset === "none") {
     roles.value = [];
   }
 });
