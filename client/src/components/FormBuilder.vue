@@ -89,7 +89,6 @@ const customRolesFile = ref<string>();
 const customRoles = ref<Array<OrgRole>>();
 
 watch([rolesPreset, customRoles], ([newPreset]) => {
-  console.log(newPreset);
   if (newPreset === "default") {
     roles.value = defaultRoles;
   } else if (newPreset === "custom") {

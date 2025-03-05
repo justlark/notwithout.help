@@ -29,11 +29,18 @@ const initialValues = computed(() => {
     return undefined;
   }
 
+  // Convert the read-only object into a mutable object.
+  const roles = form.value.value.roles.map((role) => ({
+    ...role,
+    details: [...role.details],
+  }));
+
   let rolesPreset: FormValues["rolesPreset"] = "none";
 
-  if (form.value.value.roles === defaultRoles) {
+  // Match only on the *shape* of the objects.
+  if (JSON.stringify(roles) === JSON.stringify(defaultRoles)) {
     rolesPreset = "default";
-  } else if (form.value.value.roles.length > 0) {
+  } else if (roles.length > 0) {
     rolesPreset = "custom";
   }
 
@@ -43,10 +50,7 @@ const initialValues = computed(() => {
     contactMethods: form.value.value.contactMethods as [string, ...Array<string>],
     expirationDate: form.value.value.expirationDate,
     rolesPreset,
-    roles: form.value.value.roles.map((role) => ({
-      ...role,
-      details: [...role.details],
-    })),
+    roles,
   };
 });
 
