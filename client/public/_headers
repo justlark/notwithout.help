@@ -1,7 +1,7 @@
 /*
     X-Content-Type-Options: nosniff
     X-Frame-Options: DENY
-    Content-Security-Policy: default-src 'self'; connect-src https://api.notwithout.help https://api-dev.notwithout.help; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none';
+    Content-Security-Policy: default-src 'self'; script-src 'wasm-unsafe-eval'; connect-src https://api.notwithout.help https://api-dev.notwithout.help; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; frame-ancestors 'none';
     Referrer-Policy: strict-origin
     Cache-Control: no-cache
 
