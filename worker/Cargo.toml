@@ -2,7 +2,7 @@
 name = "notwithouthelp"
 version = "0.1.0"
 edition = "2021"
-authors = ["Lark <lark@lark.gay>"]
+authors = ["Lark Aster <lark@lark.gay>"]
 # If you update this, update the GitHub Actions workflow as well.
 rust-version = "1.75.0"
 

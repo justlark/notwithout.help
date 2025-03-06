@@ -1,6 +1,6 @@
 # Security Whitepaper
 
-**Author**: Lark (they/it)\
+**Author**: Lark Aster (they/it)\
 **Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
 **Last Updated**: 12 Feb 2025
