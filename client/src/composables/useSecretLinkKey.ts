@@ -32,6 +32,7 @@ const INVACTIVE_PASSWORD_SESSION_TIMEOUT_SECONDS = 15;
 
 const idleTimeoutId = ref<ReturnType<typeof setTimeout>>();
 const passwordTimedOut = ref(false);
+const isPasswordProtected = ref(true);
 
 const resetIdleTimeout = () => {
   passwordTimedOut.value = false;
@@ -51,6 +52,10 @@ const restartIdleTimeout = ({
   resetIdleTimeout();
 
   idleTimeoutId.value = setTimeout(() => {
+    if (!isPasswordProtected.value) {
+      return;
+    }
+
     sessionStorage.removeItem(cacheKey(formId, clientKeyId));
     passwordTimedOut.value = true;
   }, timeoutSeconds * 1000);
@@ -155,10 +160,12 @@ const useSecretLinkKey = (
     let secretLinkKey: SecretLinkKey;
 
     if (passwordParams === undefined) {
-      // This secret link *is not* password-protected.
+      isPasswordProtected.value = false;
+
       secretLinkKey = maybeProtectedSecretLinkKey as SecretLinkKey;
     } else {
-      // This secret link *is* password-protected.
+      isPasswordProtected.value = true;
+
       if (password === undefined) {
         loadable.value = {
           state: "error",
