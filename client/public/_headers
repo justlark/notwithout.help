@@ -1,3 +1,8 @@
+# The need for `wasm-unsafe-inline` in the CSP is regrettable and represents a
+# very real security risk. However, this is a prerequisite for libsodium.js to
+# work. It's unclear how else to proceed here.
+#
+# https://github.com/jedisct1/libsodium.js/issues/196
 /*
     X-Content-Type-Options: nosniff
     X-Frame-Options: DENY
