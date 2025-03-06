@@ -28,7 +28,7 @@ const IDLE_WINDOW_EVENTES = ["mousemove", "keydown", "scroll", "click", "touchst
 
 // After this many seconds of inactivity, we clear the secret link key from the
 // session storage, requiring the user to re-enter their password.
-const INVACTIVE_PASSWORD_SESSION_TIMEOUT_SECONDS = 15 * 60;
+const INVACTIVE_PASSWORD_SESSION_TIMEOUT_SECONDS = 15;
 
 const idleTimeoutId = ref<ReturnType<typeof setTimeout>>();
 const passwordTimedOut = ref(false);
