@@ -3,7 +3,7 @@
 **Author**: Lark Aster (they/it)\
 **Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 6 March 2025
+**Last Updated**: 7 March 2025
 
 This document is an overview of how [Not Without Help](https://notwithout.help)
 mitigates security risks.
@@ -90,6 +90,20 @@ To create a new **Form**:
 
 ## Generating a new secret link
 
+When the user creates a new **Secret Link**, they choose what permissions it
+should grant. This is called the **Access Role**, which is either `read` or
+`admin`. Links with the `read` role **cannot** be used to:
+
+- Edit the **Form**
+- Delete the **Form**
+- Create new **Secret Links**
+- See a list of existing **Secret Links** or their associated comments
+
+The initial **Secret Link** created when the user creates a **Form** is always
+created with the `admin` role.
+
+You can see which API endpoints require which roles in the [API](#api) section.
+
 To generate a new **Secret Link**:
 
 1. The client retrieves and decrypts the **Private Primary Key** as described
@@ -105,11 +119,11 @@ To generate a new **Secret Link**:
 6. A user-provided comment for the key is encrypted with the **Public Primary
    Key**.
 7. The client sends the new **Wrapped Private Primary Key**, **Public Signing
-   Key**, and the encrypted comment to the server via an authenticated
-   endpoint.
+   Key**, encrypted comment, and the chosen **Access Role** to the server via
+   an authenticated endpoint.
 8. The server generates a new **Client Key ID**. It stores the **Wrapped
-   Private Primary Key**, **Secret Wrapping Key**, and encrypted comment in the
-   database by the **Client Key ID**.
+   Private Primary Key**, **Public Signing Key**, encrypted comment, and
+   **Access Role** in the database by the **Client Key ID**.
 9. The server returns the new **Client Key ID** to the client.
 10. The **Form ID**, new **Client Key ID**, and new **Secret Link Key** form
     the new **Secret Link**.
@@ -481,6 +495,8 @@ GET /passwords/:form_id/:client_key_id
 - **Secret Link Password Key**: A symmetric key derived from a password that is
   used to encrypt a **Secret Link Key** to form a **Protected Secret Link
   Key**.
+- **Access Role**: The permissions granted by a **Secret Link**, either `read`
+  or `admin`.
 - **Form ID**: A unique non-secret identifier for a form.
 - **Client Key ID**: A non-secret identifier for a **Secret Link** that is
   unique within the context of a **Form**.
