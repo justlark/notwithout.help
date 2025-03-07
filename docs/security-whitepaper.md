@@ -97,6 +97,7 @@ should grant. This is called the **Access Role**, which is either `read` or
 - Edit the **Form**
 - Delete the **Form**
 - Create new **Secret Links**
+- Revoke existing **Secret Links**
 - See a list of existing **Secret Links** or their associated comments
 
 The initial **Secret Link** created when the user creates a **Form** is always
