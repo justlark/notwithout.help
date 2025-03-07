@@ -264,8 +264,8 @@ Key** via `HS256`. The **API Access Token** has the following claims:
   configurable.
 - `type` (custom claim): The string `access`, used to distinguish the **API
   Access Token** from an **API Challenge**.
-- `role` (custom claim): Either `read` or `admin`, depending on the specific
-  permissions granted when creating the **Secret Link**.
+- `role` (custom claim): The **Access Role** associated with the **Secret
+  Link**.
 
 On subsequent authenticated API requests, the client includes the **API Access
 Token** as a bearer token in the `Authorization` header, which the server
