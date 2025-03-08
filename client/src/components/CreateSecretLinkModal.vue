@@ -4,6 +4,7 @@ import SelectButton from "primevue/selectbutton";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
+import Dialog from "primevue/dialog";
 import { z } from "zod";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
@@ -43,6 +44,8 @@ const linkTypeOptions = ref([
 const submitForm = handleSubmit((values) => {
   emit("submit", values);
 });
+
+const showPasswordHelp = ref(false);
 </script>
 
 <template>
@@ -98,7 +101,7 @@ const submitForm = handleSubmit((values) => {
       </span>
     </div>
     <div class="flex flex-col gap-2">
-      <label for="secret-link-password-input">Set a password (optional)</label>
+      <label for="secret-link-password-input">Set a password (recommended)</label>
       <InputText
         id="secret-link-password-input"
         v-model="linkPassword"
@@ -112,8 +115,35 @@ const submitForm = handleSubmit((values) => {
       <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
         For added security, you can set a password that the person you send this link to will need
         to know to access the page.
+        <Button
+          @click="showPasswordHelp = true"
+          class="!text-sm !font-medium !p-0"
+          variant="link"
+          label="Why is this recommended?"
+        />
       </span>
     </div>
+    <Dialog
+      class="p-2 mx-4 max-w-2xl"
+      v-model:visible="showPasswordHelp"
+      modal
+      header="Why is setting a password recommended?"
+    >
+      <ul>
+        <li>
+          Without a password, <strong>anyone</strong> with the secret link can access this page, not
+          just the person you send it to.
+        </li>
+        <li>
+          This means the secret link could be exposed through your browser history, particularly if
+          one of you share a computer with other people.
+        </li>
+        <li>
+          If one of you accidentally pastes the wrong link in the wrong place, having a password
+          provides an extra layer of protection.
+        </li>
+      </ul>
+    </Dialog>
     <Button @click="submitForm" type="submit" severity="primary" label="Create" class="max-w-24" />
   </div>
 </template>
