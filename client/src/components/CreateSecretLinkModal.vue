@@ -5,9 +5,16 @@ import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
+import InputGroup from "primevue/inputgroup";
+import InputGroupAddon from "primevue/inputgroupaddon";
 import { z } from "zod";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
+import { generateDicewarePassphrase } from "@/crypto";
+import { useToast } from "primevue";
+import { TOAST_INFO_TTL } from "@/vars";
+
+const RANDOM_PASSPHRASE_WORDS = 4;
 
 type Emits = {
   (eventName: "submit", values: FormValues): void;
@@ -46,6 +53,23 @@ const submitForm = handleSubmit((values) => {
 });
 
 const showPasswordHelp = ref(false);
+
+const toast = useToast();
+
+const generateRandomPassword = () => {
+  const password = generateDicewarePassphrase(RANDOM_PASSPHRASE_WORDS);
+
+  linkPassword.value = password;
+
+  navigator.clipboard.writeText(password);
+
+  toast.add({
+    severity: "info",
+    summary: "Password copied",
+    detail: `A random ${RANDOM_PASSPHRASE_WORDS}-word passphrase has been copied to your clipboard.`,
+    life: TOAST_INFO_TTL,
+  });
+};
 </script>
 
 <template>
@@ -102,13 +126,23 @@ const showPasswordHelp = ref(false);
     </div>
     <div class="flex flex-col gap-2">
       <label for="secret-link-password-input">Set a password (recommended)</label>
-      <InputText
-        id="secret-link-password-input"
-        v-model="linkPassword"
-        v-bind="linkPasswordAttrs"
-        type="password"
-        aria-describedby="secret-link-password-help"
-      />
+      <InputGroup>
+        <InputText
+          id="secret-link-password-input"
+          v-model="linkPassword"
+          v-bind="linkPasswordAttrs"
+          type="password"
+          aria-describedby="secret-link-password-help"
+        />
+        <InputGroupAddon>
+          <Button
+            @click="generateRandomPassword"
+            severity="primary"
+            label="Random"
+            icon="pi pi-refresh"
+          />
+        </InputGroupAddon>
+      </InputGroup>
       <Message v-if="errors.password" severity="error" size="small" variant="simple">
         {{ errors.password }}
       </Message>

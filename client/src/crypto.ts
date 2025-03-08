@@ -1,6 +1,7 @@
 import _sodium from "libsodium-wrappers-sumo";
 import * as ed from "@noble/ed25519";
 import type { Newtype } from "./types";
+import dicewareWordlist from "@/assets/eff-large-wordlist.txt?raw";
 
 let isSodiumReady = false;
 
@@ -262,3 +263,11 @@ export const signApiChallengeNonce = async (
   privateSigningKey: PrivateSigningKey,
 ): Promise<ApiChallengeSignature> =>
   (await sign(nonce, privateSigningKey)) as ApiChallengeSignature;
+
+export const generateDicewarePassphrase = (numWords: number): string =>
+  dicewareWordlist
+    .split("\n")
+    .sort(() => 0.5 - Math.random())
+    .slice(0, numWords)
+    .map((line) => line.split("\t")[1])
+    .join(" ");
