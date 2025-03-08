@@ -264,10 +264,18 @@ export const signApiChallengeNonce = async (
 ): Promise<ApiChallengeSignature> =>
   (await sign(nonce, privateSigningKey)) as ApiChallengeSignature;
 
-export const generateDicewarePassphrase = (numWords: number): string =>
-  dicewareWordlist
-    .split("\n")
-    .sort(() => 0.5 - Math.random())
-    .slice(0, numWords)
-    .map((line) => line.split("\t")[1])
-    .join(" ");
+export const generateDicewarePassphrase = (numWords: number): string => {
+  const lines = dicewareWordlist.split("\n");
+  const randomIndices = new Uint32Array(1);
+
+  const words = [];
+
+  while (words.length < numWords) {
+    crypto.getRandomValues(randomIndices);
+    const index = randomIndices[0] % lines.length;
+    const word = lines[index].split("\t")[1];
+    words.push(word);
+  }
+
+  return words.join(" ");
+};
