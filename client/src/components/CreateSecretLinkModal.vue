@@ -165,12 +165,12 @@ const generateRandomPassword = () => {
     >
       <ul>
         <li>
-          Without a password, <strong>anyone</strong> with the secret link can access this page, not
-          just the person you send it to.
+          Without a password, <strong>anyone</strong> who gets access to the secret link can access
+          this page.
         </li>
         <li>
           This means the secret link could be exposed through your browser history, particularly if
-          one of you share a computer with other people.
+          one of you shares a computer with other people.
         </li>
         <li>
           If one of you accidentally pastes the wrong link in the wrong place, having a password
