@@ -264,6 +264,13 @@ export const signApiChallengeNonce = async (
 ): Promise<ApiChallengeSignature> =>
   (await sign(nonce, privateSigningKey)) as ApiChallengeSignature;
 
+// We use the EFF's Diceware list for generating passphrases.
+//
+// https://www.eff.org/dice
+//
+// We've checked the file into the repo verbatim, which includes the dice
+// values at the beginning of each line. We can ignore those when generating
+// passphrases here, since we're using line indices instead.
 export const generateDicewarePassphrase = (numWords: number): string => {
   const lines = dicewareWordlist.split("\n");
   const randomIndices = new Uint32Array(1);
