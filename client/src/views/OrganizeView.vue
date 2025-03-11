@@ -11,9 +11,7 @@ import {
   wrapPrivatePrimaryKey,
   type ClientKeyId,
   type FormId,
-  type SecretLinkKey,
   protectSecretLinkKey,
-  type ProtectedSecretLinkKey,
   type MaybeProtectedSecretLinkKey,
 } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
@@ -141,6 +139,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       storage-key="template"
       @submit="submitForm"
       aria-labelledby="main-heading"
+      show-password-input
     >
       <template #lead>
         <h1 id="main-heading" class="text-center mb-10">Organize a group</h1>

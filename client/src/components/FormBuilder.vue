@@ -40,6 +40,7 @@ const props = defineProps<{
   storageKey: string;
   initialValues?: FormValues;
   cancelable?: boolean;
+  showPasswordInput?: boolean;
 }>();
 
 const schema = z.object({
@@ -261,7 +262,7 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
           {{ errors.title }}
         </Message>
         <span id="title-help" class="text-muted-color text-sm font-medium">
-          The name of the group or organization you're recruiting for.
+          The name of the group or organization you're recruiting for. You can change this later.
         </span>
       </div>
 
@@ -282,7 +283,8 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
           {{ errors.description }}
         </Message>
         <span id="description-help" class="text-muted-color text-sm font-medium">
-          Provide some information about your group or organization and what you're looking for.
+          Provide some information about your group or organization and what you're looking for. You
+          can change this later.
         </span>
       </div>
 
@@ -325,7 +327,7 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
         </Message>
         <span id="contact-help" class="text-muted-color text-sm font-medium">
           Specify what contact methods you want respondents to pick from when leaving their contact
-          information.
+          information. You can change this later.
         </span>
       </div>
 
@@ -429,7 +431,7 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
         </Card>
         <span class="text-muted-color text-sm font-medium">
           Show respondents a list of examples of roles they could have in your organization and let
-          them pick which they're interested in.
+          them pick which they're interested in. You can change this later.
         </span>
       </div>
 
@@ -450,11 +452,12 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
           {{ errors.expirationDate }}
         </Message>
         <span id="date-help" class="text-muted-color text-sm font-medium">
-          All submissions will automatically be permanently deleted after this date.
+          All submissions will automatically be permanently deleted after this date. You can change
+          this later.
         </span>
       </div>
 
-      <div class="flex flex-col gap-2">
+      <div v-if="showPasswordInput === true" class="flex flex-col gap-2">
         <label for="secret-link-password-input">Set a password (recommended)</label>
         <InputGroup>
           <InputText
