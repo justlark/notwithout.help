@@ -7,10 +7,13 @@ import MultiSelect from "primevue/multiselect";
 import RadioButton from "primevue/radiobutton";
 import Button from "primevue/button";
 import FileUpload, { type FileUploadUploadEvent } from "primevue/fileupload";
+import InputGroup from "primevue/inputgroup";
+import InputGroupAddon from "primevue/inputgroupaddon";
 import Card from "primevue/card";
 import DatePicker from "primevue/datepicker";
 import RoleList from "./RoleList.vue";
 import Panel from "primevue/panel";
+import SecretLinkPasswordHelpDialog from "./SecretLinkPasswordHelpDialog.vue";
 import { CONTACT_METHODS, TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { deleteState, loadState, persistState } from "@/state";
 import { z } from "zod";
@@ -23,6 +26,7 @@ import { parseRolesFile } from "@/orgRoles";
 import type { OrgRole } from "@/api";
 import { useToast } from "primevue";
 import { isDone, returnsError } from "@/types";
+import { generateDicewarePassphrase, SECRET_LINK_PASSPHRASE_WORDS } from "@/crypto";
 
 const toast = useToast();
 
@@ -51,6 +55,7 @@ const schema = z.object({
     .transform((value) => value ?? undefined),
   rolesPreset: z.enum(["none", "default", "custom"]),
   roles: z.array(z.object({ id: z.string(), name: z.string(), details: z.array(z.string()) })),
+  password: z.string().optional(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -84,6 +89,7 @@ const [contactMethods, contactMethodsAttrs] = defineField("contactMethods");
 const [expirationDate, expirationDateAttrs] = defineField("expirationDate");
 const [rolesPreset, rolesPresetAttrs] = defineField("rolesPreset");
 const [roles] = defineField("roles");
+const [linkPassword, linkPasswordAttrs] = defineField("password");
 
 const customRolesFile = ref<string>();
 const customRoles = ref<Array<OrgRole>>();
@@ -106,6 +112,23 @@ const stopPersistStateWatch = watch(values, () => {
 });
 
 const newCustomContactMethod = ref("");
+
+const showPasswordHelp = ref(false);
+
+const generateRandomPassword = () => {
+  const password = generateDicewarePassphrase(SECRET_LINK_PASSPHRASE_WORDS);
+
+  linkPassword.value = password;
+
+  navigator.clipboard.writeText(password);
+
+  toast.add({
+    severity: "info",
+    summary: "Password copied",
+    detail: `A random ${SECRET_LINK_PASSPHRASE_WORDS}-word passphrase has been copied to your clipboard.`,
+    life: TOAST_INFO_TTL,
+  });
+};
 
 // If the user refreshes the page, loading the form state from local storage, we want to make sure
 // we include any custom contact methods to the multiselect options, while preserving the ordering.
@@ -430,6 +453,40 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
           All submissions will automatically be permanently deleted after this date.
         </span>
       </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="secret-link-password-input">Set a password (recommended)</label>
+        <InputGroup>
+          <InputText
+            id="secret-link-password-input"
+            v-model="linkPassword"
+            v-bind="linkPasswordAttrs"
+            type="password"
+            aria-describedby="secret-link-password-help"
+          />
+          <InputGroupAddon>
+            <Button
+              @click="generateRandomPassword"
+              severity="primary"
+              label="Random"
+              icon="pi pi-refresh"
+            />
+          </InputGroupAddon>
+        </InputGroup>
+        <Message v-if="errors.password" severity="error" size="small" variant="simple">
+          {{ errors.password }}
+        </Message>
+        <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
+          For added security, you can set a password that you will need to know to access the page.
+          <Button
+            @click="showPasswordHelp = true"
+            class="!text-sm !font-medium !p-0"
+            variant="link"
+            label="Why is this recommended?"
+          />
+        </span>
+      </div>
+      <SecretLinkPasswordHelpDialog v-model="showPasswordHelp" />
 
       <div class="flex justify-around">
         <Button type="submit" severity="primary" label="Submit" class="max-w-24" />

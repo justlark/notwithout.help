@@ -12,6 +12,9 @@ import {
   type ClientKeyId,
   type FormId,
   type SecretLinkKey,
+  protectSecretLinkKey,
+  type ProtectedSecretLinkKey,
+  type MaybeProtectedSecretLinkKey,
 } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
 import { getAccessToken } from "@/composables/useAccessToken";
@@ -22,7 +25,7 @@ const INITIAL_KEY_COMMENT = "Original";
 
 const formId = ref<FormId>();
 const clientKeyId = ref<ClientKeyId>();
-const secretLinkKey = ref<SecretLinkKey>();
+const secretLinkKey = ref<MaybeProtectedSecretLinkKey>();
 
 const toast = useToast();
 
@@ -70,10 +73,6 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
     return;
   }
 
-  formId.value = response.formId;
-  clientKeyId.value = response.clientKeyId;
-  secretLinkKey.value = newSecretLinkKey;
-
   const accessToken = await getAccessToken(
     response.formId,
     response.clientKeyId,
@@ -84,19 +83,38 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
     encodeUtf8(INITIAL_KEY_COMMENT),
     newPrimaryKeypair.public,
   );
+
   const wrappedPrivatePrimaryKey = await wrapPrivatePrimaryKey(
     newPrimaryKeypair.private,
     derivedKeys.secretWrappingKey,
   );
 
+  let newMaybeProtectedSecretLinkKey: MaybeProtectedSecretLinkKey;
+
   try {
     await api.patchKey({
-      formId: formId.value,
-      clientKeyId: clientKeyId.value,
+      formId: response.formId,
+      clientKeyId: response.clientKeyId,
       wrappedPrivatePrimaryKey,
       encryptedComment,
       accessToken,
     });
+
+    if (values.password) {
+      const { key, params } = await protectSecretLinkKey(newSecretLinkKey, values.password);
+
+      await api.postPassword({
+        formId: response.formId,
+        clientKeyId: response.clientKeyId,
+        salt: params.salt,
+        nonce: params.nonce,
+        accessToken: accessToken,
+      });
+
+      newMaybeProtectedSecretLinkKey = key;
+    } else {
+      newMaybeProtectedSecretLinkKey = newSecretLinkKey;
+    }
   } catch {
     toast.add({
       severity: "error",
@@ -104,7 +122,13 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       detail: "Something unexpected happened.",
       life: TOAST_ERROR_TTL,
     });
+
+    return;
   }
+
+  formId.value = response.formId;
+  clientKeyId.value = response.clientKeyId;
+  secretLinkKey.value = newMaybeProtectedSecretLinkKey;
 
   resetForm();
 };

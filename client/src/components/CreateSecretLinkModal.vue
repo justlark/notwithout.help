@@ -4,17 +4,15 @@ import SelectButton from "primevue/selectbutton";
 import InputText from "primevue/inputtext";
 import Message from "primevue/message";
 import Button from "primevue/button";
-import Dialog from "primevue/dialog";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
+import SecretLinkPasswordHelpDialog from "./SecretLinkPasswordHelpDialog.vue";
 import { z } from "zod";
 import { useForm } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
-import { generateDicewarePassphrase } from "@/crypto";
+import { generateDicewarePassphrase, SECRET_LINK_PASSPHRASE_WORDS } from "@/crypto";
 import { useToast } from "primevue";
 import { TOAST_INFO_TTL } from "@/vars";
-
-const RANDOM_PASSPHRASE_WORDS = 4;
 
 type Emits = {
   (eventName: "submit", values: FormValues): void;
@@ -57,7 +55,7 @@ const showPasswordHelp = ref(false);
 const toast = useToast();
 
 const generateRandomPassword = () => {
-  const password = generateDicewarePassphrase(RANDOM_PASSPHRASE_WORDS);
+  const password = generateDicewarePassphrase(SECRET_LINK_PASSPHRASE_WORDS);
 
   linkPassword.value = password;
 
@@ -66,7 +64,7 @@ const generateRandomPassword = () => {
   toast.add({
     severity: "info",
     summary: "Password copied",
-    detail: `A random ${RANDOM_PASSPHRASE_WORDS}-word passphrase has been copied to your clipboard.`,
+    detail: `A random ${SECRET_LINK_PASSPHRASE_WORDS}-word passphrase has been copied to your clipboard.`,
     life: TOAST_INFO_TTL,
   });
 };
@@ -157,27 +155,7 @@ const generateRandomPassword = () => {
         />
       </span>
     </div>
-    <Dialog
-      class="p-2 mx-4 max-w-2xl"
-      v-model:visible="showPasswordHelp"
-      modal
-      header="Why is setting a password recommended?"
-    >
-      <ul>
-        <li>
-          Without a password, <strong>anyone</strong> who gets access to the secret link can access
-          this page.
-        </li>
-        <li>
-          This means the secret link could be exposed through your browser history, particularly if
-          one of you shares a computer with other people.
-        </li>
-        <li>
-          If one of you accidentally pastes the wrong link in the wrong place, having a password
-          provides an extra layer of protection.
-        </li>
-      </ul>
-    </Dialog>
+    <SecretLinkPasswordHelpDialog v-model="showPasswordHelp" />
     <Button @click="submitForm" type="submit" severity="primary" label="Create" class="max-w-24" />
   </div>
 </template>

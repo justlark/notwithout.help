@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type ClientKeyId, type FormId, type SecretLinkKey } from "@/crypto";
+import { type ClientKeyId, type FormId, type MaybeProtectedSecretLinkKey } from "@/crypto";
 import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
 import Card from "primevue/card";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
@@ -7,7 +7,7 @@ import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 const props = defineProps<{
   formId: FormId;
   clientKeyId: ClientKeyId;
-  secretLinkKey: SecretLinkKey;
+  secretLinkKey: MaybeProtectedSecretLinkKey;
 }>();
 </script>
 

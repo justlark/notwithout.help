@@ -264,6 +264,8 @@ export const signApiChallengeNonce = async (
 ): Promise<ApiChallengeSignature> =>
   (await sign(nonce, privateSigningKey)) as ApiChallengeSignature;
 
+export const SECRET_LINK_PASSPHRASE_WORDS = 4;
+
 // We use the EFF's Diceware list for generating passphrases.
 //
 // https://www.eff.org/dice

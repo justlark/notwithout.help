@@ -127,7 +127,7 @@ const createSecretLink = async (inputs: SecretLinkFormValues) => {
   );
 
   let newClientKeyId: ClientKeyId;
-  let newMaybeProtectedSecretLinkKey: SecretLinkKey | ProtectedSecretLinkKey;
+  let newMaybeProtectedSecretLinkKey: MaybeProtectedSecretLinkKey;
 
   try {
     const { clientKeyId } = await api.postKey({
