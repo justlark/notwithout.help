@@ -480,7 +480,8 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
           {{ errors.password }}
         </Message>
         <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
-          For added security, you can set a password that you will need to know to access the page.
+          To view responses, you'll have a secret link that only you know. For added security, you
+          can protect this link with a password.
           <Button
             @click="showPasswordHelp = true"
             class="!text-sm !font-medium !p-0"
