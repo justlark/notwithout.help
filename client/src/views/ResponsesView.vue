@@ -2,16 +2,18 @@
 import FormResponse from "@/components/FormResponse.vue";
 import ConfirmDialog from "primevue/confirmdialog";
 import SecretLinkList from "@/components/SecretLinkList.vue";
+import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
 import Card from "primevue/card";
 import Dialog from "primevue/dialog";
 import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
+import PasswordChangeModal from "@/components/PasswordChangeModal.vue";
 import Skeleton from "primevue/skeleton";
 import ErrorCard from "@/components/ErrorCard.vue";
 import Button from "primevue/button";
-import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newEditLink } from "@/vars";
+import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newEditLink, newSecretLink } from "@/vars";
 import { computed, ref, watch, watchEffect } from "vue";
 import { datetimeToCsvFormat, decodeUtf8, formatDate } from "@/encoding";
-import { unsealSubmissionBody } from "@/crypto";
+import { protectSecretLinkKey, unsealSubmissionBody, type ProtectedSecretLinkKey } from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
@@ -22,6 +24,8 @@ import useAccessToken from "@/composables/useAccessToken";
 import usePrivatePrimaryKey from "@/composables/usePrivatePrimaryKey";
 import useForm from "@/composables/useForm";
 import { stringify as toCsv } from "csv-stringify/browser/esm/sync";
+import useSecretLinkKey from "@/composables/useSecretLinkKey";
+import { injectPassword } from "@/injectKeys";
 
 export interface Submission {
   name: string;
@@ -41,6 +45,7 @@ const confirm = useConfirm();
 const toast = useToast();
 
 const secretLinkParts = useSecretLink();
+const secretLinkKey = useSecretLinkKey(injectPassword());
 const accessToken = useAccessToken();
 const privatePrimaryKey = usePrivatePrimaryKey();
 const form = useForm();
@@ -67,6 +72,7 @@ const isReadOnly = computed(() => !isDone(accessToken) || accessToken.value.valu
 
 const isMenuExpanded = ref(false);
 const isShareLinkModalVisible = ref(false);
+const isUpdatePasswordModalVisible = ref(false);
 const isReloadButtonSpinning = ref(false);
 
 watch([submissionsState], () => {
@@ -166,6 +172,52 @@ const roleNamesById = computed(() => {
 
   return new Map(form.value.value.roles.map((role) => [role.id, role.name]));
 });
+
+const newProtectedSecretLinkKey = ref<ProtectedSecretLinkKey>();
+const isNewProtectedSecretLinkModalVisible = computed({
+  get() {
+    return newProtectedSecretLinkKey.value !== undefined;
+  },
+  set(value) {
+    if (!value) {
+      newProtectedSecretLinkKey.value = undefined;
+      isUpdatePasswordModalVisible.value = false;
+    }
+  },
+});
+
+const updatePassword = async (password: string) => {
+  if (!isDone(accessToken) || !isDone(secretLinkKey) || !isDone(secretLinkParts)) {
+    return;
+  }
+
+  const { formId, clientKeyId } = secretLinkParts.value.value;
+
+  const { key, params } = await protectSecretLinkKey(secretLinkKey.value.value, password);
+
+  try {
+    await api.postPassword({
+      formId,
+      clientKeyId,
+      salt: params.salt,
+      nonce: params.nonce,
+      accessToken: accessToken.value.value.token,
+    });
+  } catch (error) {
+    toast.add({
+      severity: "error",
+      summary: "Failed to update password",
+      detail: "Something unexpected happened.",
+      life: TOAST_ERROR_TTL,
+    });
+
+    return;
+  }
+
+  newProtectedSecretLinkKey.value = key;
+
+  await router.push(newSecretLink(formId, clientKeyId, key));
+};
 
 watchEffect(async () => {
   // Make sure this is tracked by the `watchEffect` before the first await boundary.
@@ -353,6 +405,16 @@ watchEffect(async () => {
               raised
             />
             <Button
+              class="!justify-start"
+              @click="isUpdatePasswordModalVisible = true"
+              label="Password"
+              severity="secondary"
+              icon="pi pi-key"
+              aria-controls="update-password-modal"
+              :aria-expanded="isUpdatePasswordModalVisible"
+              raised
+            />
+            <Button
               v-if="!isReadOnly && editLink !== undefined"
               class="!justify-start"
               as="router-link"
@@ -399,6 +461,40 @@ watchEffect(async () => {
         </span>
       </template>
       <ShareLinkAdmonition v-if="isDone(secretLinkParts)" :form-id="secretLinkParts.value.formId" />
+    </Dialog>
+    <Dialog
+      id="update-password-modal"
+      class="p-2 mx-4"
+      v-model:visible="isUpdatePasswordModalVisible"
+      modal
+      aria-labelledby="update-password-modal-name"
+    >
+      <template #header>
+        <span class="flex gap-3 text-xl items-center">
+          <i class="pi pi-key"></i>
+          <strong id="update-password-modal-name">Update your password</strong>
+        </span>
+      </template>
+      <PasswordChangeModal @submit="updatePassword" />
+    </Dialog>
+    <Dialog
+      class="p-2 mx-4"
+      v-model:visible="isNewProtectedSecretLinkModalVisible"
+      modal
+      aria-labelledby="new-protected-secret-link-modal-name"
+    >
+      <template #header>
+        <span class="flex gap-3 text-xl items-center">
+          <i class="pi pi-lock"></i>
+          <strong id="new-protected-secret-link-modal-name">Keep this link secret</strong>
+        </span>
+      </template>
+      <SecretLinkAdmonition
+        v-if="newProtectedSecretLinkKey && isDone(secretLinkParts)"
+        :form-id="secretLinkParts.value.formId"
+        :client-key-id="secretLinkParts.value.clientKeyId"
+        :secret-link-key="newProtectedSecretLinkKey"
+      />
     </Dialog>
     <ConfirmDialog class="max-w-xl mx-6" />
   </main>

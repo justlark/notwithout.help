@@ -481,7 +481,7 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
         </Message>
         <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
           To view responses, you'll have a secret link that only you know. For added security, you
-          can protect this link with a password.
+          can protect this link with a password. You can change this later.
           <Button
             @click="showPasswordHelp = true"
             class="!text-sm !font-medium !p-0"
