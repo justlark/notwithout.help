@@ -181,6 +181,24 @@ impl SignedApiAccessToken {
         form_id: &'a FormId,
         needs_role: AccessRole,
     ) -> Result<&'a Store, AuthError> {
+        self.validate_with(store, form_id, |_, role| {
+            if role.includes(needs_role) {
+                Ok(())
+            } else {
+                Err(AuthError::forbidden(
+                    "This access token does not have the required permissions.",
+                ))
+            }
+        })
+        .await
+    }
+
+    pub async fn validate_with<'a>(
+        self,
+        store: &'a UnauthenticatedStore,
+        form_id: &'a FormId,
+        role_validator: impl Fn(ClientKeyId, AccessRole) -> Result<(), AuthError>,
+    ) -> Result<&'a Store, AuthError> {
         let store = store.without_authenticating();
 
         let header =
@@ -230,17 +248,12 @@ impl SignedApiAccessToken {
             .map_err(|err| AuthError::unauthorized(err.to_string()))?;
 
         match client_keys {
-            Some(keys) if !keys.role.includes(needs_role) => {
-                return Err(AuthError::forbidden(
-                    "This access token does not have the required permissions.",
-                ));
-            }
+            Some(keys) => role_validator(keys.id, keys.role)?,
             None => {
                 return Err(AuthError::unauthorized(
                     "Client key in access token `sub` does not exist or has been revoked.",
                 ));
             }
-            _ => {}
         }
 
         store

@@ -447,8 +447,22 @@ async fn set_password_params(
     Path((form_id, key_id)): Path<(FormId, ClientKeyId)>,
     Json(body): Json<PostPasswordRequest>,
 ) -> Result<StatusCode, ErrorResponse> {
+    // Admin users can set the password params for any key, but non-admin users can only set the
+    // password params for their own key.
+    let role_validator = |client_key_id_from_token: ClientKeyId, role: AccessRole| {
+        if (role.includes(AccessRole::Admin))
+            || (role.includes(AccessRole::Read) && client_key_id_from_token == key_id)
+        {
+            Ok(())
+        } else {
+            Err(AuthError::forbidden(
+                "Must have admin role or be the key owner to set password params.",
+            ))
+        }
+    };
+
     let store = token
-        .validate(&state.store, &form_id, AccessRole::Admin)
+        .validate_with(&state.store, &form_id, role_validator)
         .await
         .map_err(auth_err)?;
 

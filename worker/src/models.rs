@@ -88,7 +88,7 @@ impl Default for SubmissionId {
 // - Keys associated with different forms may have the same ID.
 //
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub struct ClientKeyId(u64);
 
 impl FromStr for ClientKeyId {

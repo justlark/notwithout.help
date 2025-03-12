@@ -581,7 +581,8 @@ impl Store {
             SELECT keys.id, ?3, ?4
             FROM keys
             JOIN forms ON keys.form = forms.id
-            WHERE forms.form_id = ?1 AND keys.key_index = ?2;
+            WHERE forms.form_id = ?1 AND keys.key_index = ?2
+            ON CONFLICT (key) DO UPDATE SET salt = ?3, nonce = ?4;
             ",
             form_id,
             key_id,
