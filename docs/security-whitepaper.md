@@ -3,7 +3,7 @@
 **Author**: Lark Aster (they/it)\
 **Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 7 March 2025
+**Last Updated**: 12 March 2025
 
 This document is an overview of how [Not Without Help](https://notwithout.help)
 mitigates security risks.
@@ -412,7 +412,9 @@ DELETE /keys/:form_id/:client_key_id
 
 Store the parameters for decrypting a **Protected Secret Link Key**.
 
-This endpoint requires the `admin` role.
+This endpoint requires the `read` or `admin` role. However, if a client only
+has the `read` role, they can only update the encryption parameters for their
+own **Secret Link**.
 
 ```
 POST /passwords/:form_id/:client_key_id
