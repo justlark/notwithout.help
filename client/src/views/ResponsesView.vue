@@ -203,7 +203,7 @@ const updatePassword = async (password: string) => {
       nonce: params.nonce,
       accessToken: accessToken.value.value.token,
     });
-  } catch (error) {
+  } catch {
     toast.add({
       severity: "error",
       summary: "Failed to update password",
