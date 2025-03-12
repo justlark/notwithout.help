@@ -80,7 +80,7 @@ const generateRandomPassword = () => {
     </Message>
     <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
       Enter your new password or generate a random one. You'll need this new password to access this
-      page going forward.
+      page going forward. This will generate a new secret link; your old one won't work anymore.
     </span>
     <Button @click="submitForm" type="submit" severity="primary" label="Submit" class="max-w-24" />
   </div>
