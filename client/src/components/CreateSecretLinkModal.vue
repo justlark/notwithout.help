@@ -146,7 +146,7 @@ const generateRandomPassword = () => {
       </Message>
       <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
         For added security, you can set a password that the person you send this link to will need
-        to know to access the page.
+        to know to access the page. They can change their password later, but cannot remove it.
         <Button
           @click="showPasswordHelp = true"
           class="!text-sm !font-medium !p-0"
