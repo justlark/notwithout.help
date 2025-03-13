@@ -6,7 +6,7 @@ import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
-import Message from "primevue/message";
+import FormBodyInput from "./FormBodyInput.vue";
 import { watchEffect } from "vue";
 
 const props = defineProps<{
@@ -46,36 +46,37 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="flex flex-col max-w-2xl gap-2">
-    <InputGroup>
-      <InputText
-        id="secret-link-password-input"
-        @keydown.enter="submitForm"
-        v-model="password"
-        v-bind="passwordAttrs"
-        type="password"
-        placeholder="Password"
-        aria-describedby="secret-link-password-help"
-      />
-      <InputGroupAddon>
-        <Button
-          @click="submitForm"
-          :disabled="!password"
-          type="submit"
-          severity="primary"
-          label="Submit"
-          class="max-w-24"
-        />
-      </InputGroupAddon>
-    </InputGroup>
-    <Message v-if="errors.password" severity="error" size="small" variant="simple">
-      {{ errors.password }}
-    </Message>
-    <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
+  <FormBodyInput id="secret-link-password" :error="errors.password">
+    <template #input="{ id, ariaDescribedby }">
+      <div class="max-w-2xl">
+        <InputGroup>
+          <InputText
+            :id="id"
+            @keydown.enter="submitForm"
+            v-model="password"
+            v-bind="passwordAttrs"
+            type="password"
+            placeholder="Password"
+            :aria-describedby="ariaDescribedby"
+          />
+          <InputGroupAddon>
+            <Button
+              @click="submitForm"
+              :disabled="!password"
+              type="submit"
+              severity="primary"
+              label="Submit"
+              class="max-w-24"
+            />
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
+    </template>
+    <template #help>
       This link is password-protected. Whoever gave you this link should have given you a password
       as well.
-    </span>
-  </div>
+    </template>
+  </FormBodyInput>
 </template>
 
 <style scoped></style>

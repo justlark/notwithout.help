@@ -3,7 +3,7 @@ import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import InputText from "primevue/inputtext";
 import Button from "primevue/button";
-import Message from "primevue/message";
+import FormBodyInput from "./FormBodyInput.vue";
 import { generateDicewarePassphrase, SECRET_LINK_PASSPHRASE_WORDS } from "@/crypto";
 import { TOAST_INFO_TTL } from "@/vars";
 import { toTypedSchema } from "@vee-validate/zod";
@@ -55,35 +55,38 @@ const generateRandomPassword = () => {
 </script>
 
 <template>
-  <div class="flex flex-col max-w-2xl gap-2">
-    <InputGroup>
-      <InputText
-        id="secret-link-password-input"
-        @keydown.enter="submitForm"
-        v-model="password"
-        v-bind="passwordAttrs"
-        type="password"
-        placeholder="Password"
-        aria-describedby="secret-link-password-help"
-      />
-      <InputGroupAddon>
-        <Button
-          @click="generateRandomPassword"
-          severity="primary"
-          label="Random"
-          icon="pi pi-refresh"
-        />
-      </InputGroupAddon>
-    </InputGroup>
-    <Message v-if="errors.password" severity="error" size="small" variant="simple">
-      {{ errors.password }}
-    </Message>
-    <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
-      Enter your new password or generate a random one. You'll need this new password to access this
-      page going forward. This will generate a new secret link; your old one won't work anymore.
-    </span>
-    <Button @click="submitForm" type="submit" severity="primary" label="Submit" class="max-w-24" />
-  </div>
+  <form @click="submitForm" class="flex flex-col max-w-2xl gap-2">
+    <FormBodyInput id="secret-link-password" :error="errors.password">
+      <template #input="{ id, ariaDescribedby }">
+        <InputGroup>
+          <InputText
+            :id="id"
+            @keydown.enter="submitForm"
+            v-model="password"
+            v-bind="passwordAttrs"
+            type="password"
+            placeholder="Password"
+            :aria-describedby="ariaDescribedby"
+          />
+          <InputGroupAddon>
+            <Button
+              @click="generateRandomPassword"
+              severity="primary"
+              label="Random"
+              icon="pi pi-refresh"
+            />
+          </InputGroupAddon>
+        </InputGroup>
+      </template>
+      <template #help>
+        Enter your new password or generate a random one. You'll need this new password to access
+        this page going forward. This will generate a new secret link; your old one won't work
+        anymore.
+      </template>
+    </FormBodyInput>
+
+    <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
+  </form>
 </template>
 
 <style scoped></style>

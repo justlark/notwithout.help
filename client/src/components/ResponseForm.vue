@@ -2,10 +2,11 @@
 import { watch } from "vue";
 import InputText from "primevue/inputtext";
 import Textarea from "primevue/textarea";
-import Message from "primevue/message";
 import Button from "primevue/button";
 import Select from "primevue/select";
 import Panel from "primevue/panel";
+import FormBody from "./FormBody.vue";
+import FormBodyInput from "./FormBodyInput.vue";
 import { z } from "zod";
 import { deleteState, loadState, persistState } from "@/state";
 import { useForm } from "vee-validate";
@@ -82,63 +83,48 @@ const resetForm = () => {
     <div>
       <slot name="lead" />
     </div>
-    <div class="max-w-xl mx-auto flex flex-col gap-8">
-      <div class="flex flex-col gap-2">
-        <label for="name-input" class="flex gap-2">
-          <span>Your name</span>
-          <span class="text-red-600 dark:text-red-500">*</span>
-        </label>
-        <InputText
-          id="name-input"
-          v-model="name"
-          v-bind="nameAttrs"
-          type="text"
-          size="large"
-          placeholder="Alex"
-          aria-describedby="name-help"
-        />
-        <Message v-if="errors.name" severity="error" size="small" variant="simple">
-          {{ errors.name }}
-        </Message>
-        <span id="name-help" class="text-muted-color text-sm font-medium">
-          The name, nickname, alias, or handle you want to send to the organizers.
-        </span>
-      </div>
-
-      <div class="flex flex-col gap-2">
-        <label for="contact-input" class="flex gap-2">
-          <span>Contact info</span>
-          <span class="text-red-600 dark:text-red-500">*</span>
-        </label>
-        <div class="flex max-sm:flex-col gap-2">
+    <FormBody>
+      <FormBodyInput id="name" label="Your name" required :error="errors.name">
+        <template #input="{ id, ariaDescribedby }">
           <InputText
-            id="contact-input"
-            v-model="contact"
-            v-bind="contactAttrs"
+            :id="id"
+            v-model="name"
+            v-bind="nameAttrs"
             type="text"
             size="large"
-            placeholder="alex@example.com"
-            aria-describedby="contact-help"
-            class="grow"
+            placeholder="Alex"
+            :aria-describedby="ariaDescribedby"
           />
-          <Select
-            v-model="contactMethod"
-            v-bind="contactMethodAttrs"
-            :options="props.contactMethods"
-            size="large"
-            class="basis-1/3 max-sm:grow"
-          />
-        </div>
-        <Message v-if="errors.contact" severity="error" size="small" variant="simple">
-          {{ errors.contact }}
-        </Message>
-        <Message v-if="errors.contactMethod" severity="error" size="small" variant="simple">
-          {{ errors.contactMethod }}
-        </Message>
-        <span id="contact-help" class="text-muted-color text-sm font-medium">
-          How you want the organizers to contact you.
-        </span>
-      </div>
+        </template>
+        <template #help>
+          The name, nickname, alias, or handle you want to send to the organizers.
+        </template>
+      </FormBodyInput>
+
+      <FormBodyInput id="contact" label="Contact info" required :error="errors.contact">
+        <template #input="{ id, ariaDescribedby }">
+          <div class="flex max-sm:flex-col gap-2">
+            <InputText
+              :id="id"
+              v-model="contact"
+              v-bind="contactAttrs"
+              type="text"
+              size="large"
+              placeholder="alex@example.com"
+              :aria-describedby="ariaDescribedby"
+              class="grow"
+            />
+            <Select
+              v-model="contactMethod"
+              v-bind="contactMethodAttrs"
+              :options="props.contactMethods"
+              size="large"
+              class="basis-1/3 max-sm:grow"
+            />
+          </div>
+        </template>
+        <template #help> How you want the organizers to contact you. </template>
+      </FormBodyInput>
 
       <div v-if="props.roles.length > 0" class="flex flex-col gap-2">
         <Panel header="What roles are you interested in?">
@@ -151,30 +137,26 @@ const resetForm = () => {
         </Panel>
       </div>
 
-      <div class="flex flex-col gap-2">
-        <label for="contact-input">More info</label>
-        <Textarea
-          id="comment-input"
-          v-model="comment"
-          v-bind="commentAttrs"
-          size="large"
-          auto-resize
-          placeholder="I'm looking to contribute…"
-          aria-describedby="comment-help"
-        />
-        <Message v-if="errors.comment" severity="error" size="small" variant="simple">
-          {{ errors.comment }}
-        </Message>
-        <span id="contact-help" class="text-muted-color text-sm font-medium">
-          What kinds of help you're looking to contribute.
-        </span>
-      </div>
+      <FormBodyInput id="comment" label="More info" help="" :error="errors.comment">
+        <template #input="{ id, ariaDescribedby }">
+          <Textarea
+            :id="id"
+            v-model="comment"
+            v-bind="commentAttrs"
+            size="large"
+            auto-resize
+            placeholder="I'm looking to contribute…"
+            :aria-describedby="ariaDescribedby"
+          />
+        </template>
+        <template #help> What kinds of help you're looking to contribute. </template>
+      </FormBodyInput>
 
       <div class="flex justify-around">
         <Button type="submit" severity="primary" label="Submit" class="max-w-24" />
         <Button @click="resetForm" severity="secondary" label="Reset" class="max-w-24" />
       </div>
-    </div>
+    </FormBody>
   </form>
 </template>
 
