@@ -71,7 +71,7 @@ const generateRandomPassword = () => {
 </script>
 
 <template>
-  <form @click="submitForm" class="flex flex-col max-w-2xl gap-6">
+  <form @submit="submitForm" class="flex flex-col max-w-2xl gap-6">
     <FormBodyInput
       id="secret-link-comment"
       label="Who are you sharing this link with?"

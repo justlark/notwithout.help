@@ -55,7 +55,7 @@ const generateRandomPassword = () => {
 </script>
 
 <template>
-  <form @click="submitForm" class="flex flex-col max-w-2xl gap-2">
+  <form @submit="submitForm" class="flex flex-col max-w-2xl gap-2">
     <FormBodyInput id="secret-link-password" :error="errors.password">
       <template #input="{ id, ariaDescribedby }">
         <InputGroup>
