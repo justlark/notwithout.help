@@ -452,8 +452,9 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
           {{ errors.expirationDate }}
         </Message>
         <span id="date-help" class="text-muted-color text-sm font-medium">
-          All submissions will automatically be permanently deleted after this date. You can change
-          this later.
+          All submissions will automatically be permanently deleted after this date. This is an
+          optional security feature. At any time, you can push the date back, move it up, or disable
+          the feature entirely.
         </span>
       </div>
 
@@ -481,7 +482,8 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
         </Message>
         <span id="secret-link-password-help" class="text-muted-color text-sm font-medium">
           To view responses, you'll have a secret link that only you know. For added security, you
-          can protect this link with a password. You can change this later.
+          can protect this link with a password. You can change the password later, but you can't
+          remove it once set.
           <Button
             @click="showPasswordHelp = true"
             class="!text-sm !font-medium !p-0"
