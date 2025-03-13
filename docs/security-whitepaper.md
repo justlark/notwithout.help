@@ -3,7 +3,7 @@
 **Author**: Lark Aster (they/it)\
 **Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 12 March 2025
+**Last Updated**: 13 March 2025
 
 This document is an overview of how [Not Without Help](https://notwithout.help)
 mitigates security risks.
@@ -327,6 +327,9 @@ Here are some additional security features of Not Without Help:
 - The frontend is served with a `Content-Security-Policy` header. Currently,
   the `script-src` directive requires `wasm-unsafe-eval` to allow libsodium to
   run in WebAssembly, which is a known security risk.
+- The user can specify an expiration date for the **Form**. After this date,
+  the **Form** and all **Submissions** are permanently deleted from the
+  database. This is implemented as a daily cron job.
 - When a user is viewing **Submissions** with a password-protected **Secret
   Link** and is idle for more than 15 minutes—as detected by listening to
   various input events—the unprotected **Secret Link Key** is deleted from the
