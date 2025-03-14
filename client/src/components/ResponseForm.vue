@@ -101,7 +101,12 @@ const resetForm = () => {
         </template>
       </FormBodyInput>
 
-      <FormBodyInput id="contact" label="Contact info" required :error="errors.contact">
+      <FormBodyInput
+        id="contact"
+        label="Contact info"
+        required
+        :error="[errors.contact, errors.contactMethod].join(' ')"
+      >
         <template #input="{ id, ariaDescribedby }">
           <div class="flex max-sm:flex-col gap-2">
             <InputText
