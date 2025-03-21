@@ -3,7 +3,7 @@
 **Author**: Lark Aster (they/it)\
 **Contact**: <lark@notwithout.help>\
 **GitHub**: <https://github.com/justlark/notwithout.help>\
-**Last Updated**: 13 March 2025
+**Last Updated**: 21 March 2025
 
 This document is an overview of how [Not Without Help](https://notwithout.help)
 mitigates security risks.
@@ -165,6 +165,16 @@ To decrypt a **Protected Secret Link Key**:
 3. The client uses the nonce and **Secret Link Password Key** to decrypt the
    **Protected Secret Link Key** and reveal the **Secret Link Key**.
 
+Once a client decrypts a **Protected Secret Link Key** by entering their
+password, the unencrypted **Secret Link Key** is stored in the browser session
+storage. This saves the user from having to re-enter their password if they
+reload the page, until they close the tab.
+
+If the user is idle for more than 15 minutes—as detected by listening to
+various input events—the unprotected **Secret Link Key** is deleted from the
+browser session storage and the user is required to re-enter the password to
+load the page.
+
 ## Retrieving the private primary key
 
 A **Secret Link** can be used to retrieve and decrypt the **Private Primary
@@ -202,6 +212,7 @@ claims:
 
 - `kid` (header claim): The **Server Key ID** of the **Ephemeral Server Key**
   used to sign the JWT.
+- `alg` (header claim): The string `HS256`.
 - `iss` (registered claim): The server's origin.
 - `aud` (registered claim): The server's origin.
 - `sub` (registered claim): The concatenation of the **Form ID** and the
@@ -235,6 +246,7 @@ unauthenticated API endpoint to exchange it for an **API Access Token**.
 
 The server verifies:
 
+- The `alg` is `HS256`.
 - The signature of the **API Challenge** using the **Ephemeral Server Key**
   associated with the `kid` to ensure the nonce the client signed is the same
   one the server issued.
@@ -243,7 +255,7 @@ The server verifies:
 - The `aud` matches the server's origin.
 - The `exp` shows the **API Challenge** has not expired.
 - The `jti` is still in the key-value store, to ensure the **API Challenge**
-  can only be used once.
+  has not yet been used.
 - The signature of the signed nonce using the **Public Signing Key** associated
   with the **Form ID** and **Client Key ID**.
 
@@ -255,22 +267,28 @@ Key** via `HS256`. The **API Access Token** has the following claims:
 
 - `kid` (header claim): The **Server Key ID** of the **Ephemeral Server Key**
   used to sign the JWT.
+- `alg` (header claim): The string `HS256`.
 - `iss` (registered claim): The server's origin.
 - `aud` (registered claim): The server's origin.
 - `sub` (registered claim): The concatenation of the **Form ID** and the
   **Client Key ID**.
 - `iat` (registered claim): The current timestamp.
-- `exp` (registered claim): The time the **API Access Token** expires, which is
-  configurable.
+- `exp` (registered claim): A longer expiration timestamp (e.g. 1 hour from
+  `iat`).
 - `type` (custom claim): The string `access`, used to distinguish the **API
   Access Token** from an **API Challenge**.
 - `role` (custom claim): The **Access Role** associated with the **Secret
   Link**.
 
+The client stores the **API Access Token** in the browser session storage,
+which saves the client from having to complete the full auth flow on each API
+request, until the user closes the tab.
+
 On subsequent authenticated API requests, the client includes the **API Access
 Token** as a bearer token in the `Authorization` header, which the server
 validates to authorize the request. The server validates:
 
+- The `alg` is `HS256`.
 - The signature of the **API Access Token** using the **Ephemeral Server Key**
   associated with the `kid`.
 - The `type` is `access`.
@@ -330,11 +348,6 @@ Here are some additional security features of Not Without Help:
 - The user can specify an expiration date for the **Form**. After this date,
   the **Form** and all **Submissions** are permanently deleted from the
   database. This is implemented as a daily cron job.
-- When a user is viewing **Submissions** with a password-protected **Secret
-  Link** and is idle for more than 15 minutes—as detected by listening to
-  various input events—the unprotected **Secret Link Key** is deleted from the
-  browser session storage and the user is required to re-enter the password to
-  load the page.
 
 ## API
 
