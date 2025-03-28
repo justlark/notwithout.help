@@ -25,6 +25,11 @@ import { RouterLink } from "vue-router";
         support are valuable in activism and including people who might not otherwise think they
         have a role.
       </p>
+      <p>
+        <strong>This system has not been audited for security.</strong> I'm
+        <a href="https://ko-fi.com/larkaster" target="_blank">collecting donations</a> to hire a
+        security professional to review this app.
+      </p>
       <h2 class="text-center my-4">How it works</h2>
       <ul class="list-none flex flex-col gap-4 px-0">
         <li>

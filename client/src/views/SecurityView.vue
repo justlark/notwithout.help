@@ -17,9 +17,17 @@
         >
         detailing how the system is designed.
       </p>
-      Additionally, anytime you're depending on on web-based cryptography to protect you, it's worth
-      <a href="https://www.devever.net/~hl/webcrypto" target="_blank">understanding the caveats</a>.
-      <p></p>
+      <p>
+        Additionally, anytime you're depending on on web-based cryptography to protect you, it's
+        worth
+        <a href="https://www.devever.net/~hl/webcrypto" target="_blank">understanding the caveats</a
+        >.
+      </p>
+      <p>
+        I'm <a href="https://ko-fi.com/larkaster" target="_blank">collecting donations</a> to hire a
+        security professional to review this app. If you find this app useful, or would like to have
+        more confidence in its security, please consider donating.
+      </p>
       <p>
         You can report security vulnerabilities
         <a href="https://github.com/justlark/notwithout.help/security" target="_blank">on GitHub</a>
