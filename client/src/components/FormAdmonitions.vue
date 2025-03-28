@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { type ClientKeyId, type FormId, type MaybeProtectedSecretLinkKey } from "@/crypto";
+import {
+  type ClientKeyId,
+  type FormId,
+  type MaybeProtectedSecretLinkKey,
+  type PrimaryKeyFingerprint,
+} from "@/crypto";
 import ShareLinkAdmonition from "@/components/ShareLinkAdmonition.vue";
 import Card from "primevue/card";
 import SecretLinkAdmonition from "@/components/SecretLinkAdmonition.vue";
@@ -8,6 +13,7 @@ const props = defineProps<{
   formId: FormId;
   clientKeyId: ClientKeyId;
   secretLinkKey: MaybeProtectedSecretLinkKey;
+  primaryKeyFingerprint: PrimaryKeyFingerprint;
 }>();
 </script>
 
@@ -21,7 +27,10 @@ const props = defineProps<{
         </span>
       </template>
       <template #content>
-        <ShareLinkAdmonition :formId="props.formId" />
+        <ShareLinkAdmonition
+          :form-id="props.formId"
+          :primary-key-fingerprint="props.primaryKeyFingerprint"
+        />
       </template>
     </Card>
     <Card>

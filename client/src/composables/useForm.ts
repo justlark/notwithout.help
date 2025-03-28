@@ -1,9 +1,9 @@
 import type { ApiErrorKind, OrgRole } from "@/api";
 import api, { ApiError } from "@/api";
-import type { PublicPrimaryKey } from "@/crypto";
-import { isDone, type Loadable } from "@/types";
+import type { FormId, PublicPrimaryKey } from "@/crypto";
+import { type Loadable } from "@/types";
 import { ref, watchEffect, type DeepReadonly, type Ref } from "vue";
-import { useLink } from "./useLink";
+import { useRoute, useRouter } from "vue-router";
 
 export interface Form {
   orgName: string;
@@ -17,14 +17,17 @@ export interface Form {
 export const useForm = (): DeepReadonly<Ref<Loadable<Form, ApiErrorKind>>> => {
   const form = ref<Loadable<Form, ApiErrorKind>>({ state: "loading" });
 
-  const shareLinkParts = useLink();
+  const route = useRoute();
+  const router = useRouter();
 
   watchEffect(async () => {
-    if (!isDone(shareLinkParts)) {
-      return;
-    }
+    const fragment = route.hash;
 
-    const { formId } = shareLinkParts.value.value;
+    await router.isReady();
+
+    const [, formIdPart] = fragment.split("/");
+
+    const formId = formIdPart as FormId;
 
     try {
       const response = await api.getForm({ formId });

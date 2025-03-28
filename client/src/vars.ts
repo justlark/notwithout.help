@@ -2,6 +2,7 @@ import type {
   ClientKeyId,
   FormId,
   MaybeProtectedSecretLinkKey,
+  PrimaryKeyFingerprint,
   ProtectedSecretLinkKey,
   SecretLinkKey,
 } from "./crypto";
@@ -10,8 +11,8 @@ import { encodeBase64Url } from "./encoding";
 export const TOAST_INFO_TTL = 2500;
 export const TOAST_ERROR_TTL = 3500;
 
-export const newShareLink = (formId: FormId) =>
-  new URL(`${window.location.origin}/share/#/${formId}`);
+export const newShareLink = (formId: FormId, primaryKeyFingerprint: PrimaryKeyFingerprint) =>
+  new URL(`${window.location.origin}/share/#/${formId}/${encodeBase64Url(primaryKeyFingerprint)}`);
 
 export const newSecretLink = (
   formId: FormId,

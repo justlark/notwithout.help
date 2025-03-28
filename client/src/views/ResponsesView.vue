@@ -13,7 +13,13 @@ import Button from "primevue/button";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL, newEditLink, newSecretLink } from "@/vars";
 import { computed, ref, watch, watchEffect } from "vue";
 import { datetimeToCsvFormat, decodeUtf8, formatDate } from "@/encoding";
-import { protectSecretLinkKey, unsealSubmissionBody, type ProtectedSecretLinkKey } from "@/crypto";
+import {
+  generatePrimaryKeyFingerprint,
+  protectSecretLinkKey,
+  unsealSubmissionBody,
+  type PrimaryKeyFingerprint,
+  type ProtectedSecretLinkKey,
+} from "@/crypto";
 import api, { ApiError, type SubmissionBody } from "@/api";
 import { useConfirm, useToast } from "primevue";
 import { returnsError, isDone, allDone } from "@/types";
@@ -58,6 +64,8 @@ const editLink = computed(() =>
       )
     : undefined,
 );
+
+const primaryKeyFingerprint = ref<PrimaryKeyFingerprint>();
 
 const isNotFound = computed(() => {
   return returnsError(
@@ -218,6 +226,14 @@ const updatePassword = async (password: string) => {
 
   await router.push(newSecretLink(formId, clientKeyId, key));
 };
+
+watchEffect(async () => {
+  if (!isDone(form)) return;
+
+  const { publicPrimaryKey } = form.value.value;
+
+  primaryKeyFingerprint.value = await generatePrimaryKeyFingerprint(publicPrimaryKey);
+});
 
 watchEffect(async () => {
   // Make sure this is tracked by the `watchEffect` before the first await boundary.
@@ -460,7 +476,11 @@ watchEffect(async () => {
           <strong id="share-link-modal-name">Share this link</strong>
         </span>
       </template>
-      <ShareLinkAdmonition v-if="isDone(secretLinkParts)" :form-id="secretLinkParts.value.formId" />
+      <ShareLinkAdmonition
+        v-if="isDone(secretLinkParts) && primaryKeyFingerprint !== undefined"
+        :form-id="secretLinkParts.value.formId"
+        :primary-key-fingerprint="primaryKeyFingerprint"
+      />
     </Dialog>
     <Dialog
       id="update-password-modal"

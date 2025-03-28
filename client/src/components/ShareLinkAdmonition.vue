@@ -3,13 +3,14 @@ import { computed } from "vue";
 import LinkAdmonition from "@/components/LinkAdmonition.vue";
 import { useToast } from "primevue/usetoast";
 import { newShareLink, TOAST_INFO_TTL } from "@/vars";
-import type { FormId } from "@/crypto";
+import type { FormId, PrimaryKeyFingerprint } from "@/crypto";
 
 const props = defineProps<{
   formId: FormId;
+  primaryKeyFingerprint: PrimaryKeyFingerprint;
 }>();
 
-const shareLink = computed(() => newShareLink(props.formId));
+const shareLink = computed(() => newShareLink(props.formId, props.primaryKeyFingerprint));
 
 const toast = useToast();
 

@@ -4,8 +4,12 @@ import ResponseForm, { type FormValues } from "@/components/ResponseForm.vue";
 import ErrorCard from "@/components/ErrorCard.vue";
 import useForm from "@/composables/useForm";
 import useLink from "@/composables/useLink";
-import { sealSubmissionBody } from "@/crypto";
-import { encodeUtf8 } from "@/encoding";
+import {
+  generatePrimaryKeyFingerprint,
+  primaryKeyFingerprintsAreEqual,
+  sealSubmissionBody,
+} from "@/crypto";
+import { encodeBase64, encodeUtf8 } from "@/encoding";
 import { isDone, returnsError } from "@/types";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
@@ -16,9 +20,8 @@ const toast = useToast();
 const shareLinkParts = useLink();
 const form = useForm();
 
-const isNotFound = computed(() => {
-  return returnsError(["bad-request", "not-found"], form);
-});
+const isNotFound = computed(() => returnsError(["bad-request", "not-found"], form));
+const linkIsMissingFingerprint = computed(() => returnsError("invalid", shareLinkParts));
 
 const postSubmission = async (values: FormValues, resetForm: () => void) => {
   if (!isDone(form) || !isDone(shareLinkParts)) {
@@ -26,7 +29,24 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
   }
 
   const { publicPrimaryKey } = form.value.value;
-  const { formId } = shareLinkParts.value.value;
+  const { formId, primaryKeyFingerprint } = shareLinkParts.value.value;
+
+  const computedPrimaryKeyFingerprint = await generatePrimaryKeyFingerprint(publicPrimaryKey);
+
+  console.log(encodeBase64(primaryKeyFingerprint));
+  console.log(encodeBase64(computedPrimaryKeyFingerprint));
+
+  if (!primaryKeyFingerprintsAreEqual(primaryKeyFingerprint, computedPrimaryKeyFingerprint)) {
+    toast.add({
+      severity: "error",
+      summary: "Failed to submit response",
+      detail:
+        "The security fingerprint in the link you followed is not valid. This could mean you copied the link incorrectly.",
+      life: TOAST_ERROR_TTL,
+    });
+
+    return;
+  }
 
   const submissionBody: SubmissionBody = {
     version: CURRENT_VERSION,
@@ -88,6 +108,11 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
       v-if="isNotFound"
       title="Not found"
       message="Either this is an invalid link, or the group is no longer accepting responses."
+    />
+    <ErrorCard
+      v-if="linkIsMissingFingerprint"
+      title="Invalid link"
+      message="This link is no longer valid. Please ask the organizers for a new one."
     />
     <div v-else-if="isDone(form) && isDone(shareLinkParts)">
       <ResponseForm

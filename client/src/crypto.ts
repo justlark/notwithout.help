@@ -2,6 +2,7 @@ import _sodium from "libsodium-wrappers-sumo";
 import * as ed from "@noble/ed25519";
 import type { Newtype } from "./types";
 import dicewareWordlist from "@/assets/eff-large-wordlist.txt?raw";
+import { decodeBase64, encodeBase64 } from "./encoding";
 
 let isSodiumReady = false;
 
@@ -16,6 +17,7 @@ const getSodium = async () => {
 
 export type FormId = Newtype<string, { readonly __tag: unique symbol }>;
 export type ClientKeyId = Newtype<string, { readonly __tag: unique symbol }>;
+export type PrimaryKeyFingerprint = Newtype<Uint8Array, { readonly __tag: unique symbol }>;
 
 export type ApiAccessToken = Newtype<string, { readonly __tag: unique symbol }>;
 export type ApiChallengeToken = Newtype<string, { readonly __tag: unique symbol }>;
@@ -263,6 +265,26 @@ export const signApiChallengeNonce = async (
   privateSigningKey: PrivateSigningKey,
 ): Promise<ApiChallengeSignature> =>
   (await sign(nonce, privateSigningKey)) as ApiChallengeSignature;
+
+const PRIMARY_KEY_FINGERPRINT_APP_KEY = "z8JNs9j0EZac9E9I5pQFVKdsDqePfmIKYNUvUFo0HKg=";
+
+export const generatePrimaryKeyFingerprint = async (
+  publicPrimaryKey: PublicPrimaryKey,
+): Promise<PrimaryKeyFingerprint> => {
+  const sodium = await getSodium();
+
+  return sodium.crypto_generichash(
+    sodium["crypto_generichash_BYTES"],
+    publicPrimaryKey,
+    decodeBase64(PRIMARY_KEY_FINGERPRINT_APP_KEY),
+  ) as PrimaryKeyFingerprint;
+};
+
+// This is necessary because newtypes are not directly comparable.
+export const primaryKeyFingerprintsAreEqual = (
+  first: PrimaryKeyFingerprint,
+  second: PrimaryKeyFingerprint,
+): boolean => encodeBase64(first) === encodeBase64(second);
 
 export const SECRET_LINK_PASSPHRASE_WORDS = 4;
 

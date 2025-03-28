@@ -13,6 +13,8 @@ import {
   type FormId,
   protectSecretLinkKey,
   type MaybeProtectedSecretLinkKey,
+  type PrimaryKeyFingerprint,
+  generatePrimaryKeyFingerprint,
 } from "@/crypto";
 import { encodeUtf8 } from "@/encoding";
 import { getAccessToken } from "@/composables/useAccessToken";
@@ -24,6 +26,7 @@ const INITIAL_KEY_COMMENT = "Original";
 const formId = ref<FormId>();
 const clientKeyId = ref<ClientKeyId>();
 const secretLinkKey = ref<MaybeProtectedSecretLinkKey>();
+const primaryKeyFingerprint = ref<PrimaryKeyFingerprint>();
 
 const toast = useToast();
 
@@ -127,6 +130,7 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
   formId.value = response.formId;
   clientKeyId.value = response.clientKeyId;
   secretLinkKey.value = newMaybeProtectedSecretLinkKey;
+  primaryKeyFingerprint.value = await generatePrimaryKeyFingerprint(newPrimaryKeypair.public);
 
   resetForm();
 };
@@ -146,10 +150,16 @@ const submitForm = async (values: FormValues, resetForm: () => void) => {
       </template>
     </FormBuilder>
     <FormAdmonitions
-      v-if="formId !== undefined && clientKeyId !== undefined && secretLinkKey !== undefined"
-      :formId="formId"
-      :clientKeyId="clientKeyId"
-      :secretLinkKey="secretLinkKey"
+      v-if="
+        formId !== undefined &&
+        clientKeyId !== undefined &&
+        secretLinkKey !== undefined &&
+        primaryKeyFingerprint !== undefined
+      "
+      :form-id="formId"
+      :client-key-id="clientKeyId"
+      :secret-link-key="secretLinkKey"
+      :primary-key-fingerprint="primaryKeyFingerprint"
     />
   </main>
 </template>
