@@ -15,8 +15,11 @@
           target="_blank"
           >security whitepaper</a
         >
-        detailing how the system is designed to protect you.
+        detailing how the system is designed.
       </p>
+      Additionally, anytime you're depending on on web-based cryptography to protect you, it's worth
+      <a href="https://www.devever.net/~hl/webcrypto" target="_blank">understanding the caveats</a>.
+      <p></p>
       <p>
         You can report security vulnerabilities
         <a href="https://github.com/justlark/notwithout.help/security" target="_blank">on GitHub</a>
