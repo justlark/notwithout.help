@@ -29,8 +29,8 @@ corresponding public key is sent to the server when a **Form** is created. The
 **Submissions**.
 
 A hash of the **Public Primary Key**, called the **Primary Key Fingerprint**,
-is included the **Sharing Link** so that clients can validate that the **Public
-Primary Key** received from the server can be trusted.
+is included in the **Sharing Link** so that clients can validate that the
+**Public Primary Key** received from the server can be trusted.
 
 ## Anatomy of a link
 
