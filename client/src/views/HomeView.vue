@@ -28,7 +28,8 @@ import { RouterLink } from "vue-router";
       <p>
         <strong>This system has not been audited for security.</strong> I'm
         <a href="https://ko-fi.com/larkaster" target="_blank">collecting donations</a> to hire a
-        security professional to review this app.
+        security professional to review this app. See the
+        <RouterLink to="/security">security page</RouterLink> for details.
       </p>
       <h2 class="text-center my-4">How it works</h2>
       <ul class="list-none flex flex-col gap-4 px-0">
