@@ -9,7 +9,7 @@ import {
   primaryKeyFingerprintsAreEqual,
   sealSubmissionBody,
 } from "@/crypto";
-import { encodeBase64, encodeUtf8 } from "@/encoding";
+import { encodeUtf8 } from "@/encoding";
 import { isDone, returnsError } from "@/types";
 import { TOAST_ERROR_TTL, TOAST_INFO_TTL } from "@/vars";
 import { useToast } from "primevue";
