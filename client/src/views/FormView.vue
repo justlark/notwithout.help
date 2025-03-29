@@ -33,9 +33,6 @@ const postSubmission = async (values: FormValues, resetForm: () => void) => {
 
   const computedPrimaryKeyFingerprint = await generatePrimaryKeyFingerprint(publicPrimaryKey);
 
-  console.log(encodeBase64(primaryKeyFingerprint));
-  console.log(encodeBase64(computedPrimaryKeyFingerprint));
-
   if (!primaryKeyFingerprintsAreEqual(primaryKeyFingerprint, computedPrimaryKeyFingerprint)) {
     toast.add({
       severity: "error",
