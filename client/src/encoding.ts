@@ -1,5 +1,9 @@
 export const encodeBase64 = (bytes: Uint8Array): string =>
-  btoa(String.fromCharCode.apply(null, [...bytes]));
+  btoa(
+    Array.from(bytes)
+      .map((byte) => String.fromCharCode(byte))
+      .join(""),
+  );
 
 export const decodeBase64 = (base64: string): Uint8Array =>
   Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
