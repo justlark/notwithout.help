@@ -313,7 +313,8 @@ const uploadCustomRoles = async (event: Pick<FileUploadUploadEvent, "files">) =>
         </template>
         <template #help>
           Specify what contact methods you want respondents to pick from when leaving their contact
-          information. You can change this later.
+          information. If you're an activist, consider using Signal over unencrypted messaging apps.
+          You can change this later.
         </template>
       </FormBodyInput>
 
