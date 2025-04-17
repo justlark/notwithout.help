@@ -11,65 +11,66 @@ crons = ["0 0 * * *"]
 
 [env.prod]
 
-  [env.prod.vars]
-  ENV = "prod"
-  ORIGIN = "https://api.notwithout.help"
-  CORS_ALLOWED_ORIGIN = "https://notwithout.help"
+[env.prod.vars]
+ENV = "prod"
+ORIGIN = "https://api.notwithout.help"
+CORS_ALLOWED_ORIGIN = "https://notwithout.help"
 
-  # Generating a new access token is fairly quick and doesn't require kicking
-  # the user back to any sort of login screen, because all they information
-  # needed to request one is embedded in the URL fragment. So, this doesn't
-  # need to be that long.
-  ACCESS_TOKEN_EXP = "3600" # 1 hour
+# Generating a new access token is fairly quick and doesn't require kicking
+# the user back to any sort of login screen, because all they information
+# needed to request one is embedded in the URL fragment. So, this doesn't
+# need to be that long.
+ACCESS_TOKEN_EXP = "3600" # 1 hour
 
-  # The challenge token should be short-lived; it only needs to live long enough
-  # to be exchanged for an access token.
-  CHALLENGE_TOKEN_EXP = "60" # 1 minute
+# The challenge token should be short-lived; it only needs to live long enough
+# to be exchanged for an access token.
+CHALLENGE_TOKEN_EXP = "60" # 1 minute
 
-  # The longest request bodies we expect to see are form templates and user
-  # submissions, which are both just plain text. This should give users enough
-  # space to say what they want to say while protecting us from someone uploading
-  # the complete works of Shakespeare.
-  MAX_REQUEST_BODY_LEN = "1048576" # 1 MiB
+# This protects organizers from being spammed by excessively long submissions
+# and us from someone uploading the complete works of Shakespeare. Ideally, we
+# would impose different length limits for different submission fields.
+# However, because submissions are encrypted, we have no way to enforce this
+# server-side.
+MAX_REQUEST_BODY_LEN = "5120" # 5 KiB
 
-  [env.prod.route]
-  pattern = "api.notwithout.help"
-  custom_domain = true
+[env.prod.route]
+pattern = "api.notwithout.help"
+custom_domain = true
 
-  [[env.prod.d1_databases]]
-  binding = "DB"
-  database_name = "notwithouthelp"
-  database_id = "e5c259dc-65e1-4613-8f5e-4260bd7ec3e6"
-  preview_database_id = "97a27b14-5ee7-444b-99b1-4acbc490b949"
+[[env.prod.d1_databases]]
+binding = "DB"
+database_name = "notwithouthelp"
+database_id = "e5c259dc-65e1-4613-8f5e-4260bd7ec3e6"
+preview_database_id = "97a27b14-5ee7-444b-99b1-4acbc490b949"
 
-  [[env.prod.kv_namespaces]]
-  binding = "KV"
-  id = "f62a4b8d25ba485c915ccc5f0f27ee97"
-  preview_id = "3978c62d402c4b91bcb650aacf6a9ee8"
+[[env.prod.kv_namespaces]]
+binding = "KV"
+id = "f62a4b8d25ba485c915ccc5f0f27ee97"
+preview_id = "3978c62d402c4b91bcb650aacf6a9ee8"
 
 [env.dev]
 
-  [env.dev.vars]
-  ENV = "dev"
-  ORIGIN = "https://api-dev.notwithout.help"
-  CORS_ALLOWED_ORIGIN = "https://dev.notwithout.help"
+[env.dev.vars]
+ENV = "dev"
+ORIGIN = "https://api-dev.notwithout.help"
+CORS_ALLOWED_ORIGIN = "https://dev.notwithout.help"
 
-  # Copied from the prod environment.
-  ACCESS_TOKEN_EXP = "3600"        # 1 hour
-  CHALLENGE_TOKEN_EXP = "60"       # 1 minute
-  MAX_REQUEST_BODY_LEN = "1048576" # 1 MiB
+# Copied from the prod environment.
+ACCESS_TOKEN_EXP = "3600"     # 1 hour
+CHALLENGE_TOKEN_EXP = "60"    # 1 minute
+MAX_REQUEST_BODY_LEN = "5120" # 5 KiB
 
-  [env.dev.route]
-  pattern = "api-dev.notwithout.help"
-  custom_domain = true
+[env.dev.route]
+pattern = "api-dev.notwithout.help"
+custom_domain = true
 
-  [[env.dev.d1_databases]]
-  binding = "DB"
-  database_name = "notwithouthelp-dev"
-  database_id = "97a27b14-5ee7-444b-99b1-4acbc490b949"
-  preview_database_id = "97a27b14-5ee7-444b-99b1-4acbc490b949"
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "notwithouthelp-dev"
+database_id = "97a27b14-5ee7-444b-99b1-4acbc490b949"
+preview_database_id = "97a27b14-5ee7-444b-99b1-4acbc490b949"
 
-  [[env.dev.kv_namespaces]]
-  binding = "KV"
-  id = "3978c62d402c4b91bcb650aacf6a9ee8"
-  preview_id = "3978c62d402c4b91bcb650aacf6a9ee8"
+[[env.dev.kv_namespaces]]
+binding = "KV"
+id = "3978c62d402c4b91bcb650aacf6a9ee8"
+preview_id = "3978c62d402c4b91bcb650aacf6a9ee8"
