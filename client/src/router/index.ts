@@ -40,6 +40,11 @@ const router = createRouter({
       component: () => import("../views/SecurityView.vue"),
     },
     {
+      path: "/tips",
+      name: "tips",
+      component: () => import("../views/TipsView.vue"),
+    },
+    {
       path: "/:path(.*)*",
       name: "not-found",
       component: () => import("../views/NotFoundView.vue"),

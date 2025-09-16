@@ -25,12 +25,6 @@ import { RouterLink } from "vue-router";
         support are valuable in activism and including people who might not otherwise think they
         have a role.
       </p>
-      <p>
-        <strong>This system has not been audited for security.</strong> I'm
-        <a href="https://ko-fi.com/larkaster" target="_blank">collecting donations</a> to hire a
-        security professional to review this app. See the
-        <RouterLink to="/security">security page</RouterLink> for details.
-      </p>
       <h2 class="text-center my-4">How it works</h2>
       <ul class="list-none flex flex-col gap-4 px-0">
         <li>
@@ -79,19 +73,6 @@ import { RouterLink } from "vue-router";
           <Card>
             <template #content>
               <div class="flex gap-4 items-center">
-                <i class="pi pi-eye-slash text-muted-color !text-3xl" aria-hidden></i>
-                <span>
-                  Only you can see the information people send you. Neither us nor our hosting
-                  provider have access to it.
-                </span>
-              </div>
-            </template>
-          </Card>
-        </li>
-        <li>
-          <Card>
-            <template #content>
-              <div class="flex gap-4 items-center">
                 <i class="pi pi-ban text-muted-color !text-3xl" aria-hidden></i>
                 <span>
                   You don't need any sort of account to use this tool. You don't need to provide a
@@ -107,8 +88,8 @@ import { RouterLink } from "vue-router";
               <div class="flex gap-4 items-center">
                 <i class="pi pi-user-edit text-muted-color !text-3xl" aria-hidden></i>
                 <span>
-                  You have control over who you authorize to view the information people send you,
-                  and you can revoke that access at any time.
+                  You have control over who can access the information people send you, and you can
+                  revoke that access at any time.
                 </span>
               </div>
             </template>
@@ -120,6 +101,8 @@ import { RouterLink } from "vue-router";
       <RouterLink to="/contact">Contact</RouterLink>
       <span>•</span>
       <RouterLink to="/security">Security</RouterLink>
+      <span>•</span>
+      <RouterLink to="/tips">Tips</RouterLink>
       <span>•</span>
       <a href="https://github.com/justlark/notwithout.help" target="_blank">GitHub</a>
     </p>

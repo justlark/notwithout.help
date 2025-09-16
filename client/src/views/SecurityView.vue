@@ -1,12 +1,18 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { RouterLink } from "vue-router";
+</script>
 
 <template>
   <main aria-labelledby="main-heading" class="flex flex-col items-center">
     <h1 id="main-heading" class="text-center mb-8">Security</h1>
     <div class="text-justify max-w-3xl">
       <p>
-        <strong>This system has not been audited for security.</strong> If your safety or freedom
-        are at risk, do not depend on this software to protect you.
+        This app is designed to mitigate risks to your privacy and security, but it has not been
+        audited for security, so it cannot make strong guarantees.
+        <strong
+          >If your safety or freedom are at risk, do not depend on this software to protect
+          you</strong
+        >.
       </p>
       <p>
         If you are technically inclined, you can review the
@@ -16,17 +22,6 @@
           >security whitepaper</a
         >
         detailing how the system is designed.
-      </p>
-      <p>
-        Additionally, anytime you're depending on on web-based cryptography to protect you, it's
-        worth
-        <a href="https://www.devever.net/~hl/webcrypto" target="_blank">understanding the caveats</a
-        >.
-      </p>
-      <p>
-        I'm <a href="https://ko-fi.com/larkaster" target="_blank">collecting donations</a> to hire a
-        security professional to review this app. If you find this app useful, or would like to have
-        more confidence in its security, please consider donating.
       </p>
       <p>
         You can report security vulnerabilities
