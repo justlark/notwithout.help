@@ -102,7 +102,7 @@ import { RouterLink } from "vue-router";
       <span>•</span>
       <RouterLink to="/security">Security</RouterLink>
       <span>•</span>
-      <RouterLink to="/tips">Tips</RouterLink>
+      <RouterLink to="/tips">Tip Jar</RouterLink>
       <span>•</span>
       <a href="https://github.com/justlark/notwithout.help" target="_blank">GitHub</a>
     </p>
