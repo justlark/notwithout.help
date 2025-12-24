@@ -22,6 +22,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           environment: dev
           workingDirectory: ./worker/
+          wranglerVersion: "4.56.0"
 
   prod:
     name: Deploy (prod)
@@ -38,3 +39,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           environment: prod
           workingDirectory: ./worker/
+          wranglerVersion: "4.56.0"
